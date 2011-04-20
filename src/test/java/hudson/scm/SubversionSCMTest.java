@@ -264,6 +264,23 @@ public class SubversionSCMTest extends AbstractSubversionTest {
     }
 
     /**
+     * Test parsing of @revision information from the tail of the URL
+     */
+    //TODO fix me
+//    public void testModuleLocationWithDepthIgnoreExternalsOption() throws Exception {
+//        FreeStyleProject p = createFreeStyleProject();
+//
+//        SubversionSCM scm = new SubversionSCM(
+//                Arrays.asList(
+//                        new ModuleLocation("https://svn.java.net/svn/hudson~svn/trunk/hudson/test-projects/testSubversionExclusion", "c", "infinity", true),
+//                        new ModuleLocation("https://svn.java.net/svn/hudson~svn/trunk/hudson/test-projects/testSubversionExclusion", "d", "files", false)),
+//               false, false, null, null, null, null, null, null);
+//        p.setScm(scm);
+//        submit(new WebClient().getPage(p, "configure").getFormByName("config"));
+//        verify(scm, (SubversionSCM) p.getScm());
+//    }
+
+    /**
      * Tests a checkout with RevisionParameterAction
      */
     public void testRevisionParameter() throws Exception {
@@ -509,6 +526,8 @@ public class SubversionSCMTest extends AbstractSubversionTest {
         for (int i = 0; i < ll.length; i++) {
             assertEquals(ll[i].local, rl[i].local);
             assertEquals(ll[i].remote, rl[i].remote);
+            assertEquals(ll[i].getDepthOption(), rl[i].getDepthOption());
+            assertEquals(ll[i].isIgnoreExternalsOption(), rl[i].isIgnoreExternalsOption());
         }
 
         assertNullEquals(lhs.getExcludedRegions(), rhs.getExcludedRegions());
@@ -617,7 +636,7 @@ public class SubversionSCMTest extends AbstractSubversionTest {
 //        SLAVE_DEBUG_PORT = 8001;
         File repo = new CopyExisting(getClass().getResource("HUDSON-6030.zip")).allocate();
         SubversionSCM scm = new SubversionSCM(ModuleLocation.parse(new String[]{"file://" + repo.getPath()},
-                new String[]{"."}),
+                new String[]{"."},  null, null),
                 true, false, null, ".*/bar", "", "", "", "");
 
         FreeStyleProject p = createFreeStyleProject("testExcludedRegions");
@@ -649,7 +668,7 @@ public class SubversionSCMTest extends AbstractSubversionTest {
 //        SLAVE_DEBUG_PORT = 8001;
         File repo = new CopyExisting(getClass().getResource("HUDSON-6030.zip")).allocate();
         SubversionSCM scm = new SubversionSCM(ModuleLocation.parse(new String[]{"file://" + repo.getPath()},
-                new String[]{"."}),
+                new String[]{"."}, null, null),
                 true, false, null, "", "", "", "", ".*/foo");
 
         FreeStyleProject p = createFreeStyleProject("testExcludedRegions");

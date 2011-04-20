@@ -53,6 +53,7 @@ import hudson.remoting.DelegatingCallable;
 import hudson.remoting.VirtualChannel;
 import hudson.scm.UserProvidedCredential.AuthenticationManagerImpl;
 import hudson.scm.subversion.CheckoutUpdater;
+import hudson.scm.subversion.Messages;
 import hudson.scm.subversion.UpdateUpdater;
 import hudson.scm.subversion.UpdateWithRevertUpdater;
 import hudson.scm.subversion.WorkspaceUpdater;
@@ -102,6 +103,7 @@ import javax.xml.transform.stream.StreamResult;
 import net.sf.json.JSONObject;
 import org.apache.commons.beanutils.PropertyUtils;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang.StringUtils;
 import org.apache.tools.ant.BuildException;
 import org.apache.tools.ant.Project;
 import org.apache.tools.ant.taskdefs.Chmod;
@@ -114,6 +116,7 @@ import org.kohsuke.stapler.export.Exported;
 import org.kohsuke.stapler.export.ExportedBean;
 import org.tmatesoft.svn.core.ISVNLogEntryHandler;
 import org.tmatesoft.svn.core.SVNAuthenticationException;
+import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNDirEntry;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
@@ -145,7 +148,6 @@ import org.tmatesoft.svn.core.wc.SVNInfo;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNWCClient;
 import org.tmatesoft.svn.core.wc.SVNWCUtil;
-import hudson.scm.subversion.Messages;
 
 import static hudson.Util.fixEmptyAndTrim;
 import static hudson.scm.PollingResult.BUILD_NOW;
@@ -222,7 +224,7 @@ public class SubversionSCM extends SCM implements Serializable {
      */
     public SubversionSCM(String[] remoteLocations, String[] localLocations,
                          boolean useUpdate, SubversionRepositoryBrowser browser, String excludedRegions) {
-        this(ModuleLocation.parse(remoteLocations, localLocations), useUpdate, false, browser, excludedRegions, null,
+        this(ModuleLocation.parse(remoteLocations, localLocations, null, null), useUpdate, false, browser, excludedRegions, null,
             null, null);
     }
 
@@ -232,7 +234,7 @@ public class SubversionSCM extends SCM implements Serializable {
     public SubversionSCM(String[] remoteLocations, String[] localLocations,
                          boolean useUpdate, SubversionRepositoryBrowser browser, String excludedRegions,
                          String excludedUsers, String excludedRevprop) {
-        this(ModuleLocation.parse(remoteLocations, localLocations), useUpdate, false, browser, excludedRegions,
+        this(ModuleLocation.parse(remoteLocations, localLocations, null, null), useUpdate, false, browser, excludedRegions,
             excludedUsers, excludedRevprop, null);
     }
 
@@ -376,7 +378,7 @@ public class SubversionSCM extends SCM implements Serializable {
             while(tokens.hasMoreTokens()) {
                 // the remote (repository location)
                 // the normalized name is always without the trailing '/'
-                String remoteLoc = Util.removeTrailingSlash(tokens.nextToken());
+                String remoteLoc = Util.removeTrailingSlash(tokens.nextToken    ());
 
                 oldLocations.add(new ModuleLocation(remoteLoc, null));
             }
@@ -2236,15 +2238,40 @@ public class SubversionSCM extends SCM implements Serializable {
         public final String local;
 
         /**
+         * Subversion remote depth. Used as "--depth" option for checkout and update commands.
+         * Default value is "infinity".
+         */
+        @Exported
+        public final String remoteDepthOption;
+
+        /**
+         * Flag to ignore subversion externals definitions.
+         */
+        @Exported
+        public boolean ignoreExternalsOption;
+
+        /**
          * Cache of the repository UUID.
          */
         private transient volatile UUID repositoryUUID;
         private transient volatile SVNURL repositoryRoot;
 
-        @DataBoundConstructor
+        /**
+         * Constructor to support backward compatibility.
+         * @param remote remote repository.
+         * @param local local repository.
+         */
         public ModuleLocation(String remote, String local) {
+            this(remote, local, null, false);
+        }
+
+        @DataBoundConstructor
+        public ModuleLocation(String remote, String local, String remoteDepthOption, boolean ignoreExternalsOption) {
             this.remote = Util.removeTrailingSlash(Util.fixNull(remote).trim());
             this.local = fixEmptyAndTrim(local);
+            this.remoteDepthOption = StringUtils.isEmpty(remoteDepthOption) ? SVNDepth.INFINITY.getName()
+                : remoteDepthOption;
+            this.ignoreExternalsOption = ignoreExternalsOption;
         }
 
         /**
@@ -2323,6 +2350,23 @@ public class SubversionSCM extends SCM implements Serializable {
         }
 
         /**
+         * Returns the value of remote depth option.
+         *
+         * @return the value of remote depth option.
+         */
+        public String getDepthOption() {
+            return remoteDepthOption;
+        }
+
+        /**
+         * Determines if subversion externals definitions should be ignored.
+         *
+         * @return true if subversion externals definitions should be ignored.
+         */
+        public boolean isIgnoreExternalsOption() {
+            return ignoreExternalsOption;
+        }
+        /**
          * Expand location value based on Build parametric execution.
          *
          * @param build Build instance for expanding parameters into their values
@@ -2330,7 +2374,8 @@ public class SubversionSCM extends SCM implements Serializable {
          *         values.
          */
         public ModuleLocation getExpandedLocation(AbstractBuild<?, ?> build) {
-            return new ModuleLocation(getExpandedRemote(build), getLocalDir());
+            return new ModuleLocation(getExpandedRemote(build), getLocalDir(), getDepthOption(),
+                isIgnoreExternalsOption());
         }
 
         @Override
@@ -2340,7 +2385,9 @@ public class SubversionSCM extends SCM implements Serializable {
 
         private static final long serialVersionUID = 1L;
 
-        public static List<ModuleLocation> parse(String[] remoteLocations, String[] localLocations) {
+        //TODO javadoc me
+        public static List<ModuleLocation> parse(String[] remoteLocations, String[] localLocations,
+                                                 String[] depthOptions, boolean[] isIgnoreExternals) {
             List<ModuleLocation> modules = new ArrayList<ModuleLocation>();
             if(remoteLocations != null && localLocations != null) {
                 int entries = Math.min(remoteLocations.length, localLocations.length);
@@ -2351,7 +2398,9 @@ public class SubversionSCM extends SCM implements Serializable {
 
                     if(remoteLoc != null) {// null if skipped
                         remoteLoc = Util.removeTrailingSlash(remoteLoc.trim());
-                        modules.add(new ModuleLocation(remoteLoc, Util.nullify(localLocations[i])));
+                        modules.add(new ModuleLocation(remoteLoc, Util.nullify(localLocations[i]),
+                            depthOptions != null? depthOptions[i] : null,
+                            isIgnoreExternals != null && isIgnoreExternals[i]));
                     }
                 }
             }
