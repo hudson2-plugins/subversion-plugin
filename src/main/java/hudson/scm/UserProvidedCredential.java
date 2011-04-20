@@ -35,6 +35,13 @@ import hudson.scm.SubversionSCM.DescriptorImpl.SslClientCertificateCredential;
 import hudson.security.csrf.CrumbIssuer;
 import hudson.util.IOException2;
 import hudson.util.MultipartFormDataParser;
+import java.io.Closeable;
+import java.io.File;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.Writer;
+import java.util.Arrays;
+import java.util.logging.Logger;
 import org.apache.commons.fileupload.FileItem;
 import org.kohsuke.putty.PuTTYKey;
 import org.kohsuke.stapler.HttpResponses;
@@ -48,15 +55,6 @@ import org.tmatesoft.svn.core.auth.SVNAuthentication;
 import org.tmatesoft.svn.core.auth.SVNUserNameAuthentication;
 import org.tmatesoft.svn.core.internal.wc.DefaultSVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
-import org.tmatesoft.svn.core.wc.SVNWCUtil;
-
-import java.io.Closeable;
-import java.io.File;
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.io.Writer;
-import java.util.Arrays;
-import java.util.logging.Logger;
 
 import static javax.servlet.http.HttpServletResponse.SC_FORBIDDEN;
 
@@ -78,10 +76,10 @@ public class UserProvidedCredential implements Closeable {
 
     /**
      * @deprecated as of 1.18
-     *      Use {@link #UserProvidedCredential(String, String, File, AbstractProject)}
+     *             Use {@link #UserProvidedCredential(String, String, File, AbstractProject)}
      */
     public UserProvidedCredential(String username, String password, File keyFile) {
-        this(username,password,keyFile,null);
+        this(username, password, keyFile, null);
     }
 
     public UserProvidedCredential(String username, String password, File keyFile, AbstractProject inContextOf) {
@@ -94,16 +92,18 @@ public class UserProvidedCredential implements Closeable {
     /**
      * Parses the credential information from a form submission.
      */
-    public static UserProvidedCredential fromForm(StaplerRequest req, MultipartFormDataParser parser) throws IOException {
+    public static UserProvidedCredential fromForm(StaplerRequest req, MultipartFormDataParser parser)
+        throws IOException {
         CrumbIssuer crumbIssuer = Hudson.getInstance().getCrumbIssuer();
-        if (crumbIssuer!=null && !crumbIssuer.validateCrumb(req, parser))
-            throw HttpResponses.error(SC_FORBIDDEN,new IOException("No crumb found"));
+        if(crumbIssuer != null && !crumbIssuer.validateCrumb(req, parser)) {
+            throw HttpResponses.error(SC_FORBIDDEN, new IOException("No crumb found"));
+        }
 
         String kind = parser.get("kind");
-        int idx = Arrays.asList("","password","publickey","certificate").indexOf(kind);
+        int idx = Arrays.asList("", "password", "publickey", "certificate").indexOf(kind);
 
-        String username = parser.get("username"+idx);
-        String password = parser.get("password"+idx);
+        String username = parser.get("username" + idx);
+        String password = parser.get("password" + idx);
 
 
         // SVNKit wants a key in a file
@@ -113,34 +113,37 @@ public class UserProvidedCredential implements Closeable {
             keyFile = null;
             item = null;
         } else {
-            item = parser.getFileItem(kind.equals("publickey")?"privateKey":"certificate");
-            keyFile = File.createTempFile("hudson","key");
-            if(item!=null) {
+            item = parser.getFileItem(kind.equals("publickey") ? "privateKey" : "certificate");
+            keyFile = File.createTempFile("hudson", "key");
+            if(item != null) {
                 try {
                     item.write(keyFile);
-                } catch (Exception e) {
+                } catch(Exception e) {
                     throw new IOException2(e);
                 }
                 if(PuTTYKey.isPuTTYKeyFile(keyFile)) {
                     // TODO: we need a passphrase support
-                    LOGGER.info("Converting "+keyFile+" from PuTTY format to OpenSSH format");
-                    new PuTTYKey(keyFile,null).toOpenSSH(keyFile);
+                    LOGGER.info("Converting " + keyFile + " from PuTTY format to OpenSSH format");
+                    new PuTTYKey(keyFile, null).toOpenSSH(keyFile);
                 }
             }
         }
 
-        return new UserProvidedCredential(username,password,keyFile,req.findAncestorObject(AbstractProject.class)) {
+        return new UserProvidedCredential(username, password, keyFile, req.findAncestorObject(AbstractProject.class)) {
             @Override
             public void close() throws IOException {
-                if(keyFile!=null)
+                if(keyFile != null) {
                     keyFile.delete();
-                if(item!=null)
+                }
+                if(item != null) {
                     item.delete();
+                }
             }
         };
     }
 
-    public void close() throws IOException {}
+    public void close() throws IOException {
+    }
 
     /**
      * {@link ISVNAuthenticationManager} that uses the user provided credential.
@@ -160,8 +163,19 @@ public class UserProvidedCredential implements Closeable {
          */
         boolean authenticationAcknowledged;
 
+        /**
+         * Constructor for AuthenticationManager implementation.
+         * Uses $Hudson.Home config directory for storing credentials.
+         *
+         * @param logWriter PrintWriter.
+         * @see hudson.scm.SubversionSCM#getSubversionConfigDir().
+         */
         public AuthenticationManagerImpl(PrintWriter logWriter) {
-            super(SVNWCUtil.getDefaultConfigurationDirectory(), true, username, password, keyFile, password);
+            this(SubversionSCM.getSubversionConfigDir(), logWriter);
+        }
+
+        public AuthenticationManagerImpl(File subversionConfigDir, PrintWriter logWriter) {
+            super(subversionConfigDir, true, username, password, keyFile, password);
             this.logWriter = logWriter;
         }
 
@@ -170,26 +184,28 @@ public class UserProvidedCredential implements Closeable {
         }
 
         public AuthenticationManagerImpl(TaskListener listener) {
-            this(new PrintWriter(listener.getLogger(),true));
+            this(new PrintWriter(listener.getLogger(), true));
         }
 
         @Override
         public SVNAuthentication getFirstAuthentication(String kind, String realm, SVNURL url) throws SVNException {
             authenticationAttempted = true;
-            if (kind.equals(ISVNAuthenticationManager.USERNAME))
-                // when using svn+ssh, svnkit first asks for ISVNAuthenticationManager.SSH
-                // authentication to connect via SSH, then calls this method one more time
-                // to get the user name. Perhaps svn takes user name on its own, separate
-                // from OS user name? In any case, we need to return the same user name.
-                // I don't set the cred field here, so that the 1st credential for ssh
-                // won't get clobbered.
+            if(kind.equals(ISVNAuthenticationManager.USERNAME))
+            // when using svn+ssh, svnkit first asks for ISVNAuthenticationManager.SSH
+            // authentication to connect via SSH, then calls this method one more time
+            // to get the user name. Perhaps svn takes user name on its own, separate
+            // from OS user name? In any case, we need to return the same user name.
+            // I don't set the cred field here, so that the 1st credential for ssh
+            // won't get clobbered.
+            {
                 return new SVNUserNameAuthentication(username, false);
-            if (kind.equals(ISVNAuthenticationManager.PASSWORD)) {
+            }
+            if(kind.equals(ISVNAuthenticationManager.PASSWORD)) {
                 logWriter.println("Passing user name " + username + " and password you entered");
                 cred = new PasswordCredential(username, password);
             }
-            if (kind.equals(ISVNAuthenticationManager.SSH)) {
-                if (keyFile == null) {
+            if(kind.equals(ISVNAuthenticationManager.SSH)) {
+                if(keyFile == null) {
                     logWriter.println("Passing user name " + username + " and password you entered to SSH");
                     cred = new PasswordCredential(username, password);
                 } else {
@@ -197,17 +213,17 @@ public class UserProvidedCredential implements Closeable {
                     cred = new SshPublicKeyCredential(username, password, keyFile);
                 }
             }
-            if (kind.equals(ISVNAuthenticationManager.SSL)) {
+            if(kind.equals(ISVNAuthenticationManager.SSL)) {
                 logWriter.println("Attempting an SSL client certificate authentcation");
                 try {
                     cred = new SslClientCertificateCredential(keyFile, password);
-                } catch (IOException e) {
+                } catch(IOException e) {
                     e.printStackTrace(logWriter);
                     return null;
                 }
             }
 
-            if (cred == null) {
+            if(cred == null) {
                 logWriter.println("Unknown authentication method: " + kind);
                 return null;
             }
@@ -225,15 +241,17 @@ public class UserProvidedCredential implements Closeable {
         }
 
         @Override
-        public void acknowledgeAuthentication(boolean accepted, String kind, String realm, SVNErrorMessage errorMessage, SVNAuthentication authentication) throws SVNException {
+        public void acknowledgeAuthentication(boolean accepted, String kind, String realm, SVNErrorMessage errorMessage,
+                                              SVNAuthentication authentication) throws SVNException {
             authenticationAcknowledged = true;
-            if (accepted) {
+            if(accepted) {
                 assert cred != null;
-                onSuccess(realm,cred);
+                onSuccess(realm, cred);
             } else {
                 logWriter.println("Failed to authenticate: " + errorMessage);
-                if (errorMessage.getCause() != null)
+                if(errorMessage.getCause() != null) {
                     errorMessage.getCause().printStackTrace(logWriter);
+                }
             }
             super.acknowledgeAuthentication(accepted, kind, realm, errorMessage, authentication);
         }
@@ -252,7 +270,7 @@ public class UserProvidedCredential implements Closeable {
                 logWriter.println("No authentication was attempted.");
                 throw new SVNCancelException();
             }
-            if (!authenticationAcknowledged) {
+            if(!authenticationAcknowledged) {
                 logWriter.println("Authentication was not acknowledged.");
                 throw new SVNCancelException();
             }
