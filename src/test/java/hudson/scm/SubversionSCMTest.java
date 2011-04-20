@@ -32,20 +32,12 @@ import com.gargoylesoftware.htmlunit.WebResponse;
 import com.gargoylesoftware.htmlunit.html.HtmlAnchor;
 import com.gargoylesoftware.htmlunit.html.HtmlForm;
 import com.gargoylesoftware.htmlunit.html.HtmlPage;
-import hudson.ClassicPluginStrategy;
 import hudson.FilePath;
 import hudson.Launcher;
-import hudson.Launcher.LocalLauncher;
 import hudson.Proc;
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
 import hudson.model.BuildListener;
-import hudson.scm.subversion.CheckoutUpdater;
-import hudson.scm.subversion.UpdateUpdater;
-import hudson.scm.subversion.UpdateWithCleanUpdater;
-import hudson.scm.subversion.UpdateWithRevertUpdater;
-import hudson.scm.subversion.WorkspaceUpdater;
-import hudson.slaves.DumbSlave;
 import hudson.model.Cause;
 import hudson.model.FreeStyleBuild;
 import hudson.model.FreeStyleProject;
@@ -54,44 +46,16 @@ import hudson.model.Result;
 import hudson.model.StringParameterValue;
 import hudson.model.TaskListener;
 import hudson.scm.SubversionSCM.ModuleLocation;
-import static hudson.scm.SubversionSCM.compareSVNAuthentications;
-import hudson.scm.SubversionSCM.DescriptorImpl;
 import hudson.scm.browsers.Sventon;
+import hudson.scm.subversion.CheckoutUpdater;
+import hudson.scm.subversion.UpdateUpdater;
+import hudson.scm.subversion.UpdateWithCleanUpdater;
+import hudson.scm.subversion.UpdateWithRevertUpdater;
+import hudson.scm.subversion.WorkspaceUpdater;
+import hudson.slaves.DumbSlave;
 import hudson.triggers.SCMTrigger;
 import hudson.util.FormValidation;
 import hudson.util.StreamTaskListener;
-import org.dom4j.Document;
-import org.dom4j.io.DOMReader;
-import org.jvnet.hudson.test.Bug;
-import org.jvnet.hudson.test.CaptureEnvironmentBuilder;
-import org.jvnet.hudson.test.Email;
-import org.jvnet.hudson.test.HudsonHomeLoader.CopyExisting;
-import org.jvnet.hudson.test.HudsonTestCase;
-import org.jvnet.hudson.test.TestBuilder;
-import org.jvnet.hudson.test.Url;
-import org.jvnet.hudson.test.recipes.PresetData;
-import static org.jvnet.hudson.test.recipes.PresetData.DataSet.ANONYMOUS_READONLY;
-import org.tmatesoft.svn.core.SVNDepth;
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.SVNErrorMessage;
-import org.tmatesoft.svn.core.SVNErrorCode;
-import org.tmatesoft.svn.core.SVNCancelException;
-import org.tmatesoft.svn.core.io.SVNRepository;
-import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
-import org.tmatesoft.svn.core.auth.SVNUserNameAuthentication;
-import org.tmatesoft.svn.core.auth.SVNSSHAuthentication;
-import org.tmatesoft.svn.core.auth.SVNAuthentication;
-import org.tmatesoft.svn.core.auth.SVNPasswordAuthentication;
-import org.tmatesoft.svn.core.auth.SVNSSLAuthentication;
-import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
-import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminAreaFactory;
-import org.tmatesoft.svn.core.wc.SVNClientManager;
-import org.tmatesoft.svn.core.wc.SVNCommitClient;
-import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.core.wc.SVNStatus;
-import org.tmatesoft.svn.core.wc.SVNWCUtil;
-
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
@@ -99,35 +63,63 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.URL;
 import java.nio.charset.Charset;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.ArrayList;
 import java.util.concurrent.Future;
+import org.dom4j.Document;
+import org.dom4j.io.DOMReader;
+import org.jvnet.hudson.test.Bug;
+import org.jvnet.hudson.test.CaptureEnvironmentBuilder;
+import org.jvnet.hudson.test.Email;
+import org.jvnet.hudson.test.HudsonHomeLoader.CopyExisting;
+import org.jvnet.hudson.test.TestBuilder;
+import org.jvnet.hudson.test.Url;
+import org.jvnet.hudson.test.recipes.PresetData;
+import org.tmatesoft.svn.core.SVNCancelException;
+import org.tmatesoft.svn.core.SVNDepth;
+import org.tmatesoft.svn.core.SVNErrorCode;
+import org.tmatesoft.svn.core.SVNErrorMessage;
+import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
+import org.tmatesoft.svn.core.auth.SVNAuthentication;
+import org.tmatesoft.svn.core.auth.SVNPasswordAuthentication;
+import org.tmatesoft.svn.core.auth.SVNSSHAuthentication;
+import org.tmatesoft.svn.core.auth.SVNSSLAuthentication;
+import org.tmatesoft.svn.core.auth.SVNUserNameAuthentication;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminAreaFactory;
+import org.tmatesoft.svn.core.io.SVNRepository;
+import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
+import org.tmatesoft.svn.core.wc.SVNClientManager;
+import org.tmatesoft.svn.core.wc.SVNCommitClient;
+import org.tmatesoft.svn.core.wc.SVNRevision;
+import org.tmatesoft.svn.core.wc.SVNStatus;
+import org.tmatesoft.svn.core.wc.SVNWCUtil;
+
+import static hudson.scm.SubversionSCM.compareSVNAuthentications;
+import static org.jvnet.hudson.test.recipes.PresetData.DataSet.ANONYMOUS_READONLY;
 
 /**
  * @author Kohsuke Kawaguchi
  */
 public class SubversionSCMTest extends AbstractSubversionTest {
-	
+
     private static final int LOG_LIMIT = 1000;
 
-    // in some tests we play authentication games with this repo
-    String realm = "<https://svn.dev.java.net:443> CollabNet Subversion Repository";
+    private static final String GUEST_ACCESS_REPOSITORY_RESOURCE = "guest_access_svn.zip";
+    private static final String realm = "<svn://localhost:3690>";
+    private static final String SVN_URL = "svn://localhost/bob";
+    private static final String GUEST_USER_LOGIN = "guest";
+    private static final String GUEST_USER_PASSWORD = "guestpass";
+    private static final String BOGUS_USER_LOGIN = "bogus";
+    private static final String BOGUS_USER_PASSWORD = "boguspass";
+
     String kind = ISVNAuthenticationManager.PASSWORD;
-    SVNURL repo;
 
     @Override
     protected void setUp() throws Exception {
         super.setUp();
-        repo = SVNURL.parseURIDecoded("https://svn.dev.java.net/svn/hudson");
-    }
-
-    /**
-     * Sets guest credentials to access java.net Subversion repo.
-     */
-    protected void setJavaNetCredential() throws SVNException, IOException {
-        // old svn.dev.java.net needed "guest" credential for read access.. new svn.java.net does not:
-        //descriptor.postCredential(null,"https://svn.java.net/svn/hudson~svn/","guest","",null,new PrintWriter(new NullStream()));
     }
 
     @PresetData(ANONYMOUS_READONLY)
@@ -138,7 +130,7 @@ public class SubversionSCMTest extends AbstractSubversionTest {
         p.setScm(loadSvnRepo());
         FreeStyleBuild b = p.scheduleBuild2(0, new Cause.UserCause()).get();
         System.out.println(b.getLog(LOG_LIMIT));
-        assertBuildStatus(Result.SUCCESS,b);
+        assertBuildStatus(Result.SUCCESS, b);
 
         SubversionTagAction action = b.getAction(SubversionTagAction.class);
         assertFalse(b.hasPermission(action.getPermission()));
@@ -149,11 +141,11 @@ public class SubversionSCMTest extends AbstractSubversionTest {
         // make sure there's no link to the 'tag this build'
         Document dom = new DOMReader().read(html);
         assertNull(dom.selectSingleNode("//A[text()='Tag this build']"));
-        for( HtmlAnchor a : html.getAnchors() )
+        for (HtmlAnchor a : html.getAnchors())
             assertFalse(a.getHrefAttribute().contains("/tagBuild/"));
 
         // and no tag form on tagBuild page
-        html = wc.getPage(b,"tagBuild/");
+        html = wc.getPage(b, "tagBuild/");
         try {
             html.getFormByName("tag");
             fail("should not have been found");
@@ -162,17 +154,17 @@ public class SubversionSCMTest extends AbstractSubversionTest {
 
         // and that tagging would fail
         try {
-            wc.getPage(b,"tagBuild/submit?name0=test&Submit=Tag");
+            wc.getPage(b, "tagBuild/submit?name0=test&Submit=Tag");
             fail("should have been denied");
         } catch (FailingHttpStatusCodeException e) {
             // make sure the request is denied
-            assertEquals(e.getResponse().getStatusCode(),403);
+            assertEquals(e.getResponse().getStatusCode(), 403);
         }
 
         // now login as alice and make sure that the tagging would succeed
         wc = new WebClient();
-        wc.login("alice","alice");
-        html = wc.getPage(b,"tagBuild/");
+        wc.login("alice", "alice");
+        html = wc.getPage(b, "tagBuild/");
         HtmlForm form = html.getFormByName("tag");
         submit(form);
     }
@@ -181,12 +173,11 @@ public class SubversionSCMTest extends AbstractSubversionTest {
      * Loads a test Subversion repository into a temporary directory, and creates {@link SubversionSCM} for it.
      */
     private SubversionSCM loadSvnRepo() throws Exception {
-        return new SubversionSCM("file://" + new CopyExisting(getClass().getResource("/svn-repo.zip")).allocate().toURI().toURL().getPath() + "trunk/a","a");
+        return new SubversionSCM("file://" + new CopyExisting(getClass().getResource("/svn-repo.zip")).allocate().toURI().toURL().getPath() + "trunk/a", "a");
     }
 
     @Email("http://www.nabble.com/Hudson-1.266-and-1.267%3A-Subversion-authentication-broken--td21156950.html")
     public void testHttpsCheckOut() throws Exception {
-        setJavaNetCredential();
         FreeStyleProject p = createFreeStyleProject();
         p.setScm(new SubversionSCM("https://svn.java.net/svn/hudson~svn/trunk/hudson/test-projects/trivial-ant"));
 
@@ -205,7 +196,6 @@ public class SubversionSCMTest extends AbstractSubversionTest {
 
     @Url("http://hudson.pastebin.com/m3ea34eea")
     public void testRemoteCheckOut() throws Exception {
-        setJavaNetCredential();
         DumbSlave s = createSlave();
         FreeStyleProject p = createFreeStyleProject();
         p.setAssignedLabel(s.getSelfLabel());
@@ -221,19 +211,18 @@ public class SubversionSCMTest extends AbstractSubversionTest {
      */
     @Bug(262)
     public void testRevisionedCheckout() throws Exception {
-        setJavaNetCredential();
         FreeStyleProject p = createFreeStyleProject();
         p.setScm(new SubversionSCM("https://svn.java.net/svn/hudson~svn/trunk/hudson/test-projects/trivial-ant@13000"));
 
         FreeStyleBuild b = p.scheduleBuild2(0, new Cause.UserCause()).get();
         System.out.println(b.getLog(LOG_LIMIT));
         assertTrue(b.getLog(LOG_LIMIT).contains("At revision 13000"));
-        assertBuildStatus(Result.SUCCESS,b);
+        assertBuildStatus(Result.SUCCESS, b);
 
         b = p.scheduleBuild2(0, new Cause.UserCause()).get();
         System.out.println(b.getLog(LOG_LIMIT));
         assertTrue(b.getLog(LOG_LIMIT).contains("At revision 13000"));
-        assertBuildStatus(Result.SUCCESS,b);
+        assertBuildStatus(Result.SUCCESS, b);
     }
 
     /**
@@ -249,7 +238,7 @@ public class SubversionSCMTest extends AbstractSubversionTest {
         FreeStyleBuild b = p.scheduleBuild2(0, new Cause.UserCause()).get();
         System.out.println(b.getLog(LOG_LIMIT));
         assertTrue(b.getLog(LOG_LIMIT).contains("At revision 2"));
-        assertBuildStatus(Result.SUCCESS,b);
+        assertBuildStatus(Result.SUCCESS, b);
     }
 
     /**
@@ -278,20 +267,18 @@ public class SubversionSCMTest extends AbstractSubversionTest {
      * Tests a checkout with RevisionParameterAction
      */
     public void testRevisionParameter() throws Exception {
-        setJavaNetCredential();
         FreeStyleProject p = createFreeStyleProject();
         String url = "https://svn.java.net/svn/hudson~svn/trunk/hudson/test-projects/trivial-ant";
-	p.setScm(new SubversionSCM(url));
+        p.setScm(new SubversionSCM(url));
 
-        FreeStyleBuild b = p.scheduleBuild2(0, new Cause.UserCause(), 
-        		new RevisionParameterAction(new SubversionSCM.SvnInfo(url, 13000))).get();
+        FreeStyleBuild b = p.scheduleBuild2(0, new Cause.UserCause(),
+                new RevisionParameterAction(new SubversionSCM.SvnInfo(url, 13000))).get();
         System.out.println(b.getLog(LOG_LIMIT));
         assertTrue(b.getLog(LOG_LIMIT).contains("At revision 13000"));
-        assertBuildStatus(Result.SUCCESS,b);
+        assertBuildStatus(Result.SUCCESS, b);
     }
 
     public void testRevisionParameterFolding() throws Exception {
-        setJavaNetCredential();
         FreeStyleProject p = createFreeStyleProject();
         String url = "https://svn.java.net/svn/hudson~svn/trunk/hudson/test-projects/trivial-ant";
 	p.setScm(new SubversionSCM(url));
@@ -305,7 +292,7 @@ public class SubversionSCMTest extends AbstractSubversionTest {
         		new RevisionParameterAction(new SubversionSCM.SvnInfo(url, 14000)));
 
         FreeStyleBuild b = f.get();
-	
+
         System.out.println(b.getLog(LOG_LIMIT));
         assertTrue(b.getLog(LOG_LIMIT).contains("At revision 14000"));
         assertBuildStatus(Result.SUCCESS,b);
@@ -316,7 +303,6 @@ public class SubversionSCMTest extends AbstractSubversionTest {
         // request parameters
         hudson.setCrumbIssuer(null);
 
-        setJavaNetCredential();
         FreeStyleProject p = createFreeStyleProject();
         String url = "https://svn.java.net/svn/hudson~svn/trunk/hudson/test-projects/trivial-ant";
         SCMTrigger trigger = new SCMTrigger("0 */6 * * *");
@@ -339,7 +325,7 @@ public class SubversionSCMTest extends AbstractSubversionTest {
         if (includeRevision) {
             wr.setAdditionalHeader("X-Hudson-Subversion-Revision", "13000");
         }
-        
+
         WebConnection conn = wc.getWebConnection();
         WebResponse resp = conn.getResponse(wr);
         assertTrue(isGoodHttpStatus(resp.getStatusCode()));
@@ -347,7 +333,7 @@ public class SubversionSCMTest extends AbstractSubversionTest {
         waitUntilNoActivity();
         FreeStyleBuild b = p.getLastBuild();
         assertNotNull(b);
-        assertBuildStatus(Result.SUCCESS,b);
+        assertBuildStatus(Result.SUCCESS, b);
 
         return b;
     }
@@ -361,6 +347,7 @@ public class SubversionSCMTest extends AbstractSubversionTest {
         return revisionState.revisions.get(url).longValue();
 
     }
+
     /**
      * Tests a checkout triggered from the post-commit hook
      */
@@ -370,7 +357,7 @@ public class SubversionSCMTest extends AbstractSubversionTest {
 
         assertTrue(getActualRevision(b, "https://svn.java.net/svn/hudson~svn/trunk/hudson/test-projects/trivial-ant") <= 13000);
     }
-    
+
     /**
      * Tests a checkout triggered from the post-commit hook without revision
      * information.
@@ -383,7 +370,7 @@ public class SubversionSCMTest extends AbstractSubversionTest {
     }
 
     /**
-     * {@link SubversionSCM#pollChanges(AbstractProject , Launcher , FilePath, TaskListener)} should notice
+     * {@link SubversionSCM#pollChanges(AbstractProject, Launcher, FilePath, TaskListener)} should notice
      * if the workspace and the current configuration is inconsistent and schedule a new build.
      */
     @Email("http://www.nabble.com/Proper-way-to-switch---relocate-SVN-tree---tt21173306.html")
@@ -435,39 +422,38 @@ public class SubversionSCMTest extends AbstractSubversionTest {
                 Arrays.asList(new ModuleLocation(svnBase + "trunk", null), new ModuleLocation(svnBase + "branches", null)),
                 false, false, null, null, null, null, null);
         p.setScm(scm);
-        FreeStyleBuild build = p.scheduleBuild2(0, new Cause.UserCause()).get();
+        p.scheduleBuild2(0, new Cause.UserCause()).get();
 
         // as a baseline, this shouldn't detect any change
         TaskListener listener = createTaskListener();
         assertFalse(p.pollSCMChanges(listener));
 
-        createCommit(scm,"branches/foo");
+        createCommit(scm, "branches/foo");
         assertTrue("any change in any of the repository should be detected", p.pollSCMChanges(listener));
-        assertFalse("no change since the last polling",p.pollSCMChanges(listener));
-        createCommit(scm,"trunk/foo");
+        assertFalse("no change since the last polling", p.pollSCMChanges(listener));
+        createCommit(scm, "trunk/foo");
         assertTrue("another change in the repo should be detected separately", p.pollSCMChanges(listener));
     }
 
     public void testConfigRoundtrip() throws Exception {
-        setJavaNetCredential();
         FreeStyleProject p = createFreeStyleProject();
 
         SubversionSCM scm = new SubversionSCM(
                 Arrays.asList(
-                		new ModuleLocation("https://svn.java.net/svn/hudson~svn/trunk/hudson/test-projects/testSubversionExclusion", "c"),
-                		new ModuleLocation("https://svn.java.net/svn/hudson~svn/trunk/hudson/test-projects/testSubversionExclusion", "d")),
-                true,new Sventon(new URL("http://www.sun.com/"),"test"),"exclude","user","revprop","excludeMessage");
+                        new ModuleLocation("https://svn.java.net/svn/hudson~svn/trunk/hudson/test-projects/testSubversionExclusion", "c"),
+                        new ModuleLocation("https://svn.java.net/svn/hudson~svn/trunk/hudson/test-projects/testSubversionExclusion", "d")),
+                true, new Sventon(new URL("http://www.sun.com/"), "test"), "exclude", "user", "revprop", "excludeMessage");
         p.setScm(scm);
-        submit(new WebClient().getPage(p,"configure").getFormByName("config"));
-        verify(scm,(SubversionSCM)p.getScm());
+        submit(new WebClient().getPage(p, "configure").getFormByName("config"));
+        verify(scm, (SubversionSCM) p.getScm());
 
         scm = new SubversionSCM(
-        		Arrays.asList(
-                		new ModuleLocation("https://svn.java.net/svn/hudson~svn/trunk/hudson/test-projects/testSubversionExclusion", "c")),
-        		false,null,"","","","");
+                Arrays.asList(
+                        new ModuleLocation("https://svn.java.net/svn/hudson~svn/trunk/hudson/test-projects/testSubversionExclusion", "c")),
+                false, null, "", "", "", "");
         p.setScm(scm);
-        submit(new WebClient().getPage(p,"configure").getFormByName("config"));
-        verify(scm,(SubversionSCM)p.getScm());
+        submit(new WebClient().getPage(p, "configure").getFormByName("config"));
+        verify(scm, (SubversionSCM) p.getScm());
     }
 
     @Bug(7944)
@@ -476,42 +462,42 @@ public class SubversionSCMTest extends AbstractSubversionTest {
 
         SubversionSCM scm = new SubversionSCM(
                 Arrays.asList(
-                		new ModuleLocation("https://svn.java.net/svn/hudson~svn/trunk/hudson/test-projects/testSubversionExclusion", "")),
-                true,null,null,null,null,null);
+                        new ModuleLocation("https://svn.java.net/svn/hudson~svn/trunk/hudson/test-projects/testSubversionExclusion", "")),
+                true, null, null, null, null, null);
         p.setScm(scm);
         configRoundtrip(p);
-        verify(scm,(SubversionSCM)p.getScm());
+        verify(scm, (SubversionSCM) p.getScm());
     }
 
     @Bug(5684)
     public void testDoCheckExcludedUsers() throws Exception {
-        String[] validUsernames = new String[] {
-            "DOMAIN\\user",
-            "user",
-            "us_er",
-            "user123",
-            "User",
-            "", // this one is ignored
-            "DOmain12\\User34"};
+        String[] validUsernames = new String[]{
+                "DOMAIN\\user",
+                "user",
+                "us_er",
+                "user123",
+                "User",
+                "", // this one is ignored
+                "DOmain12\\User34"};
 
         for (String validUsername : validUsernames) {
             assertEquals(
-                "User " + validUsername + " isn't OK (but it's valid).", 
-                FormValidation.Kind.OK, 
-                new SubversionSCM.DescriptorImpl().doCheckExcludedUsers(validUsername).kind);
+                    "User " + validUsername + " isn't OK (but it's valid).",
+                    FormValidation.Kind.OK,
+                    new SubversionSCM.DescriptorImpl().doCheckExcludedUsers(validUsername).kind);
         }
 
-        String[] invalidUsernames = new String[] {
-            "\\user",
-            "DOMAIN\\",
-            "DOMAIN@user",
-            "DOMAIN.user" };
+        String[] invalidUsernames = new String[]{
+                "\\user",
+                "DOMAIN\\",
+                "DOMAIN@user",
+                "DOMAIN.user"};
 
         for (String invalidUsername : invalidUsernames) {
             assertEquals(
-                "User " + invalidUsername + " isn't ERROR (but it's not valid).", 
-                FormValidation.Kind.ERROR, 
-                new SubversionSCM.DescriptorImpl().doCheckExcludedUsers(invalidUsername).kind);
+                    "User " + invalidUsername + " isn't ERROR (but it's not valid).",
+                    FormValidation.Kind.ERROR,
+                    new SubversionSCM.DescriptorImpl().doCheckExcludedUsers(invalidUsername).kind);
         }
 
     }
@@ -520,7 +506,7 @@ public class SubversionSCMTest extends AbstractSubversionTest {
         ModuleLocation[] ll = lhs.getLocations();
         ModuleLocation[] rl = rhs.getLocations();
         assertEquals(ll.length, rl.length);
-        for(int i=0; i<ll.length; i++) {
+        for (int i = 0; i < ll.length; i++) {
             assertEquals(ll[i].local, rl[i].local);
             assertEquals(ll[i].remote, rl[i].remote);
         }
@@ -529,18 +515,17 @@ public class SubversionSCMTest extends AbstractSubversionTest {
         assertNullEquals(lhs.getExcludedUsers(), rhs.getExcludedUsers());
         assertNullEquals(lhs.getExcludedRevprop(), rhs.getExcludedRevprop());
         assertNullEquals(lhs.getExcludedCommitMessages(), rhs.getExcludedCommitMessages());
-    	assertNullEquals(lhs.getIncludedRegions(), rhs.getIncludedRegions());
-        assertEquals(lhs.getWorkspaceUpdater().getClass(), rhs.getWorkspaceUpdater().getClass());
+        assertNullEquals(lhs.getIncludedRegions(), rhs.getIncludedRegions());
     }
-    
-    private void assertNullEquals (String left, String right) {
-    	if (left == null)
-    		left = "";
-    	if (right == null)
-    		right = "";
-    	assertEquals(left, right);
+
+    private void assertNullEquals(String left, String right) {
+        if (left == null)
+            left = "";
+        if (right == null)
+            right = "";
+        assertEquals(left, right);
     }
-    
+
     public void test1() {
         check("http://foobar/");
         check("https://foobar/");
@@ -552,10 +537,10 @@ public class SubversionSCMTest extends AbstractSubversionTest {
     public void test2() {
         String[] r = "abc\\ def ghi".split("(?<!\\\\)[ \\r\\n]+");
         for (int i = 0; i < r.length; i++) {
-            r[i] = r[i].replaceAll("\\\\ "," ");
+            r[i] = r[i].replaceAll("\\\\ ", " ");
         }
         System.out.println(Arrays.asList(r));
-        assertEquals(r.length,2);
+        assertEquals(r.length, 2);
     }
 
     private void check(String url) {
@@ -571,20 +556,20 @@ public class SubversionSCMTest extends AbstractSubversionTest {
         p.setScm(loadSvnRepo());
         FreeStyleBuild b = p.scheduleBuild2(0).get();
 
-        SVNClientManager wc = SubversionSCM.createSvnClientManager((AbstractProject)null);
-        SVNStatus st = wc.getStatusClient().doStatus(new File(b.getWorkspace().getRemote()+"/a"), false);
+        SVNClientManager wc = SubversionSCM.createSvnClientManager((AbstractProject) null);
+        SVNStatus st = wc.getStatusClient().doStatus(new File(b.getWorkspace().getRemote() + "/a"), false);
         int wcf = st.getWorkingCopyFormat();
         System.out.println(wcf);
-        assertEquals(SVNAdminAreaFactory.WC_FORMAT_14,wcf);
+        assertEquals(SVNAdminAreaFactory.WC_FORMAT_14, wcf);
     }
 
     private static String readFileAsString(File file)
-    throws java.io.IOException{
+            throws java.io.IOException {
         StringBuilder fileData = new StringBuilder(1000);
         BufferedReader reader = new BufferedReader(new FileReader(file));
         char[] buf = new char[1024];
-        int numRead=0;
-        while((numRead=reader.read(buf)) != -1){
+        int numRead = 0;
+        while ((numRead = reader.read(buf)) != -1) {
             fileData.append(buf, 0, numRead);
         }
         reader.close();
@@ -601,7 +586,6 @@ public class SubversionSCMTest extends AbstractSubversionTest {
             return;
         }
 
-        setJavaNetCredential();
         FreeStyleProject p = createFreeStyleProject();
         p.setScm(new SubversionSCM("https://svn.java.net/svn/hudson~svn/trunk/hudson/test-projects/issue-3904"));
 
@@ -612,12 +596,11 @@ public class SubversionSCMTest extends AbstractSubversionTest {
     }
 
     public void testExcludeByUser() throws Exception {
-        setJavaNetCredential();
-        FreeStyleProject p = createFreeStyleProject( "testExcludeByUser" );
+        FreeStyleProject p = createFreeStyleProject("testExcludeByUser");
         p.setScm(new SubversionSCM(
-                Arrays.asList( new ModuleLocation( "https://svn.java.net/svn/hudson~svn/trunk/hudson/test-projects/testSubversionExclusions@19438", null )),
+                Arrays.asList(new ModuleLocation("https://svn.java.net/svn/hudson~svn/trunk/hudson/test-projects/testSubversionExclusions@19438", null)),
                 true, null, "", "dty", "", "")
-                );
+        );
         // Do a build to force the creation of the workspace. This works around
         // pollChanges returning true when the workspace does not exist.
         p.scheduleBuild2(0).get();
@@ -634,8 +617,8 @@ public class SubversionSCMTest extends AbstractSubversionTest {
 //        SLAVE_DEBUG_PORT = 8001;
         File repo = new CopyExisting(getClass().getResource("HUDSON-6030.zip")).allocate();
         SubversionSCM scm = new SubversionSCM(ModuleLocation.parse(new String[]{"file://" + repo.getPath()},
-                                                                   new String[]{"."}),
-                                              true, false, null, ".*/bar", "", "", "", "");
+                new String[]{"."}),
+                true, false, null, ".*/bar", "", "", "", "");
 
         FreeStyleProject p = createFreeStyleProject("testExcludedRegions");
         p.setScm(scm);
@@ -648,16 +631,16 @@ public class SubversionSCMTest extends AbstractSubversionTest {
 
         // polling on the slave for the code path that does have a change but should be excluded.
         assertFalse("Polling found changes that should have been ignored",
-                    p.pollSCMChanges(createTaskListener()));
+                p.pollSCMChanges(createTaskListener()));
 
         createCommit(scm, "foo");
 
         // polling on the slave for the code path that doesn't find any change
         assertTrue("Polling didn't find a change it should have found.",
-                   p.pollSCMChanges(createTaskListener()));
+                p.pollSCMChanges(createTaskListener()));
 
     }
-    
+
     /**
      * Test included regions
      */
@@ -666,8 +649,8 @@ public class SubversionSCMTest extends AbstractSubversionTest {
 //        SLAVE_DEBUG_PORT = 8001;
         File repo = new CopyExisting(getClass().getResource("HUDSON-6030.zip")).allocate();
         SubversionSCM scm = new SubversionSCM(ModuleLocation.parse(new String[]{"file://" + repo.getPath()},
-                                                                   new String[]{"."}),
-                                              true, false, null, "", "", "", "", ".*/foo");
+                new String[]{"."}),
+                true, false, null, "", "", "", "", ".*/foo");
 
         FreeStyleProject p = createFreeStyleProject("testExcludedRegions");
         p.setScm(scm);
@@ -680,16 +663,16 @@ public class SubversionSCMTest extends AbstractSubversionTest {
 
         // polling on the slave for the code path that does have a change but should be excluded.
         assertFalse("Polling found changes that should have been ignored",
-                    p.pollSCMChanges(createTaskListener()));
+                p.pollSCMChanges(createTaskListener()));
 
         createCommit(scm, "foo");
 
         // polling on the slave for the code path that doesn't find any change
         assertTrue("Polling didn't find a change it should have found.",
-                   p.pollSCMChanges(createTaskListener()));
+                p.pollSCMChanges(createTaskListener()));
 
     }
-    
+
     /**
      * Do the polling on the slave and make sure it works.
      */
@@ -721,7 +704,7 @@ public class SubversionSCMTest extends AbstractSubversionTest {
         forCommit.setScm(scm);
         forCommit.setAssignedLabel(hudson.getSelfLabel());
         FreeStyleBuild b = assertBuildStatusSuccess(forCommit.scheduleBuild2(0).get());
-        SVNClientManager svnm = SubversionSCM.createSvnClientManager((AbstractProject)null);
+        SVNClientManager svnm = SubversionSCM.createSvnClientManager((AbstractProject) null);
 
         List<File> added = new ArrayList<File>();
         for (String path : paths) {
@@ -729,12 +712,12 @@ public class SubversionSCMTest extends AbstractSubversionTest {
             added.add(new File(newFile.getRemote()));
             if (!newFile.exists()) {
                 newFile.touch(System.currentTimeMillis());
-                svnm.getWCClient().doAdd(new File(newFile.getRemote()),false,false,false, SVNDepth.INFINITY, false,false);
+                svnm.getWCClient().doAdd(new File(newFile.getRemote()), false, false, false, SVNDepth.INFINITY, false, false);
             } else
-                newFile.write("random content","UTF-8");
+                newFile.write("random content", "UTF-8");
         }
         SVNCommitClient cc = svnm.getCommitClient();
-        cc.doCommit(added.toArray(new File[added.size()]),false,"added",null,null,false,false,SVNDepth.EMPTY);
+        cc.doCommit(added.toArray(new File[added.size()]), false, "added", null, null, false, false, SVNDepth.EMPTY);
     }
 
     public void testMasterPolling() throws Exception {
@@ -758,9 +741,9 @@ public class SubversionSCMTest extends AbstractSubversionTest {
         FilePath newFile = b.getWorkspace().child("foo");
         newFile.touch(System.currentTimeMillis());
         SVNClientManager svnm = SubversionSCM.createSvnClientManager(p);
-        svnm.getWCClient().doAdd(new File(newFile.getRemote()),false,false,false, SVNDepth.INFINITY, false,false);
+        svnm.getWCClient().doAdd(new File(newFile.getRemote()), false, false, false, SVNDepth.INFINITY, false, false);
         SVNCommitClient cc = svnm.getCommitClient();
-        cc.doCommit(new File[]{new File(newFile.getRemote())},false,"added",false,false);
+        cc.doCommit(new File[]{new File(newFile.getRemote())}, false, "added", false, false);
 
         // polling on the master for the code path that doesn't find any change
         assertTrue(p.pollSCMChanges(new StreamTaskListener(System.out)));
@@ -768,35 +751,35 @@ public class SubversionSCMTest extends AbstractSubversionTest {
 
 
     public void testCompareSVNAuthentications() throws Exception {
-        assertFalse(compareSVNAuthentications(new SVNUserNameAuthentication("me",true),new SVNSSHAuthentication("me","me",22,true)));
+        assertFalse(compareSVNAuthentications(new SVNUserNameAuthentication("me", true), new SVNSSHAuthentication("me", "me", 22, true)));
         // same object should compare equal
-        _idem(new SVNUserNameAuthentication("me",true));
-        _idem(new SVNSSHAuthentication("me","pass",22,true));
-        _idem(new SVNSSHAuthentication("me",new File("./some.key"),null,23,false));
-        _idem(new SVNSSHAuthentication("me","key".toCharArray(),"phrase",0,false));
-        _idem(new SVNPasswordAuthentication("me","pass",true));
-        _idem(new SVNSSLAuthentication("certificate".getBytes(),null,true));
+        _idem(new SVNUserNameAuthentication("me", true));
+        _idem(new SVNSSHAuthentication("me", "pass", 22, true));
+        _idem(new SVNSSHAuthentication("me", new File("./some.key"), null, 23, false));
+        _idem(new SVNSSHAuthentication("me", "key".toCharArray(), "phrase", 0, false));
+        _idem(new SVNPasswordAuthentication("me", "pass", true));
+        _idem(new SVNSSLAuthentication("certificate".getBytes(), null, true));
 
         // make sure two Files and char[]s compare the same 
         assertTrue(compareSVNAuthentications(
-                new SVNSSHAuthentication("me",new File("./some.key"),null,23,false),
-                new SVNSSHAuthentication("me",new File("./some.key"),null,23,false)));
+                new SVNSSHAuthentication("me", new File("./some.key"), null, 23, false),
+                new SVNSSHAuthentication("me", new File("./some.key"), null, 23, false)));
         assertTrue(compareSVNAuthentications(
-                new SVNSSHAuthentication("me","key".toCharArray(),"phrase",0,false),
-                new SVNSSHAuthentication("me","key".toCharArray(),"phrase",0,false)));
+                new SVNSSHAuthentication("me", "key".toCharArray(), "phrase", 0, false),
+                new SVNSSHAuthentication("me", "key".toCharArray(), "phrase", 0, false)));
 
         // negative cases
         assertFalse(compareSVNAuthentications(
-                new SVNSSHAuthentication("me",new File("./some1.key"),null,23,false),
-                new SVNSSHAuthentication("me",new File("./some2.key"),null,23,false)));
+                new SVNSSHAuthentication("me", new File("./some1.key"), null, 23, false),
+                new SVNSSHAuthentication("me", new File("./some2.key"), null, 23, false)));
         assertFalse(compareSVNAuthentications(
-                new SVNSSHAuthentication("me","key".toCharArray(),"phrase",0,false),
-                new SVNSSHAuthentication("yo","key".toCharArray(),"phrase",0,false)));
+                new SVNSSHAuthentication("me", "key".toCharArray(), "phrase", 0, false),
+                new SVNSSHAuthentication("yo", "key".toCharArray(), "phrase", 0, false)));
 
     }
 
     private void _idem(SVNAuthentication a) {
-        assertTrue(compareSVNAuthentications(a,a));
+        assertTrue(compareSVNAuthentications(a, a));
     }
 
     /**
@@ -804,100 +787,117 @@ public class SubversionSCMTest extends AbstractSubversionTest {
      */
     @Bug(2909)
     public void testInfiniteLoop() throws Exception {
-        // creates a purely in memory auth manager
-        ISVNAuthenticationManager m = createInMemoryManager();
-
-        // double check that it really knows nothing about the fake repo
+        //Start local svn repository
+        Proc server = runSvnServe(getClass().getResource(GUEST_ACCESS_REPOSITORY_RESOURCE));
+        SVNURL repo = SVNURL.parseURIDecoded(SVN_URL);
         try {
-            m.getFirstAuthentication(kind, realm, repo);
-            fail();
-        } catch (SVNCancelException e) {
-            // yep
-        }
+            // creates a purely in memory auth manager
+            ISVNAuthenticationManager m = createInMemoryManager();
 
-        // let Hudson have the credential
-        descriptor.postCredential(null,repo.toDecodedString(),"guest","",null,new PrintWriter(System.out));
-
-        // emulate the call flow where the credential fails
-        List<SVNAuthentication> attempted = new ArrayList<SVNAuthentication>();
-        SVNAuthentication a = m.getFirstAuthentication(kind, realm, repo);
-        assertNotNull(a);
-        attempted.add(a);
-        for (int i=0; i<10; i++) {
-            m.acknowledgeAuthentication(false,kind,realm,SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED),a);
+            // double check that it really knows nothing about the fake repo
             try {
-                a = m.getNextAuthentication(kind,realm,repo);
-                assertNotNull(a);
-                attempted.add(a);
+                m.getFirstAuthentication(kind, realm, repo);
+                fail();
             } catch (SVNCancelException e) {
-                // make sure we've tried our fake credential
-                for (SVNAuthentication aa : attempted) {
-                    if (aa instanceof SVNPasswordAuthentication) {
-                        SVNPasswordAuthentication pa = (SVNPasswordAuthentication) aa;
-                        if(pa.getUserName().equals("guest") && pa.getPassword().equals(""))
-                            return; // yep
-                    }
-                }
-                fail("Hudson didn't try authentication");
+                // yep
             }
+            SVNPasswordAuthentication authentication = new SVNPasswordAuthentication(BOGUS_USER_LOGIN, BOGUS_USER_PASSWORD, true);
+            m.acknowledgeAuthentication(false, kind, realm, null, authentication);
+
+            authentication = new SVNPasswordAuthentication(GUEST_USER_LOGIN, GUEST_USER_PASSWORD, true);
+            m.acknowledgeAuthentication(true, kind, realm, null, authentication);
+
+            // emulate the call flow where the credential fails
+            List<SVNAuthentication> attempted = new ArrayList<SVNAuthentication>();
+            SVNAuthentication a = m.getFirstAuthentication(kind, realm, repo);
+            assertNotNull(a);
+            attempted.add(a);
+            for (int i = 0; i < 10; i++) {
+                m.acknowledgeAuthentication(false, kind, realm, SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED), a);
+                try {
+                    a = m.getNextAuthentication(kind, realm, repo);
+                    assertNotNull(a);
+                    attempted.add(a);
+                } catch (SVNCancelException e) {
+                    // make sure we've tried our fake credential
+                    for (SVNAuthentication aa : attempted) {
+                        if (aa instanceof SVNPasswordAuthentication) {
+                            SVNPasswordAuthentication pa = (SVNPasswordAuthentication) aa;
+                            if (GUEST_USER_LOGIN.equals(pa.getUserName())
+                                    && GUEST_USER_PASSWORD.equals(pa.getPassword())) {
+                                return; // yep
+                            }
+                        }
+                    }
+                    fail("Hudson didn't try authentication");
+                }
+            }
+            fail("Looks like we went into an infinite loop");
+        } finally {
+            server.kill();
         }
-        fail("Looks like we went into an infinite loop");
     }
 
     /**
      * Even if the default providers remember bogus passwords, Hudson should still attempt what it knows.
      */
     @Bug(3936)
-    public void test3936()  throws Exception {
-        // creates a purely in memory auth manager
-        ISVNAuthenticationManager m = createInMemoryManager();
-
-        // double check that it really knows nothing about the fake repo
+    public void test3936() throws Exception {
+        //Start local svn repository
+        Proc server = runSvnServe(getClass().getResource(GUEST_ACCESS_REPOSITORY_RESOURCE));
+        SVNURL repo = SVNURL.parseURIDecoded(SVN_URL);
         try {
-            m.getFirstAuthentication(kind, realm, repo);
-            fail();
-        } catch (SVNCancelException e) {
-            // yep
+            // creates a purely in memory auth manager
+            ISVNAuthenticationManager m = createInMemoryManager();
+
+            // double check that it really knows nothing about the fake repo
+            try {
+                m.getFirstAuthentication(kind, realm, repo);
+                fail();
+            } catch (SVNCancelException e) {
+                // yep
+            }
+
+            // teach a bogus credential and have SVNKit store it.
+            SVNPasswordAuthentication bogus = new SVNPasswordAuthentication(BOGUS_USER_LOGIN, BOGUS_USER_PASSWORD, true);
+            m.acknowledgeAuthentication(true, kind, realm, null, bogus);
+            assertTrue(compareSVNAuthentications(m.getFirstAuthentication(kind, realm, repo), bogus));
+            try {
+                attemptAccess(repo, m);
+                fail("SVNKit shouldn't yet know how to access");
+            } catch (SVNCancelException e) {
+            }
+
+            // make sure the failure didn't clean up the cache,
+            // since what we want to test here is Hudson trying to supply its credential, despite the failed cache
+            assertTrue(compareSVNAuthentications(m.getFirstAuthentication(kind, realm, repo), bogus));
+
+            // now let Hudson have the real credential
+            // can we now access the repo?
+            descriptor.postCredential(null, repo.toDecodedString(), GUEST_USER_LOGIN, GUEST_USER_PASSWORD, null, new PrintWriter(System.out));
+            attemptAccess(repo, m);
+        } finally {
+            server.kill();
         }
-
-        // teach a bogus credential and have SVNKit store it.
-        SVNPasswordAuthentication bogus = new SVNPasswordAuthentication("bogus", "bogus", true);
-        m.acknowledgeAuthentication(true, kind, realm, null, bogus);
-        assertTrue(compareSVNAuthentications(m.getFirstAuthentication(kind, realm, repo), bogus));
-        try {
-            attemptAccess(m);
-            fail("SVNKit shouldn't yet know how to access");
-        } catch (SVNCancelException e) {
-        }
-
-        // make sure the failure didn't clean up the cache,
-        // since what we want to test here is Hudson trying to supply its credential, despite the failed cache
-        assertTrue(compareSVNAuthentications(m.getFirstAuthentication(kind, realm, repo),bogus));
-
-        // now let Hudson have the real credential
-        // can we now access the repo?
-        descriptor.postCredential(null,repo.toDecodedString(),"guest","",null,new PrintWriter(System.out));
-        attemptAccess(m);
     }
 
-    private void attemptAccess(ISVNAuthenticationManager m) throws SVNException {
+    private void attemptAccess(SVNURL repo, ISVNAuthenticationManager m) throws SVNException {
         SVNRepository repository = SVNRepositoryFactory.create(repo);
         repository.setAuthenticationManager(m);
         repository.testConnection();
     }
 
     private ISVNAuthenticationManager createInMemoryManager() {
-        ISVNAuthenticationManager m = SVNWCUtil.createDefaultAuthenticationManager(hudson.root,null,null,false);
+        ISVNAuthenticationManager m = SVNWCUtil.createDefaultAuthenticationManager(hudson.root, null, null, false);
         m.setAuthenticationProvider(descriptor.createAuthenticationProvider(null));
         return m;
     }
 
     public void testMultiModuleEnvironmentVariables() throws Exception {
-        setJavaNetCredential();
         FreeStyleProject p = createFreeStyleProject();
         ModuleLocation[] locations = {
-            new ModuleLocation("https://svn.java.net/svn/hudson~svn/trunk/hudson/test-projects/trivial-ant", null),
-            new ModuleLocation("https://svn.java.net/svn/hudson~svn/trunk/hudson/test-projects/trivial-maven", null)
+                new ModuleLocation("https://svn.java.net/svn/hudson~svn/trunk/hudson/test-projects/trivial-ant", null),
+                new ModuleLocation("https://svn.java.net/svn/hudson~svn/trunk/hudson/test-projects/trivial-maven", null)
         };
         p.setScm(new SubversionSCM(Arrays.asList(locations), false, false, null, null, null, null, null, null));
 
@@ -914,7 +914,6 @@ public class SubversionSCMTest extends AbstractSubversionTest {
     }
 
     public void testSingleModuleEnvironmentVariables() throws Exception {
-        setJavaNetCredential();
         FreeStyleProject p = createFreeStyleProject();
         p.setScm(new SubversionSCM("https://svn.java.net/svn/hudson~svn/trunk/hudson/test-projects/trivial-ant"));
 
@@ -931,18 +930,18 @@ public class SubversionSCMTest extends AbstractSubversionTest {
         Proc p = runSvnServe(getClass().getResource("HUDSON-1379.zip"));
         try {
             FreeStyleProject b = createFreeStyleProject();
-            b.setScm(new SubversionSCM("svn://localhost/bob"));
+            b.setScm(new SubversionSCM(SVN_URL));
 
             FreeStyleProject c = createFreeStyleProject();
             c.setScm(new SubversionSCM("svn://localhost/charlie"));
 
             // should fail without a credential
-            assertBuildStatus(Result.FAILURE,b.scheduleBuild2(0).get());
-            descriptor.postCredential(b,"svn://localhost/bob","bob","bob",null,new PrintWriter(System.out));
+            assertBuildStatus(Result.FAILURE, b.scheduleBuild2(0).get());
+            descriptor.postCredential(b, SVN_URL, "bob", "bob", null, new PrintWriter(System.out));
             buildAndAssertSuccess(b);
 
-            assertBuildStatus(Result.FAILURE,c.scheduleBuild2(0).get());
-            descriptor.postCredential(c,"svn://localhost/charlie","charlie","charlie",null,new PrintWriter(System.out));
+            assertBuildStatus(Result.FAILURE, c.scheduleBuild2(0).get());
+            descriptor.postCredential(c, "svn://localhost/charlie", "charlie", "charlie", null, new PrintWriter(System.out));
             buildAndAssertSuccess(c);
 
             // b should still build fine.
@@ -961,7 +960,7 @@ public class SubversionSCMTest extends AbstractSubversionTest {
         try {
             // enable 1.6 mode
             HtmlForm f = createWebClient().goTo("configure").getFormByName("config");
-            f.getSelectByName("svn.workspaceFormat").setSelectedAttribute("10",true);
+            f.getSelectByName("svn.workspaceFormat").setSelectedAttribute("10", true);
             submit(f);
 
             FreeStyleProject p = createFreeStyleProject();
@@ -984,25 +983,24 @@ public class SubversionSCMTest extends AbstractSubversionTest {
         Proc p = runSvnServe(getClass().getResource("HUDSON-1379.zip"));
         try {
             FreeStyleProject b = createFreeStyleProject();
-            b.setScm(new SubversionSCM("svn://localhost/bob"));
+            b.setScm(new SubversionSCM(SVN_URL));
 
             FreeStyleProject c = createFreeStyleProject();
             c.setScm(new SubversionSCM("svn://localhost/charlie"));
 
             // should fail without a credential
-            assertBuildStatus(Result.FAILURE,b.scheduleBuild2(0).get());
-            assertBuildStatus(Result.FAILURE,c.scheduleBuild2(0).get());
+            assertBuildStatus(Result.FAILURE, b.scheduleBuild2(0).get());
+            assertBuildStatus(Result.FAILURE, c.scheduleBuild2(0).get());
 
             // but with the super user credential both should work now
-            descriptor.postCredential(b,"svn://localhost/bob","alice","alice",null,new PrintWriter(System.out));
+            descriptor.postCredential(b, SVN_URL, "alice", "alice", null, new PrintWriter(System.out));
             buildAndAssertSuccess(b);
             buildAndAssertSuccess(c);
         } finally {
             p.kill();
         }
     }
-
-    /**
+   /**
      * Ensures that the introduction of {@link WorkspaceUpdater} maintains backward compatibility with
      * existing data.
      */
