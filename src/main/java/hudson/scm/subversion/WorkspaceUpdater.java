@@ -32,6 +32,7 @@ import hudson.scm.SubversionSCM;
 import hudson.scm.SubversionSCM.External;
 import hudson.scm.SubversionSCM.ModuleLocation;
 import org.kohsuke.stapler.export.ExportedBean;
+import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationProvider;
 import org.tmatesoft.svn.core.wc.SVNClientManager;
 import org.tmatesoft.svn.core.wc.SVNRevision;
@@ -161,6 +162,15 @@ public abstract class WorkspaceUpdater extends AbstractDescribableImpl<Workspace
             }
             r = l.getRevision(r);
             return r;
+        }
+
+        /**
+         * Returns {@link org.tmatesoft.svn.core.SVNDepth} by string value.
+         *
+         * @return {@link org.tmatesoft.svn.core.SVNDepth} value.
+         */
+        protected static SVNDepth getSvnDepth(String name) {
+            return SVNDepth.fromString(name);
         }
 
         private static final long serialVersionUID = 1L;

@@ -25,12 +25,11 @@ package hudson.scm.subversion;
 
 import hudson.Extension;
 import hudson.scm.SubversionSCM.ModuleLocation;
-import org.kohsuke.stapler.DataBoundConstructor;
-import org.tmatesoft.svn.core.SVNDepth;
-import org.tmatesoft.svn.core.SVNException;
-
 import java.io.File;
 import java.io.IOException;
+import org.kohsuke.stapler.DataBoundConstructor;
+import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.wc.SVNWCClient;
 
 /**
  * {@link WorkspaceUpdater} that performs "svn revert" + "svn update"
@@ -50,8 +49,10 @@ public class UpdateWithRevertUpdater extends WorkspaceUpdater {
     public static class TaskImpl extends UpdateUpdater.TaskImpl {
         @Override
         protected void preUpdate(ModuleLocation module, File local) throws SVNException, IOException {
-            listener.getLogger().println("Reverting " + local);
-            manager.getWCClient().doRevert(new File[]{local.getCanonicalFile()}, SVNDepth.INFINITY, null);
+            listener.getLogger().println("Reverting " + local + " ignoreExternals: " + module.isIgnoreExternalsOption());
+            final SVNWCClient svnwc = manager.getWCClient();
+            svnwc.setIgnoreExternals(module.isIgnoreExternalsOption());
+            svnwc.doRevert(new File[]{local.getCanonicalFile()}, getSvnDepth(module.getDepthOption()), null);
         }
     }
 

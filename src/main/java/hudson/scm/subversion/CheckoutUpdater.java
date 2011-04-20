@@ -32,12 +32,6 @@ import hudson.scm.SubversionSCM.External;
 import hudson.scm.SubversionSCM.ModuleLocation;
 import hudson.util.IOException2;
 import hudson.util.StreamCopyThread;
-import org.kohsuke.stapler.DataBoundConstructor;
-import org.tmatesoft.svn.core.SVNDepth;
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.core.wc.SVNUpdateClient;
-
 import java.io.File;
 import java.io.IOException;
 import java.io.PipedInputStream;
@@ -45,6 +39,11 @@ import java.io.PipedOutputStream;
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.List;
+import org.kohsuke.stapler.DataBoundConstructor;
+import org.tmatesoft.svn.core.SVNDepth;
+import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.wc.SVNRevision;
+import org.tmatesoft.svn.core.wc.SVNUpdateClient;
 
 /**
  * {@link WorkspaceUpdater} that does a fresh check out.
@@ -76,11 +75,15 @@ public class CheckoutUpdater extends WorkspaceUpdater {
                 try {
                     for (final ModuleLocation l : locations) {
                         location = l;
-                        listener.getLogger().println("Checking out " + l.remote);
+                        SVNDepth svnDepth = getSvnDepth(l.getDepthOption());
+                        listener.getLogger().println("Checking out " + l.remote + " depth:" + svnDepth +
+                            " ignoreExternals: " + l.isIgnoreExternalsOption());
 
                         File local = new File(ws, l.getLocalDir());
+                        svnuc.setIgnoreExternals(l.isIgnoreExternalsOption());
                         svnuc.setEventHandler(new SubversionUpdateEventHandler(new PrintStream(pos), externals, local, l.getLocalDir()));
-                        svnuc.doCheckout(l.getSVNURL(), local.getCanonicalFile(), SVNRevision.HEAD, getRevision(l), SVNDepth.INFINITY, true);
+                        svnuc.doCheckout(l.getSVNURL(), local.getCanonicalFile(), SVNRevision.HEAD, getRevision(l),
+                            svnDepth, true);
                     }
                 } catch (SVNException e) {
                     e.printStackTrace(listener.error("Failed to check out " + location.remote));
