@@ -1490,6 +1490,7 @@ public class SubversionSCM extends SCM implements Serializable {
                 return true;
             }
 
+
             @Override
             public SVNSSHAuthentication createSVNAuthentication(String kind) throws SVNException {
                 if(kind.equals(ISVNAuthenticationManager.SSH)) {
