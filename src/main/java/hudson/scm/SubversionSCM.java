@@ -1453,7 +1453,8 @@ public class SubversionSCM extends SCM implements Serializable {
                     setFilePermissions(savedKeyFile, "600");
                 } catch(IOException e) {
                     throw new SVNException(
-                        SVNErrorMessage.create(SVNErrorCode.AUTHN_CREDS_UNAVAILABLE, "Unable to save private key"), e);
+                        SVNErrorMessage.create(SVNErrorCode.AUTHN_CREDS_UNAVAILABLE,
+                            hudson.scm.credential.Messages.SshPublicKeyCredential_private_key_save_error()), e);
                 }
             }
 
@@ -1461,11 +1462,11 @@ public class SubversionSCM extends SCM implements Serializable {
              * Gets the location where the private key will be permanently stored.
              */
             private File getKeyFile() {
-                File dir = new File(Hudson.getInstance().getRootDir(), "subversion-credentials");
+                File dir = new File(Hudson.getInstance().getRootDir(), hudson.scm.credential.Messages.SshPublicKeyCredential_private_key());
                 if(dir.mkdirs()) {
                     // make sure the directory exists. if we created it, try to set the permission to 600
                     // since this is sensitive information
-                    setFilePermissions(dir, "600");
+                    setFilePermissions(dir, hudson.scm.credential.Messages.SshPublicKeyCredential_private_key_permissions());
                 }
                 return new File(dir, id);
             }
@@ -1482,7 +1483,7 @@ public class SubversionSCM extends SCM implements Serializable {
                     chmod.execute();
                 } catch(BuildException e) {
                     // if we failed to set the permission, that's fine.
-                    LOGGER.log(Level.WARNING, "Failed to set permission of " + file, e);
+                    LOGGER.log(Level.WARNING, hudson.scm.credential.Messages.SshPublicKeyCredential_private_key_set_permissions_error(file), e);
                     return false;
                 }
 
@@ -1499,21 +1500,21 @@ public class SubversionSCM extends SCM implements Serializable {
                             // remote
                             privateKey = channel.call(new Callable<String, IOException>() {
                                 public String call() throws IOException {
-                                    return FileUtils.readFileToString(getKeyFile(), "iso-8859-1");
+                                    return FileUtils.readFileToString(getKeyFile(), hudson.scm.credential.Messages.SshPublicKeyCredential_private_key_encoding());
                                 }
                             });
                         } else {
-                            privateKey = FileUtils.readFileToString(getKeyFile(), "iso-8859-1");
+                            privateKey = FileUtils.readFileToString(getKeyFile(), hudson.scm.credential.Messages.SshPublicKeyCredential_private_key_encoding());
                         }
                         return new SVNSSHAuthentication(userName, privateKey.toCharArray(),
                             Scrambler.descramble(passphrase), -1, false);
                     } catch(IOException e) {
                         throw new SVNException(
-                            SVNErrorMessage.create(SVNErrorCode.AUTHN_CREDS_UNAVAILABLE, "Unable to load private key"),
+                            SVNErrorMessage.create(SVNErrorCode.AUTHN_CREDS_UNAVAILABLE, hudson.scm.credential.Messages.SshPublicKeyCredential_private_key_load_error()),
                             e);
                     } catch(InterruptedException e) {
                         throw new SVNException(
-                            SVNErrorMessage.create(SVNErrorCode.AUTHN_CREDS_UNAVAILABLE, "Unable to load private key"),
+                            SVNErrorMessage.create(SVNErrorCode.AUTHN_CREDS_UNAVAILABLE, hudson.scm.credential.Messages.SshPublicKeyCredential_private_key_load_error()),
                             e);
                     }
                 } else {

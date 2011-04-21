@@ -1,18 +1,22 @@
 package hudson.scm;
 
+import hudson.Extension;
+import hudson.ExtensionList;
 import hudson.XmlFile;
 import hudson.model.AbstractProject;
+import hudson.model.Hudson;
 import hudson.model.Saveable;
+import hudson.model.listeners.SaveableListener;
 import hudson.remoting.Channel;
 import hudson.scm.SubversionSCM.DescriptorImpl.Credential;
 import hudson.scm.SubversionSCM.DescriptorImpl.RemotableSVNAuthenticationProvider;
-import org.tmatesoft.svn.core.SVNURL;
-
 import java.io.File;
 import java.io.IOException;
 import java.util.Hashtable;
 import java.util.Map;
 import java.util.logging.Logger;
+import org.tmatesoft.svn.core.SVNURL;
+import hudson.scm.subversion.Messages;
 
 import static java.util.logging.Level.INFO;
 
@@ -22,7 +26,19 @@ import static java.util.logging.Level.INFO;
  * @author Kohsuke Kawaguchi
  */
 final class PerJobCredentialStore implements Saveable, RemotableSVNAuthenticationProvider {
+    private static final Logger LOGGER = Logger.getLogger(PerJobCredentialStore.class.getName());
+
+    /**
+     * Used to remember the context. If we are persisting, we don't want to persist a proxy,
+     * even if that happens in the context of a remote call.
+     */
+    private static final ThreadLocal<Boolean> IS_SAVING = new ThreadLocal<Boolean>();
+
     private final transient AbstractProject<?,?> project;
+
+    private static final String credentialsFileName = "subversion.credentials";
+
+    private transient CredentialsSaveableListener saveableListener;
 
     /**
      * SVN authentication realm to its associated credentials, scoped to this project.
@@ -38,7 +54,7 @@ final class PerJobCredentialStore implements Saveable, RemotableSVNAuthenticatio
                 xml.unmarshal(this);
         } catch (IOException e) {
             // ignore the failure to unmarshal, or else we'll never get through beyond this point.
-            LOGGER.log(INFO,"Failed to retrieve Subversion credentials from "+xml,e);
+            LOGGER.log(INFO, Messages.PerJobCredentialStore_readCredentials_error(xml), e);
         }
     }
 
@@ -54,7 +70,7 @@ final class PerJobCredentialStore implements Saveable, RemotableSVNAuthenticatio
         try {
             acknowledge(realm, cred);
         } catch (IOException e) {
-            LOGGER.log(INFO,"Failed to persist the credentials",e);
+            LOGGER.log(INFO,Messages.PerJobCredentialStore_acknowledgeAuthentication_error(), e);
         }
     }
 
@@ -69,7 +85,11 @@ final class PerJobCredentialStore implements Saveable, RemotableSVNAuthenticatio
     public synchronized void save() throws IOException {
         IS_SAVING.set(Boolean.TRUE);
         try {
-            getXmlFile().write(this);
+            if(!credentials.isEmpty()) {
+                XmlFile xmlFile = getXmlFile();
+                xmlFile.write(this);
+                SaveableListener.fireOnChange(this, xmlFile);
+            }
         } finally {
             IS_SAVING.remove();
         }
@@ -93,11 +113,40 @@ final class PerJobCredentialStore implements Saveable, RemotableSVNAuthenticatio
         return c==null ? this : c.export(RemotableSVNAuthenticationProvider.class, this);
     }
 
-    private static final Logger LOGGER = Logger.getLogger(PerJobCredentialStore.class.getName());
+    protected CredentialsSaveableListener getSaveableListener() {
+        if(null == saveableListener) {
+            ExtensionList<SaveableListener> extensionList = Hudson.getInstance().getExtensionList(
+                SaveableListener.class);
+            if(null != extensionList && !extensionList.isEmpty()) {
+                for(SaveableListener listener : extensionList) {
+                    if(listener instanceof CredentialsSaveableListener) {
+                        saveableListener = (CredentialsSaveableListener) listener;
+                        break;
+                    }
+                }
+            }
+        }
+        return saveableListener;
+    }
 
-    /**
-     * Used to remember the context. If we are persisting, we don't want to persist a proxy,
-     * even if that happens in the context of a remote call.
-     */
-    private static final ThreadLocal<Boolean> IS_SAVING = new ThreadLocal<Boolean>();
+    @Extension
+    public static class CredentialsSaveableListener extends SaveableListener {
+
+        private boolean fileChanged = false;
+
+        @Override
+        public void onChange(Saveable o, XmlFile file) {
+            if(o instanceof PerJobCredentialStore) {
+                fileChanged = true;
+            }
+        }
+
+        public boolean isFileChanged() {
+            return fileChanged;
+        }
+
+        public void resetChangedStatus() {
+            fileChanged = false;
+        }
+    }
 }
