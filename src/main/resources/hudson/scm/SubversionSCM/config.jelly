@@ -28,6 +28,11 @@ THE SOFTWARE.
       <table width="100%">
         <f:entry title="${%Repository URL}" field="remote" help="/scm/SubversionSCM/url-help">
           <f:textbox value="${loc.remote}" id="svn.remote.loc" />
+            <j:if test="${loc.remote!=null}">
+                <a href="descriptorByName/hudson.scm.SubversionSCM/enterCredential?${loc.remote}" target="_blank">
+                    Update credentials
+                </a>
+            </j:if>
         </f:entry>
         <f:entry title="${%Local module directory} (${%optional})" field="local">
           <f:textbox value="${loc!=null?loc.local:'.'}" />

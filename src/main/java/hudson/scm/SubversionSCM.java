@@ -1949,7 +1949,7 @@ public class SubversionSCM extends SCM implements Serializable {
                     }
                 }
             } catch(SVNException e) {
-                LOGGER.log(Level.INFO, "Failed to access subversion repository " + url, e);
+                LOGGER.log(Level.INFO, Messages.SubversionSCM_doCheckRemote_accessRepository_error(url), e);
                 String message = Messages.SubversionSCM_doCheckRemote_exceptionMsg1(
                     Util.escape(url), Util.escape(e.getErrorMessage().getFullMessage()),
                     "javascript:document.getElementById('svnerror').style.display='block';"
