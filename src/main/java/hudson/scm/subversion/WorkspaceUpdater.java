@@ -31,18 +31,17 @@ import hudson.scm.RevisionParameterAction;
 import hudson.scm.SubversionSCM;
 import hudson.scm.SubversionSCM.External;
 import hudson.scm.SubversionSCM.ModuleLocation;
-import org.kohsuke.stapler.export.ExportedBean;
-import org.tmatesoft.svn.core.SVNDepth;
-import org.tmatesoft.svn.core.auth.ISVNAuthenticationProvider;
-import org.tmatesoft.svn.core.wc.SVNClientManager;
-import org.tmatesoft.svn.core.wc.SVNRevision;
-
+import hudson.scm.util.RevisionUtil;
 import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.Date;
 import java.util.List;
-import java.util.logging.Logger;
+import org.kohsuke.stapler.export.ExportedBean;
+import org.tmatesoft.svn.core.SVNDepth;
+import org.tmatesoft.svn.core.auth.ISVNAuthenticationProvider;
+import org.tmatesoft.svn.core.wc.SVNClientManager;
+import org.tmatesoft.svn.core.wc.SVNRevision;
 
 /**
  * Encapsulates the logic of how files are obtained from a subversion repository.
@@ -75,8 +74,11 @@ public abstract class WorkspaceUpdater extends AbstractDescribableImpl<Workspace
      * These fields are set by {@link SubversionSCM} before the invocation.
      */
     public static abstract class UpdateTask implements Serializable {
+        private static final long serialVersionUID = 1L;
+
         // fields that are set by the caller as context for the perform method
 
+        //TODO protect, remove public properties
         /**
          * Factory for various subversion commands.
          */
@@ -88,10 +90,14 @@ public abstract class WorkspaceUpdater extends AbstractDescribableImpl<Workspace
         public ISVNAuthenticationProvider authProvider;
 
         /**
-         * In the absence of a revision-specific check out, we want to check out by this timestamp,
-         * not just the latest to ensure consistency. Never null.
+         * When the build was scheduled.
          */
-        public Date timestamp;
+        public Date queueTime;
+
+        /**
+         * When the build was started.
+         */
+        public Date buildTime;
 
         /**
          * Connected to build console. Never null.
@@ -111,7 +117,12 @@ public abstract class WorkspaceUpdater extends AbstractDescribableImpl<Workspace
         /**
          * If the build parameter is specified with specific version numbers, this field captures that. Can be null.
          */
-        public RevisionParameterAction revisions;
+        public RevisionParameterAction revisionParameterAction;
+
+        /**
+         * Global defined revision policy.
+         */
+        public SubversionSCM.RevisionPolicy revisionPolicy;
 
         /**
          * Performs the checkout/update.
@@ -127,11 +138,13 @@ public abstract class WorkspaceUpdater extends AbstractDescribableImpl<Workspace
         protected List<External> delegateTo(UpdateTask t) throws IOException, InterruptedException {
             t.manager = this.manager;
             t.authProvider = this.authProvider;
-            t.timestamp = this.timestamp;
+            t.queueTime = this.queueTime;
+            t.buildTime = this.buildTime;
             t.listener = this.listener;
             t.locations = this.locations;
-            t.revisions = this.revisions;
+            t.revisionParameterAction = this.revisionParameterAction;
             t.ws = this.ws;
+            t.revisionPolicy = this.revisionPolicy;
 
             return t.perform();
         }
@@ -147,21 +160,8 @@ public abstract class WorkspaceUpdater extends AbstractDescribableImpl<Workspace
         /**
          * Determines the revision to check out for the given location.
          */
-        protected SVNRevision getRevision(ModuleLocation l) {
-            // for the SVN revision, we will use the first off:
-            // - a @NNN prefix of the SVN url
-            // - a value found in a RevisionParameterAction
-            // - the revision corresponding to the build timestamp
-
-            SVNRevision r = null;
-            if (revisions != null) {
-                r = revisions.getRevision(l.getURL());
-            }
-            if (r == null) {
-                r = SVNRevision.create(timestamp);
-            }
-            r = l.getRevision(r);
-            return r;
+        protected SVNRevision getRevision(ModuleLocation location) {
+            return RevisionUtil.getRevision(location, revisionParameterAction, revisionPolicy, queueTime, buildTime);
         }
 
         /**
@@ -173,8 +173,5 @@ public abstract class WorkspaceUpdater extends AbstractDescribableImpl<Workspace
             return SVNDepth.fromString(name);
         }
 
-        private static final long serialVersionUID = 1L;
     }
-
-    private static final Logger LOGGER = Logger.getLogger(WorkspaceUpdater.class.getName());
 }

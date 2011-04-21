@@ -1,0 +1,11 @@
+<div>
+    Policy specifies which subversion revision plugin will use during checkout or update commands:
+<p/> "Queue time" - revision created base on build scheduled time will be used, default value.
+<p/> "Build time" - revision created base on build run time will be used.
+<p/> "Head revision" - HEAD revision will be used.
+<p/>
+    This setting will be overridden:
+<p/> - if user specified repository URL like http://svn.java.net/some-resource@1234 (1234 - revision)
+<p/> - if user created parameterized build and specified RevisionParameter
+
+</div>

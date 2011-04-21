@@ -122,13 +122,16 @@ public class UpdateUpdater extends WorkspaceUpdater {
                     File local = new File(ws, l.getLocalDir());
                     svnuc.setEventHandler(new SubversionUpdateEventHandler(listener.getLogger(), externals, local, l.getLocalDir()));
 
-                    SVNRevision r = getRevision(l);
                     svnuc.setIgnoreExternals(l.isIgnoreExternalsOption());
                     preUpdate(l, local);
 
                     SVNDepth svnDepth = getSvnDepth(l.getDepthOption());
-                    listener.getLogger().println("Updating " + l.remote + " depth:" + svnDepth);
-                    svnuc.doUpdate(local.getCanonicalFile(), r, svnDepth, true, false);
+                    SVNRevision revision = getRevision(l);
+
+                    listener.getLogger().println("Updating " + l.remote + " revision: " +
+                        (revision != null ? revision.toString() : "null") + " depth:" + svnDepth +
+                        " ignoreExternals: " + l.isIgnoreExternalsOption());
+                    svnuc.doUpdate(local.getCanonicalFile(), revision, svnDepth, true, false);
 
                 } catch (final SVNException e) {
                     if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_LOCKED) {

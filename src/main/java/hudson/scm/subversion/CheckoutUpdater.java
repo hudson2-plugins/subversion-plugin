@@ -76,13 +76,15 @@ public class CheckoutUpdater extends WorkspaceUpdater {
                     for (final ModuleLocation l : locations) {
                         location = l;
                         SVNDepth svnDepth = getSvnDepth(l.getDepthOption());
-                        listener.getLogger().println("Checking out " + l.remote + " depth:" + svnDepth +
+                        SVNRevision revision = getRevision(l);
+                        listener.getLogger().println("Checking out " + l.remote + " revision: " +
+                            (revision != null ? revision.toString() : "null") + " depth:" + svnDepth +
                             " ignoreExternals: " + l.isIgnoreExternalsOption());
 
                         File local = new File(ws, l.getLocalDir());
                         svnuc.setIgnoreExternals(l.isIgnoreExternalsOption());
                         svnuc.setEventHandler(new SubversionUpdateEventHandler(new PrintStream(pos), externals, local, l.getLocalDir()));
-                        svnuc.doCheckout(l.getSVNURL(), local.getCanonicalFile(), SVNRevision.HEAD, getRevision(l),
+                        svnuc.doCheckout(l.getSVNURL(), local.getCanonicalFile(), SVNRevision.HEAD, revision,
                             svnDepth, true);
                     }
                 } catch (SVNException e) {

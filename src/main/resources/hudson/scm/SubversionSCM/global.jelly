@@ -32,6 +32,20 @@ THE SOFTWARE.
             <f:option value="10" selected="${descriptor.workspaceFormat==10}">1.6 (svn:externals to file)</f:option>
           </select>
         </f:entry>
+        <f:entry title="${%Subversion Revision Policy}" help="/descriptor/hudson.scm.SubversionSCM/help/revisionPolicy">
+            <select name="svn.revisionPolicy">
+                <j:forEach var="optVal" items="${descriptor.revisionOptions}">
+                    <j:choose>
+                        <j:when test="${descriptor.revisionPolicy.name()==optVal.name()}">
+                            <option value="${optVal.name()}" selected="selected">${optVal.policyName}</option>
+                        </j:when>
+                        <j:otherwise>
+                            <option value="${optVal.name()}">${optVal.policyName}</option>
+                        </j:otherwise>
+                    </j:choose>
+                </j:forEach>
+            </select>
+        </f:entry>
         <f:entry title="${%Exclusion revprop name}" help="/descriptor/hudson.scm.SubversionSCM/help/excludedRevprop">
             <f:textbox name="svn.global_excluded_revprop" value="${descriptor.globalExcludedRevprop}"/>
         </f:entry>

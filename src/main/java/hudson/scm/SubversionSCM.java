@@ -83,6 +83,7 @@ import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
+import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Hashtable;
@@ -203,6 +204,35 @@ public class SubversionSCM extends SCM implements Serializable {
     private String modules;
 
     private static File subversionConfigDir;
+
+    /**
+     * Supported revision policies.
+     */
+    public enum RevisionPolicy {
+        QUEUE_TIME("Queue time"),
+        BUILD_TIME("Build time"),
+        HEAD("Head revision");
+
+        private String policyName;
+
+        /**
+         * Creates the policy.
+         *
+         * @param policyName policy name.
+         */
+        RevisionPolicy(String policyName) {
+            this.policyName = policyName;
+        }
+
+        /**
+         * Returns the name of policy.
+         *
+         * @return the name of policy.
+         */
+        public String getPolicyName() {
+            return this.policyName;
+        }
+    }
 
     // No longer used but left for serialization compatibility
     @Deprecated
@@ -332,6 +362,7 @@ public class SubversionSCM extends SCM implements Serializable {
         return null;
     }
 
+    //TODO It seems there is delete operation in checkoutUpdater, verify it
     public boolean processWorkspaceBeforeDeletion(AbstractProject<?,?> project, FilePath workspace, Node node) throws IOException, InterruptedException {
         return (workspaceUpdater instanceof CheckoutUpdater);
     }
@@ -737,7 +768,9 @@ public class SubversionSCM extends SCM implements Serializable {
             }
         }
 
-        return workspace.act(new CheckOutTask(build, this, build.getTimestamp().getTime(), listener));
+        //TODO get build time from listener.
+        return workspace.act(new CheckOutTask(build, this, build.getTimestamp().getTime(),
+            new GregorianCalendar().getTime(), listener));
     }
 
 
@@ -747,13 +780,16 @@ public class SubversionSCM extends SCM implements Serializable {
     private static class CheckOutTask extends UpdateTask implements FileCallable<List<External>> {
         private final UpdateTask task;
 
-        public CheckOutTask(AbstractBuild<?, ?> build, SubversionSCM parent, Date timestamp, TaskListener listener) {
-            this.authProvider = parent.getDescriptor().createAuthenticationProvider(build.getParent());
-            this.timestamp = timestamp;
+        public CheckOutTask(AbstractBuild<?, ?> build, SubversionSCM scm, Date queueTime, Date buildTime,
+                            TaskListener listener) {
+            this.authProvider = scm.getDescriptor().createAuthenticationProvider(build.getParent());
+            this.queueTime = queueTime;
+            this.buildTime = buildTime;
             this.listener = listener;
-            this.locations = parent.getLocations(build);
-            this.revisions = build.getAction(RevisionParameterAction.class);
-            this.task = parent.getWorkspaceUpdater().createTask();
+            this.locations = scm.getLocations(build);
+            this.revisionParameterAction = build.getAction(RevisionParameterAction.class);
+            this.task = scm.getWorkspaceUpdater().createTask();
+            this.revisionPolicy = (scm.getDescriptor() != null ? scm.getDescriptor().getRevisionPolicy() : null);
         }
 
         public List<External> invoke(File ws, VirtualChannel channel) throws IOException {
@@ -1386,6 +1422,11 @@ public class SubversionSCM extends SCM implements Serializable {
         private int workspaceFormat = SVNAdminAreaFactory.WC_FORMAT_14;
 
         /**
+         * Selected global revision policy.
+         */
+        private RevisionPolicy revisionPolicy = RevisionPolicy.QUEUE_TIME;
+
+        /**
          * When set to true, repository URLs will be validated up to the first
          * dollar sign which is encountered.
          */
@@ -1730,12 +1771,38 @@ public class SubversionSCM extends SCM implements Serializable {
             return validateRemoteUpToVar;
         }
 
+        /**
+         * Returns available choose for revision policy option.
+         *
+         * @return available choose for revision policy option.
+         */
+        @Exported
+        public RevisionPolicy[] getRevisionOptions() {
+            return RevisionPolicy.values();
+        }
+
+        /**
+         * Returns revision policy.
+         *
+         * @return revision policy.
+         */
+        public RevisionPolicy getRevisionPolicy() {
+            return revisionPolicy;
+        }
+
         @Override
         public boolean configure(StaplerRequest req, JSONObject formData) throws FormException {
             globalExcludedRevprop = fixEmptyAndTrim(
                 req.getParameter("svn.global_excluded_revprop"));
             workspaceFormat = Integer.parseInt(req.getParameter("svn.workspaceFormat"));
             validateRemoteUpToVar = formData.containsKey("validateRemoteUpToVar");
+
+            try {
+                revisionPolicy = req.getParameter("svn.revisionPolicy") != null ? RevisionPolicy.valueOf(
+                    req.getParameter("svn.revisionPolicy")) : RevisionPolicy.QUEUE_TIME;
+            } catch(IllegalArgumentException e) {
+                revisionPolicy = RevisionPolicy.QUEUE_TIME;
+            }
 
             // Save configuration
             save();
@@ -2298,6 +2365,16 @@ public class SubversionSCM extends SCM implements Serializable {
         public String getURL() {
             return getUrlWithoutRevision(remote);
         }
+
+        /**
+         * Returns origin remote url, it can be specified with "@NNN" suffix.
+         *
+         * @return origin remote url.
+         */
+        public String getOriginRemote() {
+            return remote;
+        }
+
 
         /**
          * Gets {@link #remote} as {@link SVNURL}.
