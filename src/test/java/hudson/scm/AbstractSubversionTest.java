@@ -5,12 +5,13 @@ import hudson.Launcher.LocalLauncher;
 import hudson.Proc;
 import hudson.scm.SubversionSCM.DescriptorImpl;
 import hudson.util.StreamTaskListener;
-import org.jvnet.hudson.test.HudsonHomeLoader.CopyExisting;
-import org.jvnet.hudson.test.HudsonTestCase;
-
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
+import org.jvnet.hudson.test.HudsonHomeLoader.CopyExisting;
+import org.jvnet.hudson.test.HudsonTestCase;
+import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
+import org.tmatesoft.svn.core.wc.SVNWCUtil;
 
 /**
  * Base class for Subversion related tests.
@@ -19,6 +20,8 @@ import java.net.URL;
  */
 public abstract class AbstractSubversionTest extends HudsonTestCase  {
     protected DescriptorImpl descriptor;
+    protected String kind = ISVNAuthenticationManager.PASSWORD;
+
 
     @Override
     protected void setUp() throws Exception {
@@ -43,6 +46,12 @@ public abstract class AbstractSubversionTest extends HudsonTestCase  {
         }
         return launcher.launch().cmds(
                 "svnserve","-d","--foreground","-r",repo.getAbsolutePath()).pwd(repo).start();
+    }
+
+    protected ISVNAuthenticationManager createInMemoryManager() {
+        ISVNAuthenticationManager m = SVNWCUtil.createDefaultAuthenticationManager(hudson.root, null, null, false);
+        m.setAuthenticationProvider(descriptor.createAuthenticationProvider(null));
+        return m;
     }
 
     static {
