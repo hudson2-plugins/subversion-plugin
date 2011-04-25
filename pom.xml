@@ -73,6 +73,7 @@ THE SOFTWARE.
         <dependency>
             <groupId>org.jvnet.hudson.main</groupId>
             <artifactId>hudson-test-harness</artifactId>
+            <scope>test</scope>
             <version>2.0.0</version>
         </dependency>
     </dependencies>
