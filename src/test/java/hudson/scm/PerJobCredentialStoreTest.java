@@ -20,7 +20,6 @@ import static hudson.scm.SubversionSCM.compareSVNAuthentications;
 /**
  * @author Kohsuke Kawaguchi
  */
-@Ignore
 public class PerJobCredentialStoreTest extends AbstractSubversionTest {
     private static final String testSvnUser = "user";
     private static final String testSvnPassword = "userpass";

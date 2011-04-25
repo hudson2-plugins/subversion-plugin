@@ -60,13 +60,10 @@ import org.tmatesoft.svn.core.wc.SVNCommitClient;
 
 import static hudson.scm.SubversionSCM.compareSVNAuthentications;
 
-
 /**
  * @author Kohsuke Kawaguchi
  */
 public class SubversionCommonTest extends AbstractSubversionTest {
-
-    private static final int LOG_LIMIT = 1000;
 
     private static final String GUEST_ACCESS_REPOSITORY_RESOURCE = "guest_access_svn.zip";
     private static final String realm = "<svn://localhost:3690>";

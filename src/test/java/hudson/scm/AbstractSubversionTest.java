@@ -5,12 +5,11 @@ import hudson.Launcher.LocalLauncher;
 import hudson.Proc;
 import hudson.scm.SubversionSCM.DescriptorImpl;
 import hudson.util.StreamTaskListener;
-import org.jvnet.hudson.test.HudsonHomeLoader.CopyExisting;
-import org.jvnet.hudson.test.HudsonTestCase;
-
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
+import org.jvnet.hudson.test.HudsonHomeLoader.CopyExisting;
+import org.jvnet.hudson.test.HudsonTestCase;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.wc.SVNWCUtil;
 
