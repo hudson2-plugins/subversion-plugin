@@ -34,12 +34,14 @@ THE SOFTWARE.
     <artifactId>subversion</artifactId>
     <packaging>hpi</packaging>
     <name>Hudson Subversion Plug-in</name>
+    <description>Integrates Hudson with Subversion SCM</description>
     <version>2.0.0</version>
     <url>http://wiki.hudson-ci.org/display/HUDSON/Subversion+Plugin</url>
     <licenses>
         <license>
-            <name>MIT license</name>
-            <comments>All source code is under the MIT license.</comments>
+            <name>The MIT license</name>
+            <url>http://www.opensource.org/licenses/mit-license.php</url>
+            <distribution>repo</distribution>
         </license>
     </licenses>
 
@@ -78,10 +80,16 @@ THE SOFTWARE.
         </dependency>
     </dependencies>
 
+    <scm>
+        <connection>scm:git:git://github.com/hudson-plugins/subversion-plugin.git</connection>
+        <developerConnection>scm:git:git@github.com:hudson-plugins/subversion-plugin.git</developerConnection>
+        <url>https://github.com/hudson-plugins/subversion-plugin</url>
+    </scm>
+
     <developers>
         <developer>
             <name>Many</name>
-            <id>kohsuke abayer dodok1 dty huybrechts mindless pgweiss stephenconnolly rseguy etc</id>
+            <id>kohsuke abayer dodok1 dty huybrechts mindless pgweiss stephenconnolly rseguy wjprakash akozak 8nevil8</id>
         </developer>
     </developers>
 </project>
