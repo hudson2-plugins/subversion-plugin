@@ -43,6 +43,10 @@ THE SOFTWARE.
         </license>
     </licenses>
 
+    <properties>
+        <compileSource>1.6</compileSource>
+    </properties>
+
     <build>
         <plugins>
             <plugin>
@@ -60,6 +64,29 @@ THE SOFTWARE.
                         <hudson.udp>33849</hudson.udp>
                     </systemPropertyVariables>
                 </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-pmd-plugin</artifactId>
+                <version>2.5</version>
+                <configuration>
+                    <verbose>true</verbose>
+                    <targetJdk>${compileSource}</targetJdk>
+                    <outputDirectory>${project.reporting.outputDirectory}</outputDirectory>
+                    <targetDirectory>${project.build.directory}</targetDirectory>
+                    <excludeRoots>
+                        <excludeRoot>${basedir}/target/generated-sources/</excludeRoot>
+                    </excludeRoots>
+                </configuration>
+                <executions>
+                    <execution>
+                        <phase>validate</phase>
+                        <goals>
+                            <goal>check</goal>
+                            <goal>cpd-check</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>

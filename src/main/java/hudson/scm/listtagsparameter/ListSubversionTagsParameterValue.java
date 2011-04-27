@@ -28,7 +28,6 @@ import hudson.EnvVars;
 import hudson.model.AbstractBuild;
 import hudson.model.ParameterValue;
 import hudson.util.VariableResolver;
-import java.util.logging.Logger;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.export.Exported;
 
@@ -40,46 +39,46 @@ import org.kohsuke.stapler.export.Exported;
  */
 public class ListSubversionTagsParameterValue extends ParameterValue {
 
-  @Exported(visibility=3) private String tagsDir; // this att comes from ListSubversionTagsParameterDefinition
-  @Exported(visibility=3) private String tag;
+    @Exported(visibility = 3)
+    private String tagsDir; // this att comes from ListSubversionTagsParameterDefinition
+    @Exported(visibility = 3)
+    private String tag;
 
-  @DataBoundConstructor
-  public ListSubversionTagsParameterValue(String name, String tagsDir, String tag) {
-    super(name);
-    this.tagsDir = tagsDir;
-    this.tag = tag;
-  }
+    @DataBoundConstructor
+    public ListSubversionTagsParameterValue(String name, String tagsDir, String tag) {
+        super(name);
+        this.tagsDir = tagsDir;
+        this.tag = tag;
+    }
 
-  @Override
-  public void buildEnvVars(AbstractBuild<?,?> build, EnvVars env) {
-    env.put(getName(), getTag());
-  }
+    @Override
+    public void buildEnvVars(AbstractBuild<?, ?> build, EnvVars env) {
+        env.put(getName(), getTag());
+    }
 
-  @Override
-  public VariableResolver<String> createVariableResolver(AbstractBuild<?, ?> build) {
-    return new VariableResolver<String>() {
-      public String resolve(String name) {
-        return ListSubversionTagsParameterValue.this.name.equals(name) ? getTag() : null;
-      }
-    };
-  }
+    @Override
+    public VariableResolver<String> createVariableResolver(AbstractBuild<?, ?> build) {
+        return new VariableResolver<String>() {
+            public String resolve(String name) {
+                return ListSubversionTagsParameterValue.this.name.equals(name) ? getTag() : null;
+            }
+        };
+    }
 
-  public String getTag() {
-    return tag;
-  }
+    public String getTag() {
+        return tag;
+    }
 
-  public void setTag(String tag) {
-    this.tag = tag;
-  }
+    public void setTag(String tag) {
+        this.tag = tag;
+    }
 
-  public String getTagsDir() {
-    return tagsDir;
-  }
+    public String getTagsDir() {
+        return tagsDir;
+    }
 
-  public void setTagsDir(String tagsDir) {
-    this.tagsDir = tagsDir;
-  }
-
-  private final static Logger LOGGER = Logger.getLogger(ListSubversionTagsParameterValue.class.getName());
+    public void setTagsDir(String tagsDir) {
+        this.tagsDir = tagsDir;
+    }
 
 }

@@ -96,7 +96,7 @@ final class PerJobCredentialStore implements Saveable, RemotableSVNAuthenticatio
     }
 
     private XmlFile getXmlFile() {
-        return new XmlFile(new File(project.getRootDir(),"subversion.credentials"));
+        return new XmlFile(new File(project.getRootDir(),credentialsFileName));
     }
 
     /*package*/ synchronized boolean isEmpty() {
