@@ -23,6 +23,7 @@
  */
 package hudson.scm;
 
+import com.gargoylesoftware.htmlunit.html.HtmlForm;
 import hudson.FilePath;
 import hudson.Launcher;
 import hudson.Proc;
@@ -52,11 +53,6 @@ import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 public class WorkspaceUpdaterTest extends AbstractSubversionTest {
 
     String kind = ISVNAuthenticationManager.PASSWORD;
-
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
-    }
 
     /**
      * Ensures that the introduction of {@link hudson.scm.subversion.WorkspaceUpdater} maintains backward compatibility with
@@ -137,30 +133,29 @@ public class WorkspaceUpdaterTest extends AbstractSubversionTest {
     /**
      * Subversion externals to a file. Requires 1.6 workspace.
      */
-    //TODO fix me
-//    @Bug(7539)
-//    public void testExternalsToFile() throws Exception {
-//        Proc server = runSvnServe(getClass().getResource("HUDSON-7539.zip"));
-//        try {
-//            // enable 1.6 mode
-//            HtmlForm f = createWebClient().goTo("configure").getFormByName("config");
-//            f.getSelectByName("svn.workspaceFormat").setSelectedAttribute("10", true);
-//            submit(f);
-//
-//            FreeStyleProject p = createFreeStyleProject();
-//            p.setScm(new SubversionSCM("svn://localhost/dir1"));
-//            FreeStyleBuild b = assertBuildStatusSuccess(p.scheduleBuild2(0));
-//            System.out.println(getLog(b));
-//
-//            assertTrue(b.getWorkspace().child("2").exists());
-//            assertTrue(b.getWorkspace().child("3").exists());
-//            assertTrue(b.getWorkspace().child("test.x").exists());
-//
-//            assertBuildStatusSuccess(p.scheduleBuild2(0));
-//        } finally {
-//            server.kill();
-//        }
-//    }
+    @Bug(7539)
+    public void testExternalsToFile() throws Exception {
+        Proc server = runSvnServe(getClass().getResource("HUDSON-7539.zip"));
+        try {
+            // enable 1.6 mode
+            HtmlForm f = createWebClient().goTo("configure").getFormByName("config");
+            f.getSelectByName("svn.workspaceFormat").setSelectedAttribute("10", true);
+            submit(f);
+
+            FreeStyleProject p = createFreeStyleProject();
+            p.setScm(new SubversionSCM("svn://localhost/dir1"));
+            FreeStyleBuild b = assertBuildStatusSuccess(p.scheduleBuild2(0));
+            System.out.println(getLog(b));
+
+            assertTrue(b.getWorkspace().child("2").exists());
+            assertTrue(b.getWorkspace().child("3").exists());
+            assertTrue(b.getWorkspace().child("test.x").exists());
+
+            assertBuildStatusSuccess(p.scheduleBuild2(0));
+        } finally {
+            server.kill();
+        }
+    }
 
     private void verifyCompatibility(String resourceName, Class<? extends WorkspaceUpdater> expected)
         throws IOException {

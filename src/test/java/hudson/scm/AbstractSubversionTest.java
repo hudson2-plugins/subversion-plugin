@@ -18,13 +18,15 @@ import org.tmatesoft.svn.core.wc.SVNWCUtil;
  *
  * @author Kohsuke Kawaguchi
  */
-public abstract class AbstractSubversionTest extends HudsonTestCase  {
+public abstract class AbstractSubversionTest extends HudsonTestCase {
     protected DescriptorImpl descriptor;
     protected String kind = ISVNAuthenticationManager.PASSWORD;
 
 
     @Override
     protected void setUp() throws Exception {
+        //Enable classic plugin strategy, because some extensions are duplicated with default strategy
+        System.setProperty("hudson.PluginStrategy", "hudson.ClassicPluginStrategy");
         super.setUp();
         descriptor = hudson.getDescriptorByType(DescriptorImpl.class);
     }
@@ -39,13 +41,13 @@ public abstract class AbstractSubversionTest extends HudsonTestCase  {
     protected Proc runSvnServe(File repo) throws Exception {
         LocalLauncher launcher = new LocalLauncher(new StreamTaskListener(System.out));
         try {
-            launcher.launch().cmds("svnserve","--help").start().join();
+            launcher.launch().cmds("svnserve", "--help").start().join();
         } catch (IOException e) {
             // if we fail to launch svnserve, skip the test
             return null;
         }
         return launcher.launch().cmds(
-                "svnserve","-d","--foreground","-r",repo.getAbsolutePath()).pwd(repo).start();
+            "svnserve", "-d", "--foreground", "-r", repo.getAbsolutePath()).pwd(repo).start();
     }
 
     protected ISVNAuthenticationManager createInMemoryManager() {
