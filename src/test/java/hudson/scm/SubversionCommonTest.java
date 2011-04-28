@@ -23,15 +23,22 @@
  */
 package hudson.scm;
 
+import com.gargoylesoftware.htmlunit.ElementNotFoundException;
+import com.gargoylesoftware.htmlunit.FailingHttpStatusCodeException;
 import com.gargoylesoftware.htmlunit.HttpMethod;
 import com.gargoylesoftware.htmlunit.WebConnection;
 import com.gargoylesoftware.htmlunit.WebRequestSettings;
 import com.gargoylesoftware.htmlunit.WebResponse;
+import com.gargoylesoftware.htmlunit.html.HtmlAnchor;
+import com.gargoylesoftware.htmlunit.html.HtmlForm;
+import com.gargoylesoftware.htmlunit.html.HtmlPage;
 import hudson.FilePath;
 import hudson.Proc;
 import hudson.model.AbstractProject;
+import hudson.model.Cause;
 import hudson.model.FreeStyleBuild;
 import hudson.model.FreeStyleProject;
+import hudson.model.Hudson;
 import hudson.model.Result;
 import hudson.scm.browsers.Sventon;
 import hudson.triggers.SCMTrigger;
@@ -41,9 +48,13 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import org.acegisecurity.context.SecurityContextHolder;
+import org.dom4j.Document;
+import org.dom4j.io.DOMReader;
 import org.jvnet.hudson.test.Bug;
 import org.jvnet.hudson.test.CaptureEnvironmentBuilder;
 import org.jvnet.hudson.test.HudsonHomeLoader.CopyExisting;
+import org.jvnet.hudson.test.recipes.PresetData;
 import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNErrorCode;
@@ -72,6 +83,7 @@ public class SubversionCommonTest extends AbstractSubversionTest {
     private static final String GUEST_USER_PASSWORD = "guestpass";
     private static final String BOGUS_USER_LOGIN = "bogus";
     private static final String BOGUS_USER_PASSWORD = "boguspass";
+    private static final Integer LOG_LIMIT = 1000;
 
     public void testMatcher() {
         check("http://foobar/");
@@ -94,53 +106,56 @@ public class SubversionCommonTest extends AbstractSubversionTest {
         assertTrue(SubversionSCM.URL_PATTERN.matcher(url).matches());
     }
 
-    //TODO fix me
-//    @PresetData(ANONYMOUS_READONLY)
-//    @Bug(2380)
-//    public void testTaggingPermission() throws Exception {
-//        // create a build
-//        FreeStyleProject p = createFreeStyleProject();
-//        p.setScm(loadSvnRepo());
-//        FreeStyleBuild b = p.scheduleBuild2(0, new Cause.UserCause()).get();
-//        System.out.println(b.getLog(LOG_LIMIT));
-//        assertBuildStatus(Result.SUCCESS, b);
-//
-//        SubversionTagAction action = b.getAction(SubversionTagAction.class);
-//        assertFalse(b.hasPermission(action.getPermission()));
-//
-//        WebClient wc = new WebClient();
-//        HtmlPage html = wc.getPage(b);
-//
-//        // make sure there's no link to the 'tag this build'
-//        Document dom = new DOMReader().read(html);
-//        assertNull(dom.selectSingleNode("//A[text()='Tag this build']"));
-//        for (HtmlAnchor a : html.getAnchors())
-//            assertFalse(a.getHrefAttribute().contains("/tagBuild/"));
-//
-//        // and no tag form on tagBuild page
-//        html = wc.getPage(b, "tagBuild/");
-//        try {
-//            html.getFormByName("tag");
-//            fail("should not have been found");
-//        } catch (ElementNotFoundException e) {
-//        }
-//
-//        // and that tagging would fail
-//        try {
-//            wc.getPage(b, "tagBuild/submit?name0=test&Submit=Tag");
-//            fail("should have been denied");
-//        } catch (FailingHttpStatusCodeException e) {
-//            // make sure the request is denied
-//            assertEquals(e.getResponse().getStatusCode(), 403);
-//        }
-//
-//        // now login as alice and make sure that the tagging would succeed
-//        wc = new WebClient();
-//        wc.login("alice", "alice");
-//        html = wc.getPage(b, "tagBuild/");
-//        HtmlForm form = html.getFormByName("tag");
-//        submit(form);
-//    }
+    //TODO Investigate why System user is used instead of anonymous after migration to 2.0.0 version
+    @PresetData(PresetData.DataSet.ANONYMOUS_READONLY)
+    @Bug(2380)
+    public void testTaggingPermission() throws Exception {
+        // create a build
+        FreeStyleProject p = createFreeStyleProject();
+        //Set anonymous user for authentication.
+        SecurityContextHolder.getContext().setAuthentication(Hudson.ANONYMOUS);
+        p.setScm(loadSvnRepo());
+        FreeStyleBuild b = p.scheduleBuild2(0, new Cause.UserCause()).get();
+        System.out.println(b.getLog(LOG_LIMIT));
+        assertBuildStatus(Result.SUCCESS, b);
+
+        SubversionTagAction action = b.getAction(SubversionTagAction.class);
+        assertFalse(b.hasPermission(action.getPermission()));
+
+        WebClient wc = new WebClient();
+        HtmlPage html = wc.getPage(b);
+
+        // make sure there's no link to the 'tag this build'
+        Document dom = new DOMReader().read(html);
+        assertNull(dom.selectSingleNode("//A[text()='Tag this build']"));
+        for (HtmlAnchor a : html.getAnchors()) {
+            assertFalse(a.getHrefAttribute().contains("/tagBuild/"));
+        }
+
+        // and no tag form on tagBuild page
+        html = wc.getPage(b, "tagBuild/");
+        try {
+            html.getFormByName("tag");
+            fail("should not have been found");
+        } catch (ElementNotFoundException e) {
+        }
+
+        // and that tagging would fail
+        try {
+            wc.getPage(b, "tagBuild/submit?name0=test&Submit=Tag");
+            fail("should have been denied");
+        } catch (FailingHttpStatusCodeException e) {
+            // make sure the request is denied
+            assertEquals(e.getResponse().getStatusCode(), 403);
+        }
+
+        // now login as alice and make sure that the tagging would succeed
+        wc = new WebClient();
+        wc.login("alice", "alice");
+        html = wc.getPage(b, "tagBuild/");
+        HtmlForm form = html.getFormByName("tag");
+        submit(form);
+    }
 
     public void testConfigRoundtrip() throws Exception {
         FreeStyleProject p = createFreeStyleProject();
