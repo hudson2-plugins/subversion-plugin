@@ -27,19 +27,17 @@ import hudson.model.AbstractBuild;
 import hudson.model.User;
 import hudson.scm.SubversionChangeLogSet.LogEntry;
 import hudson.scm.SubversionSCM.ModuleLocation;
-
-import org.kohsuke.stapler.export.Exported;
-import org.kohsuke.stapler.export.ExportedBean;
-
 import java.io.IOException;
 import java.util.AbstractList;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Comparator;
+import org.kohsuke.stapler.export.Exported;
+import org.kohsuke.stapler.export.ExportedBean;
 
 /**
  * {@link ChangeLogSet} for Subversion.
@@ -52,19 +50,20 @@ public final class SubversionChangeLogSet extends ChangeLogSet<LogEntry> {
     /**
      * @GuardedBy this
      */
-    private Map<String,Long> revisionMap;
+    private Map<String, Long> revisionMap;
 
     /*package*/ SubversionChangeLogSet(AbstractBuild build, List<LogEntry> logs) {
         super(build);
         // we want recent changes first
-        Collections.sort(logs,new Comparator<LogEntry>() {
+        Collections.sort(logs, new Comparator<LogEntry>() {
             public int compare(LogEntry a, LogEntry b) {
-                return b.getRevision()-a.getRevision();
+                return b.getRevision() - a.getRevision();
             }
         });
         this.logs = Collections.unmodifiableList(logs);
-        for (LogEntry log : logs)
+        for (LogEntry log : logs) {
             log.setParent(this);
+        }
     }
 
     public boolean isEmptySet() {
@@ -85,24 +84,29 @@ public final class SubversionChangeLogSet extends ChangeLogSet<LogEntry> {
         return "svn";
     }
 
-    public synchronized Map<String,Long> getRevisionMap() throws IOException {
-        if(revisionMap==null)
+    public synchronized Map<String, Long> getRevisionMap() throws IOException {
+        if (revisionMap == null) {
             revisionMap = SubversionSCM.parseRevisionFile(build);
+        }
         return revisionMap;
     }
 
     @Exported
     public List<RevisionInfo> getRevisions() throws IOException {
         List<RevisionInfo> r = new ArrayList<RevisionInfo>();
-        for (Map.Entry<String, Long> e : getRevisionMap().entrySet())
-            r.add(new RevisionInfo(e.getKey(),e.getValue()));
+        for (Map.Entry<String, Long> e : getRevisionMap().entrySet()) {
+            r.add(new RevisionInfo(e.getKey(), e.getValue()));
+        }
         return r;
     }
 
-    @ExportedBean(defaultVisibility=999)
+    @ExportedBean(defaultVisibility = 999)
     public static final class RevisionInfo {
-        @Exported public final String module;
-        @Exported public final long revision;
+        @Exported
+        public final String module;
+        @Exported
+        public final long revision;
+
         public RevisionInfo(String module, long revision) {
             this.module = module;
             this.revision = revision;
@@ -111,7 +115,7 @@ public final class SubversionChangeLogSet extends ChangeLogSet<LogEntry> {
 
     /**
      * One commit.
-     * <p>
+     * <p/>
      * Setter methods are public only so that the objects can be constructed from Digester.
      * So please consider this object read-only.
      */
@@ -126,20 +130,13 @@ public final class SubversionChangeLogSet extends ChangeLogSet<LogEntry> {
          * Gets the {@link SubversionChangeLogSet} to which this change set belongs.
          */
         public SubversionChangeLogSet getParent() {
-            return (SubversionChangeLogSet)super.getParent();
-        }
-
-        // because of the classloader difference, we need to extend this method to make it accessible
-        // to the rest of SubversionSCM
-        @Override
-        protected void setParent(ChangeLogSet changeLogSet) {
-            super.setParent(changeLogSet);
+            return (SubversionChangeLogSet) super.getParent();
         }
 
         /**
          * Gets the revision of the commit.
-         *
-         * <p>
+         * <p/>
+         * <p/>
          * If the commit made the repository revision 1532, this
          * method returns 1532.
          */
@@ -154,8 +151,9 @@ public final class SubversionChangeLogSet extends ChangeLogSet<LogEntry> {
 
         @Override
         public User getAuthor() {
-            if(author==null)
+            if (author == null) {
                 return User.getUnknown();
+            }
             return author;
         }
 
@@ -165,16 +163,19 @@ public final class SubversionChangeLogSet extends ChangeLogSet<LogEntry> {
                 public String get(int index) {
                     return preparePath(paths.get(index).value);
                 }
+
                 public int size() {
                     return paths.size();
                 }
             };
         }
-        
+
         private String preparePath(String path) {
             SCM scm = getParent().build.getProject().getScm();
-            if (!(scm instanceof SubversionSCM)) return path;
-            ModuleLocation[] locations = ((SubversionSCM)scm).getLocations();
+            if (!(scm instanceof SubversionSCM)) {
+                return path;
+            }
+            ModuleLocation[] locations = ((SubversionSCM) scm).getLocations();
             for (int i = 0; i < locations.length; i++) {
                 String commonPart = findCommonPart(locations[i].remote, path);
                 if (commonPart != null) {
@@ -190,7 +191,7 @@ public final class SubversionChangeLogSet extends ChangeLogSet<LogEntry> {
             }
             return path;
         }
-        
+
         private String findCommonPart(String folder, String filePath) {
             if (folder == null || filePath == null) {
                 return null;
@@ -213,7 +214,7 @@ public final class SubversionChangeLogSet extends ChangeLogSet<LogEntry> {
 
         @Exported
         public String getUser() {// digester wants read/write property, even though it never reads. Duh.
-            return author!=null ? author.getDisplayName() : "unknown";
+            return author != null ? author.getDisplayName() : "unknown";
         }
 
         @Exported
@@ -225,7 +226,8 @@ public final class SubversionChangeLogSet extends ChangeLogSet<LogEntry> {
             this.date = date;
         }
 
-        @Override @Exported
+        @Override
+        @Exported
         public String getMsg() {
             return msg;
         }
@@ -234,34 +236,34 @@ public final class SubversionChangeLogSet extends ChangeLogSet<LogEntry> {
             this.msg = msg;
         }
 
-        public void addPath( Path p ) {
+        public void addPath(Path p) {
             p.entry = this;
             paths.add(p);
         }
 
         /**
          * Gets the files that are changed in this commit.
-         * @return
-         *      can be empty but never null.
+         *
+         * @return can be empty but never null.
          */
         @Exported
         public List<Path> getPaths() {
             return paths;
         }
-        
+
         @Override
         public Collection<Path> getAffectedFiles() {
-	        return paths;
+            return paths;
         }
     }
 
     /**
      * A file in a commit.
-     * <p>
+     * <p/>
      * Setter methods are public only so that the objects can be constructed from Digester.
      * So please consider this object read-only.
      */
-    @ExportedBean(defaultVisibility=999)
+    @ExportedBean(defaultVisibility = 999)
     public static class Path implements AffectedFile {
         private LogEntry entry;
         private char action;
@@ -288,7 +290,7 @@ public final class SubversionChangeLogSet extends ChangeLogSet<LogEntry> {
         /**
          * Path in the repository. Such as <tt>/test/trunk/foo.c</tt>
          */
-        @Exported(name="file")
+        @Exported(name = "file")
         public String getValue() {
             return value;
         }
@@ -297,19 +299,21 @@ public final class SubversionChangeLogSet extends ChangeLogSet<LogEntry> {
          * Inherited from AffectedFile
          */
         public String getPath() {
-	        return getValue();
+            return getValue();
         }
-        
+
         public void setValue(String value) {
             this.value = value;
         }
 
         @Exported
         public EditType getEditType() {
-            if( action=='A' )
+            if (action == 'A') {
                 return EditType.ADD;
-            if( action=='D' )
+            }
+            if (action == 'D') {
                 return EditType.DELETE;
+            }
             return EditType.EDIT;
         }
     }

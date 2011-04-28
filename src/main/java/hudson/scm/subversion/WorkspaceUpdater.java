@@ -78,51 +78,50 @@ public abstract class WorkspaceUpdater extends AbstractDescribableImpl<Workspace
 
         // fields that are set by the caller as context for the perform method
 
-        //TODO protect, remove public properties
         /**
          * Factory for various subversion commands.
          */
-        public SVNClientManager manager;
+        protected SVNClientManager manager;
 
         /**
          * Encapusulates the authentication. Connected back to Hudson master. Never null.
          */
-        public ISVNAuthenticationProvider authProvider;
+        protected ISVNAuthenticationProvider authProvider;
 
         /**
          * When the build was scheduled.
          */
-        public Date queueTime;
+        protected Date queueTime;
 
         /**
          * When the build was started.
          */
-        public Date buildTime;
+        protected Date buildTime;
 
         /**
          * Connected to build console. Never null.
          */
-        public TaskListener listener;
+        protected TaskListener listener;
 
         /**
          * Modules to check out. Never null.
          */
-        public ModuleLocation[] locations;
+        protected ModuleLocation[] locations;
 
         /**
          * Build workspace. Never null.
          */
-        public File ws;
+        protected File ws;
 
         /**
          * If the build parameter is specified with specific version numbers, this field captures that. Can be null.
          */
-        public RevisionParameterAction revisionParameterAction;
+        protected RevisionParameterAction revisionParameterAction;
 
         /**
          * Global defined revision policy.
          */
-        public SubversionSCM.RevisionPolicy revisionPolicy;
+        protected SubversionSCM.RevisionPolicy revisionPolicy;
 
         /**
          * Performs the checkout/update.

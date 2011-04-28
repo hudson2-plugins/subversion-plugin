@@ -23,28 +23,24 @@
  */
 package hudson.scm.browsers;
 
+import hudson.Extension;
 import hudson.model.Descriptor;
-import hudson.model.Descriptor.FormException;
 import hudson.scm.EditType;
 import hudson.scm.RepositoryBrowser;
 import hudson.scm.SubversionChangeLogSet;
 import hudson.scm.SubversionRepositoryBrowser;
-import hudson.Extension;
-
 import java.io.IOException;
 import java.net.URL;
-import net.sf.json.JSONObject;
 import org.kohsuke.stapler.DataBoundConstructor;
-import org.kohsuke.stapler.StaplerRequest;
 
 /**
  * {@link RepositoryBrowser} implementation for CollabNet hosted Subversion repositories.
  * This enables Hudson to integrate with the repository browsers built-in to CollabNet-powered
  * sites such as Java.net and Tigris.org.
+ *
  * @author Daniel Dyer
  */
-public class CollabNetSVN extends SubversionRepositoryBrowser
-{
+public class CollabNetSVN extends SubversionRepositoryBrowser {
     @Extension
     public static class DescriptorImpl extends Descriptor<RepositoryBrowser<?>> {
         public String getDisplayName() {
@@ -86,7 +82,7 @@ public class CollabNetSVN extends SubversionRepositoryBrowser
 
     /**
      * {@inheritDoc}
-     */    
+     */
     public URL getFileLink(SubversionChangeLogSet.Path path) throws IOException {
         int revision = path.getLogEntry().getRevision();
         QueryBuilder query = new QueryBuilder(null);
@@ -98,7 +94,7 @@ public class CollabNetSVN extends SubversionRepositoryBrowser
 
     /**
      * {@inheritDoc}
-     */    
+     */
     public URL getChangeSetLink(SubversionChangeLogSet.LogEntry changeSet) throws IOException {
         int revision = changeSet.getRevision();
         QueryBuilder query = new QueryBuilder(null);

@@ -32,16 +32,14 @@ import hudson.scm.RepositoryBrowser;
 import hudson.scm.SubversionChangeLogSet.LogEntry;
 import hudson.scm.SubversionChangeLogSet.Path;
 import hudson.util.FormValidation;
-import hudson.util.FormValidation.URLCheck;
-import org.kohsuke.stapler.AncestorInPath;
-import org.kohsuke.stapler.DataBoundConstructor;
-import org.kohsuke.stapler.QueryParameter;
-
-import javax.servlet.ServletException;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLEncoder;
+import javax.servlet.ServletException;
+import org.kohsuke.stapler.AncestorInPath;
+import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.QueryParameter;
 
 /**
  * {@link RepositoryBrowser} for Sventon 1.x.
@@ -56,20 +54,22 @@ public class Sventon extends AbstractSventon {
 
     @Override
     public URL getDiffLink(Path path) throws IOException {
-        if(path.getEditType()!= EditType.EDIT)
+        if (path.getEditType() != EditType.EDIT) {
             return null;    // no diff if this is not an edit change
+        }
         int r = path.getLogEntry().getRevision();
         return new URL(url, String.format("diffprev.svn?name=%s&commitrev=%d&committedRevision=%d&revision=%d&path=%s",
-                repositoryInstance,r,r,r,URLEncoder.encode(getPath(path), URL_CHARSET)));
+            repositoryInstance, r, r, r, URLEncoder.encode(getPath(path), URL_CHARSET)));
     }
 
     @Override
     public URL getFileLink(Path path) throws IOException {
-        if (path.getEditType() == EditType.DELETE)
-           return null; // no file if it's gone
+        if (path.getEditType() == EditType.DELETE) {
+            return null; // no file if it's gone
+        }
         int r = path.getLogEntry().getRevision();
         return new URL(url, String.format("goto.svn?name=%s&revision=%d&path=%s",
-                repositoryInstance,r,URLEncoder.encode(getPath(path), URL_CHARSET)));
+            repositoryInstance, r, URLEncoder.encode(getPath(path), URL_CHARSET)));
     }
 
     /**
@@ -77,15 +77,17 @@ public class Sventon extends AbstractSventon {
      */
     private String getPath(Path path) {
         String s = trimHeadSlash(path.getValue());
-        if(s.startsWith(repositoryInstance)) // this should be always true, but be defensive
+        if (s.startsWith(repositoryInstance)) // this should be always true, but be defensive
+        {
             s = trimHeadSlash(s.substring(repositoryInstance.length()));
+        }
         return s;
     }
 
     @Override
     public URL getChangeSetLink(LogEntry changeSet) throws IOException {
         return new URL(url, String.format("revinfo.svn?name=%s&revision=%d",
-                repositoryInstance,changeSet.getRevision()));
+            repositoryInstance, changeSet.getRevision()));
     }
 
     @Extension
@@ -98,30 +100,16 @@ public class Sventon extends AbstractSventon {
          * Performs on-the-fly validation of the URL.
          */
         public FormValidation doCheckUrl(@AncestorInPath AbstractProject project,
-                                         @QueryParameter(fixEmpty=true) final String value)
-                throws IOException, ServletException {
-            if(!project.hasPermission(Item.CONFIGURE))  return FormValidation.ok(); // can't check
-            if(value==null) // nothing entered yet
+                                         @QueryParameter(fixEmpty = true) final String value)
+            throws IOException, ServletException {
+            if (!project.hasPermission(Item.CONFIGURE)) {
+                return FormValidation.ok(); // can't check
+            }
+            if (value == null) { // nothing entered yet
                 return FormValidation.ok();
+            }
 
-            return new URLCheck() {
-                protected FormValidation check() throws IOException, ServletException {
-                    String v = value;
-                    if(!v.endsWith("/")) v+='/';
-
-                    try {
-                        if (findText(open(new URL(v)),"sventon 1")) {
-                            return FormValidation.ok();
-                        } else if (findText(open(new URL(v)),"sventon")) {
-                            return FormValidation.error("This is a valid Sventon URL but it doesn't look like Sventon 1.x");
-                        } else{
-                            return FormValidation.error("This is a valid URL but it doesn't look like Sventon");
-                        }
-                    } catch (IOException e) {
-                        return handleIOException(v,e);
-                    }
-                }
-            }.check();
+            return new SventonUrlChecker(value, 1).check();
         }
     }
 

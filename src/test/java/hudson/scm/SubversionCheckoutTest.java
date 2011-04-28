@@ -48,11 +48,6 @@ public class SubversionCheckoutTest extends AbstractSubversionTest {
 
     String kind = ISVNAuthenticationManager.PASSWORD;
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
-    }
-
     @Email("http://www.nabble.com/Hudson-1.266-and-1.267%3A-Subversion-authentication-broken--td21156950.html")
     public void testHttpsCheckOut() throws Exception {
         FreeStyleProject p = createFreeStyleProject();

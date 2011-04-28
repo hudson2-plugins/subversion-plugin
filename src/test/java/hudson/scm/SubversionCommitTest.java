@@ -65,11 +65,6 @@ public class SubversionCommitTest extends AbstractSubversionTest {
 
     String kind = ISVNAuthenticationManager.PASSWORD;
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
-    }
-
     /**
      * {@link SubversionSCM#pollChanges(AbstractProject, hudson.Launcher, FilePath, TaskListener)} should notice
      * if the workspace and the current configuration is inconsistent and schedule a new build.
@@ -105,9 +100,9 @@ public class SubversionCommitTest extends AbstractSubversionTest {
         String var = url.substring(0, 10);
 
         FreeStyleBuild b = p.scheduleBuild2(0, new Cause.UserCause(),
-                new ParametersAction(new StringParameterValue("REPO", var))).get();
+            new ParametersAction(new StringParameterValue("REPO", var))).get();
         System.out.println(b.getLog(LOG_LIMIT));
-        assertBuildStatus(Result.SUCCESS,b);
+        assertBuildStatus(Result.SUCCESS, b);
         assertTrue(b.getWorkspace().child("Node.java").exists());
     }
 
@@ -118,11 +113,14 @@ public class SubversionCommitTest extends AbstractSubversionTest {
     public void testPollMultipleRepositories() throws Exception {
         // fetch the current workspaces
         FreeStyleProject p = createFreeStyleProject();
-        String svnBase = "file://" + new CopyExisting(getClass().getResource("/svn-repo.zip")).allocate().toURI().toURL().getPath();
+        String svnBase = "file://" + new CopyExisting(getClass().getResource("/svn-repo.zip")).allocate()
+            .toURI()
+            .toURL()
+            .getPath();
         SubversionSCM scm = new SubversionSCM(
-                Arrays.asList(new SubversionSCM.ModuleLocation(svnBase + "trunk", null),
-                    new SubversionSCM.ModuleLocation(svnBase + "branches", null)),
-                false, false, null, null, null, null, null);
+            Arrays.asList(new SubversionSCM.ModuleLocation(svnBase + "trunk", null),
+                new SubversionSCM.ModuleLocation(svnBase + "branches", null)),
+            false, false, null, null, null, null, null);
         p.setScm(scm);
         p.scheduleBuild2(0, new Cause.UserCause()).get();
 
@@ -161,11 +159,11 @@ public class SubversionCommitTest extends AbstractSubversionTest {
             reader = new BufferedReader(new FileReader(file));
             char[] buf = new char[1024];
             int numRead = 0;
-            while((numRead = reader.read(buf)) != -1) {
+            while ((numRead = reader.read(buf)) != -1) {
                 fileData.append(buf, 0, numRead);
             }
         } finally {
-            if(reader != null) {
+            if (reader != null) {
                 reader.close();
             }
         }
@@ -189,14 +187,16 @@ public class SubversionCommitTest extends AbstractSubversionTest {
         FreeStyleBuild b = p.scheduleBuild2(0, new Cause.UserCause()).get();
         File source = new File(b.getWorkspace().getRemote() + "/readme.txt");
         File linked = new File(b.getWorkspace().getRemote() + "/linked.txt");
-        assertEquals("Files '" + source + "' and '" + linked + "' are not identical from user view.", readFileAsString(source), readFileAsString(linked));
+        assertEquals("Files '" + source + "' and '" + linked + "' are not identical from user view.",
+            readFileAsString(source), readFileAsString(linked));
     }
 
     public void testExcludeByUser() throws Exception {
         FreeStyleProject p = createFreeStyleProject("testExcludeByUser");
         p.setScm(new SubversionSCM(
-                Arrays.asList(new SubversionSCM.ModuleLocation("https://svn.java.net/svn/hudson~svn/trunk/hudson/test-projects/testSubversionExclusions@19438", null)),
-                true, null, "", "dty", "", "")
+            Arrays.asList(new SubversionSCM.ModuleLocation(
+                "https://svn.java.net/svn/hudson~svn/trunk/hudson/test-projects/testSubversionExclusions@19438", null)),
+            true, null, "", "dty", "", "")
         );
         // Do a build to force the creation of the workspace. This works around
         // pollChanges returning true when the workspace does not exist.
@@ -216,7 +216,7 @@ public class SubversionCommitTest extends AbstractSubversionTest {
         SubversionSCM scm = new SubversionSCM(
             SubversionSCM.ModuleLocation.parse(new String[]{"file://" + repo.getPath()},
                 new String[]{"."}, null, null),
-                true, false, null, ".*//*bar", "", "", "", "");
+            true, false, null, ".*//*bar", "", "", "", "");
 
         FreeStyleProject p = createFreeStyleProject("testExcludedRegions");
         p.setScm(scm);
@@ -229,13 +229,13 @@ public class SubversionCommitTest extends AbstractSubversionTest {
 
         // polling on the slave for the code path that does have a change but should be excluded.
         assertFalse("Polling found changes that should have been ignored",
-                p.pollSCMChanges(createTaskListener()));
+            p.pollSCMChanges(createTaskListener()));
 
         createCommit(scm, "foo");
 
         // polling on the slave for the code path that doesn't find any change
         assertTrue("Polling didn't find a change it should have found.",
-                p.pollSCMChanges(createTaskListener()));
+            p.pollSCMChanges(createTaskListener()));
 
     }
 
@@ -249,7 +249,7 @@ public class SubversionCommitTest extends AbstractSubversionTest {
         SubversionSCM scm = new SubversionSCM(
             SubversionSCM.ModuleLocation.parse(new String[]{"file://" + repo.getPath()},
                 new String[]{"."}, null, null),
-                true, false, null, "", "", "", "", ".*//*foo");
+            true, false, null, "", "", "", "", ".*//*foo");
 
         FreeStyleProject p = createFreeStyleProject("testExcludedRegions");
         p.setScm(scm);
@@ -262,13 +262,13 @@ public class SubversionCommitTest extends AbstractSubversionTest {
 
         // polling on the slave for the code path that does have a change but should be excluded.
         assertFalse("Polling found changes that should have been ignored",
-                p.pollSCMChanges(createTaskListener()));
+            p.pollSCMChanges(createTaskListener()));
 
         createCommit(scm, "foo");
 
         // polling on the slave for the code path that doesn't find any change
         assertTrue("Polling didn't find a change it should have found.",
-                p.pollSCMChanges(createTaskListener()));
+            p.pollSCMChanges(createTaskListener()));
 
     }
 
@@ -294,6 +294,7 @@ public class SubversionCommitTest extends AbstractSubversionTest {
         // polling on the slave for the code path that doesn't find any change
         assertTrue(p.pollSCMChanges(new StreamTaskListener(System.out, Charset.defaultCharset())));
     }
+
     /**
      * Tests a checkout triggered from the post-commit hook
      */
@@ -301,7 +302,8 @@ public class SubversionCommitTest extends AbstractSubversionTest {
         FreeStyleProject p = createPostCommitTriggerJob();
         FreeStyleBuild b = sendCommitTrigger(p, true);
 
-        assertTrue(getActualRevision(b, "https://svn.java.net/svn/hudson~svn/trunk/hudson/test-projects/trivial-ant") <= 13000);
+        assertTrue(getActualRevision(b, "https://svn.java.net/svn/hudson~svn/trunk/hudson/test-projects/trivial-ant")
+            <= 13000);
     }
 
     /**
@@ -317,24 +319,30 @@ public class SubversionCommitTest extends AbstractSubversionTest {
     }
 
     private void assertNullEquals(String left, String right) {
-        if (left == null)
+        if (left == null) {
             left = "";
-        if (right == null)
+        }
+        if (right == null) {
             right = "";
+        }
         assertEquals(left, right);
     }
+
     /**
      * Loads a test Subversion repository into a temporary directory, and creates {@link SubversionSCM} for it.
      */
     private SubversionSCM loadSvnRepo() throws Exception {
-        return new SubversionSCM("file://" + new CopyExisting(getClass().getResource("/svn-repo.zip")).allocate().toURI().toURL().getPath() + "trunk/a", "a");
+        return new SubversionSCM(
+            "file://" + new CopyExisting(getClass().getResource("/svn-repo.zip")).allocate().toURI().toURL().getPath()
+                + "trunk/a", "a");
     }
 
     private FreeStyleBuild sendCommitTrigger(FreeStyleProject p, boolean includeRevision) throws Exception {
         String repoUUID = "71c3de6d-444a-0410-be80-ed276b4c234a";
 
         WebClient wc = new WebClient();
-        WebRequestSettings wr = new WebRequestSettings(new URL(getURL() + "subversion/" + repoUUID + "/notifyCommit"), HttpMethod.POST);
+        WebRequestSettings wr = new WebRequestSettings(new URL(getURL() + "subversion/" + repoUUID + "/notifyCommit"),
+            HttpMethod.POST);
         wr.setRequestBody("A   trunk/hudson/test-projects/trivial-ant/build.xml");
         wr.setAdditionalHeader("Content-Type", "text/plain;charset=UTF-8");
 
@@ -370,9 +378,11 @@ public class SubversionCommitTest extends AbstractSubversionTest {
             added.add(new File(newFile.getRemote()));
             if (!newFile.exists()) {
                 newFile.touch(System.currentTimeMillis());
-                svnm.getWCClient().doAdd(new File(newFile.getRemote()), false, false, false, SVNDepth.INFINITY, false, false);
-            } else
+                svnm.getWCClient()
+                    .doAdd(new File(newFile.getRemote()), false, false, false, SVNDepth.INFINITY, false, false);
+            } else {
                 newFile.write("random content", "UTF-8");
+            }
         }
         SVNCommitClient cc = svnm.getCommitClient();
         cc.doCommit(added.toArray(new File[added.size()]), false, "added", null, null, false, false, SVNDepth.EMPTY);
