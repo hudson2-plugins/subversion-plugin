@@ -1,7 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2010, Manufacture Francaise des Pneumatiques Michelin, Romain Seguy
+ * Copyright (c) 2011, Oracle Corporation, Winston Prakash, Nikita Levyankov, Anton Kozak
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -45,7 +45,6 @@ public class SimpleSVNDirEntryHandler implements ISVNDirEntryHandler {
     return dirs;
   }
 
-  @Override
   public void handleDirEntry(SVNDirEntry dirEntry) throws SVNException {
     dirs.add(Util.removeTrailingSlash(dirEntry.getName()));
   }
