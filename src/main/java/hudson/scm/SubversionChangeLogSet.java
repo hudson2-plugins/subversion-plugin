@@ -133,6 +133,14 @@ public final class SubversionChangeLogSet extends ChangeLogSet<LogEntry> {
             return (SubversionChangeLogSet) super.getParent();
         }
 
+        // because of the classloader difference, we need to extend this method to make it accessible
+        // to the rest of SubversionSCM
+        @Override
+        @SuppressWarnings({"PMD"})
+        protected void setParent(ChangeLogSet changeLogSet) {
+            super.setParent(changeLogSet);
+        }
+
         /**
          * Gets the revision of the commit.
          * <p/>
