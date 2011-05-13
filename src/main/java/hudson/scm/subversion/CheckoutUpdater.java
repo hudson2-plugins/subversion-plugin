@@ -32,21 +32,19 @@ import hudson.scm.SubversionSCM.External;
 import hudson.scm.SubversionSCM.ModuleLocation;
 import hudson.util.IOException2;
 import hudson.util.StreamCopyThread;
-import java.io.File;
-import java.io.IOException;
-import java.io.PipedInputStream;
-import java.io.PipedOutputStream;
-import java.io.PrintStream;
-import java.util.ArrayList;
-import java.util.List;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNUpdateClient;
 
+import java.io.*;
+import java.util.ArrayList;
+import java.util.List;
+
+
 /**
- * {@link WorkspaceUpdater} that does a fresh check out.
+ * {@link WorkspaceUpdater} that cleans workspace and then performs checkout.
  *
  * @author Kohsuke Kawaguchi
  */
@@ -72,32 +70,34 @@ public class CheckoutUpdater extends WorkspaceUpdater {
             final SVNUpdateClient svnuc = manager.getUpdateClient();
             final List<External> externals = new ArrayList<External>(); // store discovered externals to here
 
-            listener.getLogger().println("Cleaning workspace " + ws.getCanonicalPath());
-            Util.deleteContentsRecursive(ws);
+            cleanupBeforeCheckout();
 
             // buffer the output by a separate thread so that the update operation
             // won't be blocked by the remoting of the data
             PipedOutputStream pos = new PipedOutputStream();
-            StreamCopyThread sct = new StreamCopyThread("svn log copier", new PipedInputStream(pos),
-                listener.getLogger());
-            sct.start();
-
+            StreamCopyThread sct = null;
+            if (listener != null) {
+                sct = new StreamCopyThread("svn log copier", new PipedInputStream(pos),
+                        listener.getLogger());
+                sct.start();
+            }
             ModuleLocation location = null;
             try {
                 for (final ModuleLocation l : locations) {
                     location = l;
                     SVNDepth svnDepth = getSvnDepth(l.getDepthOption());
                     SVNRevision revision = getRevision(l);
-                    listener.getLogger().println("Checking out " + l.remote + " revision: " +
-                        (revision != null ? revision.toString() : "null") + " depth:" + svnDepth +
-                        " ignoreExternals: " + l.isIgnoreExternalsOption());
-
+                    if (listener != null) {
+                        listener.getLogger().println("Checking out " + l.remote + " revision: " +
+                                (revision != null ? revision.toString() : "null") + " depth:" + svnDepth +
+                                " ignoreExternals: " + l.isIgnoreExternalsOption());
+                    }
                     File local = new File(ws, l.getLocalDir());
                     svnuc.setIgnoreExternals(l.isIgnoreExternalsOption());
                     svnuc.setEventHandler(
-                        new SubversionUpdateEventHandler(new PrintStream(pos), externals, local, l.getLocalDir()));
+                            new SubversionUpdateEventHandler(new PrintStream(pos), externals, local, l.getLocalDir()));
                     svnuc.doCheckout(l.getSVNURL(), local.getCanonicalFile(), SVNRevision.HEAD, revision,
-                        svnDepth, true);
+                            svnDepth, true);
                 }
             } catch (SVNException e) {
                 e.printStackTrace(listener.error("Failed to check out " + location.remote));
@@ -107,7 +107,9 @@ public class CheckoutUpdater extends WorkspaceUpdater {
                     pos.close();
                 } finally {
                     try {
-                        sct.join(); // wait for all data to be piped.
+                        if (sct != null) {
+                            sct.join(); // wait for all data to be piped.
+                        }
                     } catch (InterruptedException e) {
                         throw new IOException2("interrupted", e);
                     }
@@ -115,6 +117,18 @@ public class CheckoutUpdater extends WorkspaceUpdater {
             }
 
             return externals;
+        }
+
+        /**
+         * Cleans workspace.
+         *
+         * @throws IOException IOException
+         */
+        protected void cleanupBeforeCheckout() throws IOException {
+            if (listener != null && listener.getLogger() != null) {
+                listener.getLogger().println("Cleaning workspace " + ws.getCanonicalPath());
+            }
+            Util.deleteContentsRecursive(ws);
         }
     }
 }
