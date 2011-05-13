@@ -32,16 +32,17 @@ import hudson.scm.SubversionSCM;
 import hudson.scm.SubversionSCM.External;
 import hudson.scm.SubversionSCM.ModuleLocation;
 import hudson.scm.util.RevisionUtil;
-import java.io.File;
-import java.io.IOException;
-import java.io.Serializable;
-import java.util.Date;
-import java.util.List;
 import org.kohsuke.stapler.export.ExportedBean;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationProvider;
 import org.tmatesoft.svn.core.wc.SVNClientManager;
 import org.tmatesoft.svn.core.wc.SVNRevision;
+
+import java.io.File;
+import java.io.IOException;
+import java.io.Serializable;
+import java.util.Date;
+import java.util.List;
 
 /**
  * Encapsulates the logic of how files are obtained from a subversion repository.
@@ -172,5 +173,58 @@ public abstract class WorkspaceUpdater extends AbstractDescribableImpl<Workspace
             return SVNDepth.fromString(name);
         }
 
+        /**
+         * Sets svn manager. For the tests only.
+         *
+         * @param manager manager.
+         */
+        void setManager(SVNClientManager manager) {
+            this.manager = manager;
+        }
+
+        /**
+         * Sets auth provider.  For the tests only.
+         *
+         * @param authProvider auth provider.
+         */
+        void setAuthProvider(ISVNAuthenticationProvider authProvider) {
+            this.authProvider = authProvider;
+        }
+
+        /**
+         * Sets svn locations.  For the tests only.
+         *
+         * @param locations svn locations.
+         */
+        void setLocations(ModuleLocation[] locations) {
+            this.locations = locations;
+        }
+
+        /**
+         * Sets workspace. For the tests only.
+         *
+         * @param ws workspace.
+         */
+        void setWs(File ws) {
+            this.ws = ws;
+        }
+
+        /**
+         * Sets revision policy. For the tests only.
+         *
+         * @param revisionPolicy revision policy.
+         */
+        void setRevisionPolicy(SubversionSCM.RevisionPolicy revisionPolicy) {
+            this.revisionPolicy = revisionPolicy;
+        }
+
+        /**
+         * Sets listener.  For the tests only.
+         *
+         * @param listener listener.
+         */
+        void setListener(TaskListener listener) {
+            this.listener = listener;
+        }
     }
 }
