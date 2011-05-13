@@ -10,13 +10,13 @@ import hudson.model.listeners.SaveableListener;
 import hudson.remoting.Channel;
 import hudson.scm.SubversionSCM.DescriptorImpl.Credential;
 import hudson.scm.SubversionSCM.DescriptorImpl.RemotableSVNAuthenticationProvider;
+import hudson.scm.subversion.Messages;
 import java.io.File;
 import java.io.IOException;
 import java.util.Hashtable;
 import java.util.Map;
 import java.util.logging.Logger;
 import org.tmatesoft.svn.core.SVNURL;
-import hudson.scm.subversion.Messages;
 
 import static java.util.logging.Level.INFO;
 
@@ -34,7 +34,8 @@ final class PerJobCredentialStore implements Saveable, RemotableSVNAuthenticatio
      */
     private static final ThreadLocal<Boolean> IS_SAVING = new ThreadLocal<Boolean>();
 
-    private final transient AbstractProject<?,?> project;
+    private final transient AbstractProject<?, ?> project;
+    private final transient String url;
 
     private static final String credentialsFileName = "subversion.credentials";
 
@@ -43,49 +44,54 @@ final class PerJobCredentialStore implements Saveable, RemotableSVNAuthenticatio
     /**
      * SVN authentication realm to its associated credentials, scoped to this project.
      */
-    private final Map<String,Credential> credentials = new Hashtable<String,Credential>();
-    
-    PerJobCredentialStore(AbstractProject<?,?> project) {
+    private final Map<String, Credential> credentials = new Hashtable<String, Credential>();
+
+    PerJobCredentialStore(AbstractProject<?, ?> project, String url) {
         this.project = project;
+        this.url = url;
         // read existing credential
         XmlFile xml = getXmlFile();
         try {
-            if (xml.exists())
+            if (xml.exists()) {
                 xml.unmarshal(this);
+            }
         } catch (IOException e) {
             // ignore the failure to unmarshal, or else we'll never get through beyond this point.
             LOGGER.log(INFO, Messages.PerJobCredentialStore_readCredentials_error(xml), e);
         }
     }
 
-    public synchronized Credential get(String realm) {
-        return credentials.get(realm);
+    private synchronized Credential get(String key) {
+        return credentials.get(key);
     }
 
     public Credential getCredential(SVNURL url, String realm) {
-        return get(realm);
+        return null == url ? get(realm) : get(url.toDecodedString());
     }
 
     public void acknowledgeAuthentication(String realm, Credential cred) {
         try {
-            acknowledge(realm, cred);
+            acknowledge(null == url? realm : url, cred);
         } catch (IOException e) {
-            LOGGER.log(INFO,Messages.PerJobCredentialStore_acknowledgeAuthentication_error(), e);
+            LOGGER.log(INFO, Messages.PerJobCredentialStore_acknowledgeAuthentication_error(), e);
         }
     }
 
-    public synchronized void acknowledge(String realm, Credential cred) throws IOException {
-        Credential old = cred==null ? credentials.remove(realm) : credentials.put(realm, cred);
+    private synchronized void acknowledge(String key, Credential cred) throws IOException {
+        Credential old = cred == null ? credentials.remove(key) : credentials.put(key, cred);
         // save only if there was a change
-        if (old==null && cred==null)    return;
-        if (old==null || cred==null || !old.equals(cred))
+        if (old == null && cred == null) {
+            return;
+        }
+        if (old == null || cred == null || !old.equals(cred)) {
             save();
+        }
     }
 
     public synchronized void save() throws IOException {
         IS_SAVING.set(Boolean.TRUE);
         try {
-            if(!credentials.isEmpty()) {
+            if (!credentials.isEmpty()) {
                 XmlFile xmlFile = getXmlFile();
                 xmlFile.write(this);
                 SaveableListener.fireOnChange(this, xmlFile);
@@ -96,10 +102,11 @@ final class PerJobCredentialStore implements Saveable, RemotableSVNAuthenticatio
     }
 
     private XmlFile getXmlFile() {
-        return new XmlFile(new File(project.getRootDir(),credentialsFileName));
+        return new XmlFile(new File(project.getRootDir(), credentialsFileName));
     }
 
-    /*package*/ synchronized boolean isEmpty() {
+    /*package*/
+    synchronized boolean isEmpty() {
         return credentials.isEmpty();
     }
 
@@ -107,19 +114,21 @@ final class PerJobCredentialStore implements Saveable, RemotableSVNAuthenticatio
      * When sent to the remote node, send a proxy.
      */
     private Object writeReplace() {
-        if (IS_SAVING.get()!=null)  return this;
-        
+        if (IS_SAVING.get() != null) {
+            return this;
+        }
+
         Channel c = Channel.current();
-        return c==null ? this : c.export(RemotableSVNAuthenticationProvider.class, this);
+        return c == null ? this : c.export(RemotableSVNAuthenticationProvider.class, this);
     }
 
     protected CredentialsSaveableListener getSaveableListener() {
-        if(null == saveableListener) {
+        if (null == saveableListener) {
             ExtensionList<SaveableListener> extensionList = Hudson.getInstance().getExtensionList(
                 SaveableListener.class);
-            if(null != extensionList && !extensionList.isEmpty()) {
-                for(SaveableListener listener : extensionList) {
-                    if(listener instanceof CredentialsSaveableListener) {
+            if (null != extensionList && !extensionList.isEmpty()) {
+                for (SaveableListener listener : extensionList) {
+                    if (listener instanceof CredentialsSaveableListener) {
                         saveableListener = (CredentialsSaveableListener) listener;
                         break;
                     }
@@ -136,7 +145,7 @@ final class PerJobCredentialStore implements Saveable, RemotableSVNAuthenticatio
 
         @Override
         public void onChange(Saveable o, XmlFile file) {
-            if(o instanceof PerJobCredentialStore) {
+            if (o instanceof PerJobCredentialStore) {
                 fileChanged = true;
             }
         }
