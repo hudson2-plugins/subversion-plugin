@@ -42,6 +42,7 @@ import hudson.model.BuildListener;
 import hudson.model.Computer;
 import hudson.model.Hudson;
 import hudson.model.Hudson.MasterComputer;
+import hudson.model.Item;
 import hudson.model.Node;
 import hudson.model.ParametersAction;
 import hudson.model.Run;
@@ -1730,7 +1731,8 @@ public class SubversionSCM extends SCM implements Serializable {
          */
         // TODO: stapler should do multipart/form-data handling
         public void doPostCredential(StaplerRequest req, StaplerResponse rsp) throws IOException, ServletException {
-            Hudson.getInstance().checkPermission(Hudson.ADMINISTER);
+            //User should have Configure permissions.
+            Hudson.getInstance().checkPermission(Item.CONFIGURE);
 
             MultipartFormDataParser parser = new MultipartFormDataParser(req);
 
