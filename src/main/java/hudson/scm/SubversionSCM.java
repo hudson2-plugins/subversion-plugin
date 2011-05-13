@@ -29,7 +29,6 @@ package hudson.scm;
 import com.thoughtworks.xstream.XStream;
 import com.trilead.ssh2.DebugLogger;
 import com.trilead.ssh2.SCPClient;
-import com.trilead.ssh2.crypto.Base64;
 import hudson.Extension;
 import hudson.FilePath;
 import hudson.FilePath.FileCallable;
@@ -47,7 +46,6 @@ import hudson.model.Node;
 import hudson.model.ParametersAction;
 import hudson.model.Run;
 import hudson.model.TaskListener;
-import hudson.remoting.Callable;
 import hudson.remoting.Channel;
 import hudson.remoting.DelegatingCallable;
 import hudson.remoting.VirtualChannel;
@@ -62,8 +60,6 @@ import hudson.scm.subversion.WorkspaceUpdaterDescriptor;
 import hudson.util.EditDistance;
 import hudson.util.FormValidation;
 import hudson.util.MultipartFormDataParser;
-import hudson.util.Scrambler;
-import hudson.util.Secret;
 import hudson.util.TimeUnit2;
 import hudson.util.XStream2;
 import java.io.BufferedOutputStream;
@@ -91,7 +87,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Random;
 import java.util.Set;
 import java.util.StringTokenizer;
 import java.util.UUID;
@@ -105,9 +100,6 @@ import net.sf.json.JSONObject;
 import org.apache.commons.beanutils.PropertyUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
-import org.apache.tools.ant.BuildException;
-import org.apache.tools.ant.Project;
-import org.apache.tools.ant.taskdefs.Chmod;
 import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
@@ -119,7 +111,6 @@ import org.tmatesoft.svn.core.ISVNLogEntryHandler;
 import org.tmatesoft.svn.core.SVNAuthenticationException;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNDirEntry;
-import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLogEntry;
@@ -130,9 +121,6 @@ import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationOutcomeListener;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationProvider;
 import org.tmatesoft.svn.core.auth.SVNAuthentication;
-import org.tmatesoft.svn.core.auth.SVNPasswordAuthentication;
-import org.tmatesoft.svn.core.auth.SVNSSHAuthentication;
-import org.tmatesoft.svn.core.auth.SVNSSLAuthentication;
 import org.tmatesoft.svn.core.auth.SVNUserNameAuthentication;
 import org.tmatesoft.svn.core.internal.io.dav.DAVRepositoryFactory;
 import org.tmatesoft.svn.core.internal.io.dav.http.DefaultHTTPConnectionFactory;
@@ -1449,159 +1437,38 @@ public class SubversionSCM extends SCM implements Serializable {
 
         /**
          * Username/password based authentication.
+         *
+         * @deprecated left for backward compatibility.
          */
-        public static final class PasswordCredential extends Credential {
-            private final String userName;
-            private final String password; // scrambled by base64
+        public static final class PasswordCredential extends hudson.scm.credential.PasswordCredential {
 
             public PasswordCredential(String userName, String password) {
-                this.userName = userName;
-                this.password = Scrambler.scramble(password);
-            }
-
-            @Override
-            public SVNAuthentication createSVNAuthentication(String kind) {
-                if (kind.equals(ISVNAuthenticationManager.SSH)) {
-                    return new SVNSSHAuthentication(userName, Scrambler.descramble(password), -1, false);
-                } else {
-                    return new SVNPasswordAuthentication(userName, Scrambler.descramble(password), false);
-                }
+                super(userName, password);
             }
         }
 
         /**
          * Public key authentication for Subversion over SSH.
+         *
+         * @deprecated left for backward compatibility.
          */
-        public static final class SshPublicKeyCredential extends Credential {
-            private final String userName;
-            private final String passphrase; // scrambled by base64
-            private final String id;
+        public static final class SshPublicKeyCredential extends hudson.scm.credential.SshPublicKeyCredential {
 
-            /**
-             * @param keyFile stores SSH private key. The file will be copied.
-             */
             public SshPublicKeyCredential(String userName, String passphrase, File keyFile) throws SVNException {
-                this.userName = userName;
-                this.passphrase = Scrambler.scramble(passphrase);
-
-                Random r = new Random();
-                StringBuilder buf = new StringBuilder();
-                for (int i = 0; i < 16; i++) {
-                    buf.append(Integer.toHexString(r.nextInt(16)));
-                }
-                this.id = buf.toString();
-
-                try {
-                    File savedKeyFile = getKeyFile();
-                    FileUtils.copyFile(keyFile, savedKeyFile);
-                    setFilePermissions(savedKeyFile, "600");
-                } catch (IOException e) {
-                    throw new SVNException(
-                        SVNErrorMessage.create(SVNErrorCode.AUTHN_CREDS_UNAVAILABLE,
-                            hudson.scm.credential.Messages.SshPublicKeyCredential_private_key_save_error()), e);
-                }
-            }
-
-            /**
-             * Gets the location where the private key will be permanently stored.
-             */
-            private File getKeyFile() {
-                File dir = new File(Hudson.getInstance().getRootDir(),
-                    hudson.scm.credential.Messages.SshPublicKeyCredential_private_key());
-                if (dir.mkdirs()) {
-                    // make sure the directory exists. if we created it, try to set the permission to 600
-                    // since this is sensitive information
-                    setFilePermissions(dir,
-                        hudson.scm.credential.Messages.SshPublicKeyCredential_private_key_permissions());
-                }
-                return new File(dir, id);
-            }
-
-            /**
-             * Set the file permissions
-             */
-            private boolean setFilePermissions(File file, String perms) {
-                try {
-                    Chmod chmod = new Chmod();
-                    chmod.setProject(new Project());
-                    chmod.setFile(file);
-                    chmod.setPerm(perms);
-                    chmod.execute();
-                } catch (BuildException e) {
-                    // if we failed to set the permission, that's fine.
-                    LOGGER.log(Level.WARNING,
-                        hudson.scm.credential.Messages.SshPublicKeyCredential_private_key_set_permissions_error(file),
-                        e);
-                    return false;
-                }
-
-                return true;
-            }
-
-
-            @Override
-            public SVNSSHAuthentication createSVNAuthentication(String kind) throws SVNException {
-                if (kind.equals(ISVNAuthenticationManager.SSH)) {
-                    try {
-                        Channel channel = Channel.current();
-                        String privateKey;
-                        if (channel != null) {
-                            // remote
-                            privateKey = channel.call(new Callable<String, IOException>() {
-                                public String call() throws IOException {
-                                    return FileUtils.readFileToString(getKeyFile(),
-                                        hudson.scm.credential.Messages.SshPublicKeyCredential_private_key_encoding());
-                                }
-                            });
-                        } else {
-                            privateKey = FileUtils.readFileToString(getKeyFile(),
-                                hudson.scm.credential.Messages.SshPublicKeyCredential_private_key_encoding());
-                        }
-                        return new SVNSSHAuthentication(userName, privateKey.toCharArray(),
-                            Scrambler.descramble(passphrase), -1, false);
-                    } catch (IOException e) {
-                        throw new SVNException(
-                            SVNErrorMessage.create(SVNErrorCode.AUTHN_CREDS_UNAVAILABLE,
-                                hudson.scm.credential.Messages.SshPublicKeyCredential_private_key_load_error()),
-                            e);
-                    } catch (InterruptedException e) {
-                        throw new SVNException(
-                            SVNErrorMessage.create(SVNErrorCode.AUTHN_CREDS_UNAVAILABLE,
-                                hudson.scm.credential.Messages.SshPublicKeyCredential_private_key_load_error()),
-                            e);
-                    }
-                } else {
-                    return null; // unknown
-                }
+                super(userName, passphrase, keyFile);
             }
         }
 
         /**
          * SSL client certificate based authentication.
+         *
+         * @deprecated left for backward compatibility.
          */
-        public static final class SslClientCertificateCredential extends Credential {
-            private final Secret certificate;
-            private final String password; // scrambled by base64
+        public static final class SslClientCertificateCredential
+            extends hudson.scm.credential.SslClientCertificateCredential {
 
             public SslClientCertificateCredential(File certificate, String password) throws IOException {
-                this.password = Scrambler.scramble(password);
-                this.certificate = Secret.fromString(
-                    new String(Base64.encode(FileUtils.readFileToByteArray(certificate))));
-            }
-
-            @Override
-            public SVNAuthentication createSVNAuthentication(String kind) {
-                if (kind.equals(ISVNAuthenticationManager.SSL)) {
-                    try {
-                        return new SVNSSLAuthentication(
-                            Base64.decode(certificate.getPlainText().toCharArray()),
-                            Scrambler.descramble(password), false);
-                    } catch (IOException e) {
-                        throw new Error(e); // can't happen
-                    }
-                } else {
-                    return null; // unexpected authentication type
-                }
+                super(certificate, password);
             }
         }
 
@@ -1845,7 +1712,7 @@ public class SubversionSCM extends SCM implements Serializable {
          */
         public ISVNAuthenticationProvider createAuthenticationProvider(AbstractProject<?, ?> inContextOf) {
             return new SVNAuthenticationProviderImpl(
-                inContextOf == null ? null : new PerJobCredentialStore(inContextOf), remotableProvider);
+                inContextOf == null ? null : new PerJobCredentialStore(inContextOf, null), remotableProvider);
         }
 
         /**
@@ -1906,7 +1773,7 @@ public class SubversionSCM extends SCM implements Serializable {
          * <p/>
          * This code is fairly ugly because of the way SVNKit handles credentials.
          */
-        public void postCredential(String url, final UserProvidedCredential upc, PrintWriter logWriter)
+        public void postCredential(final String url, final UserProvidedCredential upc, PrintWriter logWriter)
             throws SVNException, IOException {
             SVNRepository repository = null;
 
@@ -1921,12 +1788,15 @@ public class SubversionSCM extends SCM implements Serializable {
                 repository.setTunnelProvider(SVNWCUtil.createDefaultOptions(true));
                 AuthenticationManagerImpl authManager = upc.new AuthenticationManagerImpl(logWriter) {
                     @Override
-                    protected void onSuccess(String realm, Credential cred) {
-                        LOGGER.info("Persisted " + cred + " for " + realm);
-                        credentials.put(realm, cred);
-                        save();
+                    protected void onSuccess(String realm, Credential cred, Boolean overrideGlobal) {
+                        if (overrideGlobal) {
+                            LOGGER.info("Persisted " + cred + " for " + realm);
+                            credentials.put(realm, cred);
+                            save();
+                        }
                         if (upc.inContextOf != null) {
-                            new PerJobCredentialStore(upc.inContextOf).acknowledgeAuthentication(realm, cred);
+                            LOGGER.info("Persisted " + cred + " for " + url);
+                            new PerJobCredentialStore(upc.inContextOf, url).acknowledgeAuthentication(realm, cred);
                         }
 
                     }

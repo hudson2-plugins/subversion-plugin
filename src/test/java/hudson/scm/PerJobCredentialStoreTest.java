@@ -1,3 +1,26 @@
+/*
+ * The MIT License
+ *
+ * Copyright (c) 2011, Oracle Corporation, Nikita Levyankov
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ * THE SOFTWARE.
+ */
 package hudson.scm;
 
 import hudson.Proc;
@@ -5,7 +28,6 @@ import hudson.model.FreeStyleProject;
 import hudson.model.Result;
 import java.io.IOException;
 import java.io.PrintWriter;
-import org.junit.Ignore;
 import org.jvnet.hudson.test.Bug;
 import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.SVNException;
@@ -19,6 +41,7 @@ import static hudson.scm.SubversionSCM.compareSVNAuthentications;
 
 /**
  * @author Kohsuke Kawaguchi
+ * @author Nikita Levyankov
  */
 public class PerJobCredentialStoreTest extends AbstractSubversionTest {
     private static final String testSvnUser = "user";
@@ -36,25 +59,28 @@ public class PerJobCredentialStoreTest extends AbstractSubversionTest {
 
     public void testAcknowledgeNonEmptyCredentials() throws IOException {
         FreeStyleProject p = createFreeStyleProject();
-        credentialStore = new PerJobCredentialStore(p);
+        credentialStore = new PerJobCredentialStore(p, null);
         assertFalse(credentialStore.getSaveableListener().isFileChanged());
-        SubversionSCM.DescriptorImpl.Credential credential = new SubversionSCM.DescriptorImpl.PasswordCredential(testSvnUser, testSvnPassword);
-        credentialStore.acknowledge(testSvnRealm, credential);
+        SubversionSCM.DescriptorImpl.Credential credential = new SubversionSCM.DescriptorImpl.PasswordCredential(
+            testSvnUser, testSvnPassword);
+        credentialStore.acknowledgeAuthentication(testSvnRealm, credential);
         assertTrue(credentialStore.getSaveableListener().isFileChanged());
     }
 
     public void testAcknowledgeEmptyCredentials() throws IOException {
         FreeStyleProject p = createFreeStyleProject();
-        credentialStore = new PerJobCredentialStore(p);
-        SubversionSCM.DescriptorImpl.Credential credential = new SubversionSCM.DescriptorImpl.PasswordCredential(testSvnUser, testSvnPassword);
+        credentialStore = new PerJobCredentialStore(p, null);
+        SubversionSCM.DescriptorImpl.Credential credential = new SubversionSCM.DescriptorImpl.PasswordCredential(
+            testSvnUser, testSvnPassword);
         //Store password credentials
-        credentialStore.acknowledge(testSvnRealm, credential);
+        credentialStore.acknowledgeAuthentication(testSvnRealm, credential);
         //Reset file changed status flag in order to acknowledge null credentials
         credentialStore.getSaveableListener().resetChangedStatus();
         //Emulate call from slave.
-        credentialStore.acknowledge(testSvnRealm, null);
+        credentialStore.acknowledgeAuthentication(testSvnRealm, null);
         assertFalse(credentialStore.getSaveableListener().isFileChanged());
     }
+
     /**
      * There was a bug that credentials stored in the remote call context was serialized wrongly.
      */
@@ -64,17 +90,17 @@ public class PerJobCredentialStoreTest extends AbstractSubversionTest {
         try {
             p = runSvnServe(getClass().getResource("HUDSON-1379.zip"));
             FreeStyleProject b = createFreeStyleProject();
-            b.setScm(new SubversionSCM("svn://localhost/bob"));
+            b.setScm(new SubversionSCM(SVN_URL));
             b.setAssignedNode(createSlave());
 
-            descriptor.postCredential(b,"svn://localhost/bob","alice","alice",null,new PrintWriter(System.out));
-            
+            descriptor.postCredential(b, SVN_URL, "alice", "alice", null, new PrintWriter(System.out));
+
             buildAndAssertSuccess(b);
 
-            PerJobCredentialStore store = new PerJobCredentialStore(b);
+            PerJobCredentialStore store = new PerJobCredentialStore(b, SVN_URL);
             assertFalse(store.isEmpty());   // credential store should contain a valid entry
         } finally {
-            if(p!= null){
+            if (p != null) {
                 p.kill();
             }
         }
@@ -102,7 +128,8 @@ public class PerJobCredentialStoreTest extends AbstractSubversionTest {
             }
 
             // teach a bogus credential and have SVNKit store it.
-            SVNPasswordAuthentication bogus = new SVNPasswordAuthentication(BOGUS_USER_LOGIN, BOGUS_USER_PASSWORD, true);
+            SVNPasswordAuthentication bogus = new SVNPasswordAuthentication(BOGUS_USER_LOGIN, BOGUS_USER_PASSWORD,
+                true);
             m.acknowledgeAuthentication(true, kind, realm, null, bogus);
             assertTrue(compareSVNAuthentications(m.getFirstAuthentication(kind, realm, repo), bogus));
             try {
@@ -117,7 +144,8 @@ public class PerJobCredentialStoreTest extends AbstractSubversionTest {
 
             // now let Hudson have the real credential
             // can we now access the repo?
-            descriptor.postCredential(null, repo.toDecodedString(), GUEST_USER_LOGIN, GUEST_USER_PASSWORD, null, new PrintWriter(System.out));
+            descriptor.postCredential(null, repo.toDecodedString(), GUEST_USER_LOGIN, GUEST_USER_PASSWORD, null,
+                new PrintWriter(System.out));
             attemptAccess(repo, m);
         } finally {
             server.kill();
