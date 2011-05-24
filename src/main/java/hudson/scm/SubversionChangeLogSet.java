@@ -1,7 +1,7 @@
 /*
  * The MIT License
  * 
- * Copyright (c) 2004-2009, Sun Microsystems, Inc., Kohsuke Kawaguchi, Erik Ramfelt
+ * Copyright (c) 2004-2011, Oracle Corporation, Inc., Kohsuke Kawaguchi, Erik Ramfelt, Nikita Levyankov
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -33,7 +33,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import org.kohsuke.stapler.export.Exported;
@@ -43,6 +42,7 @@ import org.kohsuke.stapler.export.ExportedBean;
  * {@link ChangeLogSet} for Subversion.
  *
  * @author Kohsuke Kawaguchi
+ * @author Nikita Levyankov
  */
 public final class SubversionChangeLogSet extends ChangeLogSet<LogEntry> {
     private final List<LogEntry> logs;
@@ -66,17 +66,8 @@ public final class SubversionChangeLogSet extends ChangeLogSet<LogEntry> {
         }
     }
 
-    public boolean isEmptySet() {
-        return logs.isEmpty();
-    }
-
     public List<LogEntry> getLogs() {
         return logs;
-    }
-
-
-    public Iterator<LogEntry> iterator() {
-        return logs.iterator();
     }
 
     @Override
@@ -157,7 +148,17 @@ public final class SubversionChangeLogSet extends ChangeLogSet<LogEntry> {
             this.revision = revision;
         }
 
+        /**
+         * {@inheritDoc}
+         */
         @Override
+        public String getCurrentRevision() {
+            return String.valueOf(getRevision());
+        }
+
+        /**
+         * {@inheritDoc}
+         */
         public User getAuthor() {
             if (author == null) {
                 return User.getUnknown();
@@ -165,7 +166,9 @@ public final class SubversionChangeLogSet extends ChangeLogSet<LogEntry> {
             return author;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public Collection<String> getAffectedPaths() {
             return new AbstractList<String>() {
                 public String get(int index) {
@@ -222,7 +225,7 @@ public final class SubversionChangeLogSet extends ChangeLogSet<LogEntry> {
 
         @Exported
         public String getUser() {// digester wants read/write property, even though it never reads. Duh.
-            return author != null ? author.getDisplayName() : "unknown";
+            return getAuthor().getDisplayName();
         }
 
         @Exported
@@ -234,7 +237,6 @@ public final class SubversionChangeLogSet extends ChangeLogSet<LogEntry> {
             this.date = date;
         }
 
-        @Override
         @Exported
         public String getMsg() {
             return msg;
