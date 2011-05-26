@@ -1811,14 +1811,20 @@ public class SubversionSCM extends SCM implements Serializable {
         }
 
         /**
-         * validate the value for a remote (repository) location.
+         * Validates the value for a remote (repository) location.
+         *
+         * @param req {@link StaplerRequest}.
+         * @param context {@link AbstractProject}.
+         * @param value value to validate.
+         * @return {@link FormValidation}.
          */
         public FormValidation doCheckRemote(StaplerRequest req, @AncestorInPath AbstractProject context,
                                             @QueryParameter String value) {
             // syntax check first
             String url = Util.nullify(value);
+            // fixed HUDSON-7804 issue
             if (url == null) {
-                return FormValidation.ok();
+                return FormValidation.error(hudson.util.Messages.FormValidation_ValidateRequired());
             }
 
             // remove unneeded whitespaces
@@ -1955,8 +1961,15 @@ public class SubversionSCM extends SCM implements Serializable {
             return repoPath;
         }
 
+
         /**
-         * validate the value for a local location (local checkout directory).
+         * Validates the value for a local location (local checkout directory).
+         *
+         * @param value value to validate.
+         * @return {@link FormValidation}.
+         * @throws java.io.IOException IOException.
+         * @throws javax.servlet.ServletException ServletException.
+         *
          */
         public FormValidation doCheckLocal(@QueryParameter String value) throws IOException, ServletException {
             String v = Util.nullify(value);
@@ -1979,7 +1992,12 @@ public class SubversionSCM extends SCM implements Serializable {
         }
 
         /**
-         * Validates the excludeRegions Regex
+         * Validates the excludeRegions Regex.
+         *
+         * @param value value to validate.
+         * @return {@link FormValidation}.
+         * @throws java.io.IOException IOException.
+         * @throws javax.servlet.ServletException ServletException.
          */
         public FormValidation doCheckExcludedRegions(@QueryParameter String value)
             throws IOException, ServletException {
@@ -1994,7 +2012,12 @@ public class SubversionSCM extends SCM implements Serializable {
         }
 
         /**
-         * Validates the includedRegions Regex
+         * Validates the includedRegions Regex.
+         *
+         * @param value value to validate.
+         * @return {@link FormValidation}.
+         * @throws java.io.IOException IOException.
+         * @throws javax.servlet.ServletException ServletException.
          */
         public FormValidation doCheckIncludedRegions(@QueryParameter String value)
             throws IOException, ServletException {
@@ -2008,7 +2031,12 @@ public class SubversionSCM extends SCM implements Serializable {
         private static final Pattern USERNAME_PATTERN = Pattern.compile("(\\w+\\\\)?+(\\w+)");
 
         /**
-         * Validates the excludeUsers field
+         * Validates the excludeUsers field.
+         *
+         * @param value value to validate.
+         * @return {@link FormValidation}.
+         * @throws java.io.IOException IOException.
+         * @throws javax.servlet.ServletException ServletException.
          */
         public FormValidation doCheckExcludedUsers(@QueryParameter String value) throws IOException, ServletException {
             for (String user : Util.fixNull(value).trim().split("[\\r\\n]+")) {
@@ -2031,7 +2059,12 @@ public class SubversionSCM extends SCM implements Serializable {
         }
 
         /**
-         * Validates the excludeCommitMessages field
+         * Validates the excludeCommitMessages field.
+         *
+         * @param value value to validate.
+         * @return {@link FormValidation}.
+         * @throws java.io.IOException IOException.
+         * @throws javax.servlet.ServletException ServletException.
          */
         public FormValidation doCheckExcludedCommitMessages(@QueryParameter String value)
             throws IOException, ServletException {
@@ -2046,7 +2079,13 @@ public class SubversionSCM extends SCM implements Serializable {
         }
 
         /**
-         * Validates the remote server supports custom revision properties
+         * Validates the remote server supports custom revision properties.
+         *
+         * @param context {@link AbstractProject}.
+         * @param value value to validate.
+         * @return {@link FormValidation}.
+         * @throws java.io.IOException IOException.
+         * @throws javax.servlet.ServletException ServletException.
          */
         public FormValidation doCheckRevisionPropertiesSupported(@AncestorInPath AbstractProject context,
                                                                  @QueryParameter String value)
