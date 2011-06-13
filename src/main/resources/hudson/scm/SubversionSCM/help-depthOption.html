@@ -1,10 +1,26 @@
 <div>
-  "--depth" option for checkout and update commands. Default value is "infinity".
-<p/> "empty" includes only the immediate target of the operation, not any of its file or directory children.
-<p/> "files" includes the immediate target of the operation and any of its immediate file children.
-<p/> "immediates" includes the immediate target of the operation and any of its immediate file or directory children. The directory children will themselves be empty.
-<p/> "infinity" includes the immediate target, its file and directory children, its children's children, and so on to full recursion.
-<p/>
-    More information can be found
-  <a href="http://svnbook.red-bean.com/en/1.5/svn.advanced.sparsedirs.html" target="_blank">here</a>.
+    <p><code>--depth</code> option for checkout and update commands. Default
+        value is <code>infinity</code>.</p>
+    <dl>
+        <dt>empty</dt>
+        <dd> includes only the immediate target of the operation, not any of its
+            file or directory children.
+        </dd>
+        <dt>files</dt>
+        <dd>includes the immediate target of the operation and any of its
+            immediate file children
+        </dd>
+        <dt>immediates</dt>
+        <dd> includes the immediate target of the operation and any of its
+            immediate file or directory children. The directory children will
+            themselves be empty.
+        </dd>
+        <dt>infinity</dt>
+        <dd> includes the immediate target, its file and directory children, its
+            children's children, and so on to full recursion.
+        </dd>
+    </dl>
+    <p>More information can be found
+        <a href="http://svnbook.red-bean.com/en/1.5/svn.advanced.sparsedirs.html"
+            target="_blank">here</a></p>.
 </div>

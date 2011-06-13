@@ -25,13 +25,11 @@ THE SOFTWARE.
 <j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form" xmlns:i="jelly:fmt">
   <l:ajax>
     <div>
-    ${%description.1}
-    ${%description.explicitRevision}
-    <br/>
-    ${%description.2(rootURL)}
-    <br />
-    ${%description.3}
-    ${%description.4}
+    <p>${%description.1}</p>
+    <p>${%description.explicitRevision}</p>
+    <p>${%description.2(rootURL)}</p>
+    <p>${%description.3}</p>
+    <p>${%description.4}</p>
     </div>
   </l:ajax>
 </j:jelly>
