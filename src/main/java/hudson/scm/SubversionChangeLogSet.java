@@ -84,8 +84,8 @@ public final class SubversionChangeLogSet extends ChangeLogSet<LogEntry> {
         return r;
     }
 
-    private List<LogEntry> prepareChangeLogEntries(List<LogEntry> items) {
-        items = removeDuplicateEntries(items);
+    protected List<LogEntry> prepareChangeLogEntries(List<LogEntry> items) {
+        items = removeDuplicatedEntries(items);
         // we want recent changes first
         Collections.sort(items, new LogEntryComparator());
         for (LogEntry log : items) {
@@ -100,7 +100,7 @@ public final class SubversionChangeLogSet extends ChangeLogSet<LogEntry> {
      * @param items list of items
      * @return filtered list without duplicated entries
      */
-    private List<LogEntry> removeDuplicateEntries(List<LogEntry> items) {
+    protected static List<LogEntry> removeDuplicatedEntries(List<LogEntry> items) {
         Set<LogEntry> entries = new HashSet<LogEntry>(items);
         return new ArrayList<LogEntry>(entries);
     }
