@@ -1,0 +1,58 @@
+<!-- **************************************************************************
+#
+# Copyright (C) 2004-2011 Oracle Corporation
+#
+# All rights reserved. This program and the accompanying materials
+# are made available under the terms of the Eclipse Public License v1.0
+# which accompanies this distribution, and is available at
+# http://www.eclipse.org/legal/epl-v10.html
+#
+# Contributors:
+#   Kohsuke Kawaguchi, id:cactusman
+#
+#************************************************************************** -->
+
+<!--
+  Displays the Subversion change log.
+-->
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
+  <j:set var="browser" value="${it.build.parent.scm.effectiveBrowser}"/>
+
+  <h2>${%Summary}</h2>
+  <ol>
+    <j:forEach var="cs" items="${it.logs}">
+      <li><st:out value="${cs.msg}"/></li>
+    </j:forEach>
+  </ol>
+  <table class="pane" style="border:none">
+    <j:forEach var="cs" items="${it.logs}" varStatus="loop">
+      <tr class="pane">
+        <td colspan="2" class="changeset">
+          <a name="detail${loop.index}"></a>
+          <div class="changeset-message">
+            <b>
+              ${%Revision}
+              <a href="${browser.getChangeSetLink(cs)}">${cs.revision}</a>
+              by <a href="${rootURL}/${cs.author.url}/">${cs.author}</a>:
+            </b><br/>
+            ${cs.msgAnnotated}
+          </div>
+        </td>
+      </tr>
+
+      <j:forEach var="p" items="${cs.paths}">
+        <tr>
+          <td><t:editTypeIcon type="${p.editType}" /></td>
+          <td>
+            <a href="${browser.getFileLink(p)}">${p.value}</a>
+            <j:set var="diff" value="${browser.getDiffLink(p)}"/>
+            <j:if test="${diff!=null}">
+              <st:nbsp/>
+              <a href="${diff}">(diff)</a>
+            </j:if>
+          </td>
+        </tr>
+      </j:forEach>
+    </j:forEach>
+  </table>
+</j:jelly>

@@ -1,0 +1,70 @@
+<!-- **************************************************************************
+#
+# Copyright (C) 2004-2011 Oracle Corporation
+#
+# All rights reserved. This program and the accompanying materials
+# are made available under the terms of the Eclipse Public License v1.0
+# which accompanies this distribution, and is available at
+# http://www.eclipse.org/legal/epl-v10.html
+#
+# Contributors:
+#   Kohsuke Kawaguchi, Tom Huybrechts, id:cactusman, Yahoo! Inc.
+#
+#************************************************************************** -->
+
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
+  <f:entry title="${%Modules}">
+    <f:repeatable var="loc" name="locations" items="${instance.locations}" noAddButton="true" minimum="1">
+      <table width="100%">
+        <f:entry title="${%Repository URL}" field="remote" help="/scm/SubversionSCM/url-help">
+          <f:textbox value="${loc.remote}" id="svn.remote.loc" />
+            <j:if test="${loc.remote!=null}">
+                <a href="descriptorByName/hudson.scm.SubversionSCM/enterCredential?${loc.remote}" target="_blank">
+                    Update credentials
+                </a>
+            </j:if>
+        </f:entry>
+        <f:entry title="${%Local module directory} (${%optional})" field="local">
+          <f:textbox value="${loc!=null?loc.local:'.'}" />
+        </f:entry>
+        <f:entry title="${%Repository depth option}" field="depthOption">
+            <select name="depthOption">
+                <f:option value="infinity" selected="${loc.depthOption=='infinity'}">infinity</f:option>
+                <f:option value="empty" selected="${loc.depthOption=='empty'}">empty</f:option>
+                <f:option value="files" selected="${loc.depthOption=='files'}">files</f:option>
+                <f:option value="immediates" selected="${loc.depthOption=='immediates'}">immediates</f:option>
+            </select>
+        </f:entry>
+        <f:entry title="${%Ignore externals option}" field="ignoreExternalsOption">
+          <f:checkbox default="false" checked="${loc.ignoreExternalsOption}"/>
+        </f:entry>
+        <f:entry>
+          <div align="right">
+            <input type="button" value="${%Add more locations...}" class="repeatable-add show-if-last" />
+            <input type="button" value="${%Delete}" class="repeatable-delete show-if-not-only" style="margin-left: 1em;" />
+          </div>
+        </f:entry>
+      </table>
+    </f:repeatable>
+  </f:entry>
+  <f:dropdownDescriptorSelector title="${%Check-out Strategy}" field="workspaceUpdater" descriptors="${descriptor.getWorkspaceUpdaterDescriptors()}"/>
+
+  <t:listScmBrowsers name="svn.browser" />
+  <f:advanced>
+    <f:entry title="${%Excluded Regions}" field="excludedRegions">
+        <f:textarea />
+    </f:entry>
+    <f:entry title="${%Included Regions}" field="includedRegions">
+        <f:textarea />
+    </f:entry>
+    <f:entry title="${%Excluded Users}" field="excludedUsers">
+        <f:textarea />
+    </f:entry>
+    <f:entry title="${%Excluded Commit Messages}" field="excludedCommitMessages">
+        <f:textarea />
+    </f:entry>
+    <f:entry title="${%Exclusion revprop name}" field="excludedRevprop">
+        <f:textbox checkUrl="'descriptorByName/hudson.scm.SubversionSCM/checkRevisionPropertiesSupported?value='+toValue(document.getElementById('svn.remote.loc'))"/>
+    </f:entry>
+  </f:advanced>
+</j:jelly>

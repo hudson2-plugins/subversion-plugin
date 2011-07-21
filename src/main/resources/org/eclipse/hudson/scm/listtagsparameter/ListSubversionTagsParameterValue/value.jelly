@@ -1,0 +1,22 @@
+<!-- **************************************************************************
+#
+# Copyright (C) 2004-2011 Oracle Corporation
+#
+# All rights reserved. This program and the accompanying materials
+# are made available under the terms of the Eclipse Public License v1.0
+# which accompanies this distribution, and is available at
+# http://www.eclipse.org/legal/epl-v10.html
+#
+# Contributors:
+# Manufacture Francaise des Pneumatiques Michelin, Romain Seguy
+#
+#************************************************************************** -->
+
+<j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form">
+    <f:entry title="${%Repository URL}">
+        <f:textbox name="tagsDir" value="${it.tagsDir}" />
+    </f:entry>
+    <f:entry title="${%Tag}">
+        <f:textbox name="tad" value="${it.tag}" />
+    </f:entry>
+</j:jelly>

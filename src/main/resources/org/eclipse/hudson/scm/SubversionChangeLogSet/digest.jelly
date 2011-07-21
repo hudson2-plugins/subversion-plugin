@@ -1,0 +1,65 @@
+<!-- **************************************************************************
+#
+# Copyright (C) 2004-2011 Oracle Corporation
+#
+# All rights reserved. This program and the accompanying materials
+# are made available under the terms of the Eclipse Public License v1.0
+# which accompanies this distribution, and is available at
+# http://www.eclipse.org/legal/epl-v10.html
+#
+# Contributors:
+#   Kohsuke Kawaguchi, Seiji Sogabe, id:cactusman
+#
+#************************************************************************** -->
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
+  <st:documentation>
+    Displays the Subversion change log digest.
+    <st:attribute name="changesBaseUrl">
+      If specified, this is prepended in links to change details.
+    </st:attribute>
+  </st:documentation>
+
+  <j:set var="browser" value="${it.build.parent.scm.effectiveBrowser}"/>
+  <j:set var="rev" value="${it.revisionMap}" />
+  <j:choose>
+    <j:when test="${empty(rev)}">
+      <!-- nothing -->
+    </j:when>
+    <j:when test="${size(rev)==1}">
+      ${%Revision}:
+      <j:forEach var="r" items="${rev}">${r.value}</j:forEach><!-- just print that one value-->
+      <br/>
+    </j:when>
+    <j:otherwise>
+      ${%Revisions}
+      <ul>
+        <j:forEach var="r" items="${rev}">
+          <li>${r.key} : ${r.value}</li>
+        </j:forEach>
+      </ul>
+    </j:otherwise>
+  </j:choose>
+  <j:choose>
+    <j:when test="${it.emptySet}">
+      ${%No changes.}
+    </j:when>
+    <j:otherwise>
+      ${%Changes}
+      <ol>
+        <j:forEach var="cs" items="${it.logs}" varStatus="loop">
+          <li>
+            ${cs.msgAnnotated}
+            (<a href="${changesBaseUrl}changes#detail${loop.index}">${%detail}</a>
+
+            <j:set var="cslink" value="${browser.getChangeSetLink(cs)}"/>
+            <j:if test="${cslink!=null}">
+              <j:text>/</j:text>
+              <a href="${cslink}">${browser.descriptor.displayName}</a>
+            </j:if>
+            <j:text>)</j:text>
+          </li>
+        </j:forEach>
+      </ol>
+    </j:otherwise>
+  </j:choose>
+</j:jelly>
