@@ -195,7 +195,9 @@ public class SubversionCheckoutTest extends AbstractSubversionTest {
                 "user123",
                 "User",
                 "", // this one is ignored
-                "DOmain12\\User34"};
+                "DOmain12\\User34",
+                "DOMAIN.user",
+                "continuous-habbo"};
 
         for (String validUsername : validUsernames) {
             assertEquals(
@@ -207,8 +209,7 @@ public class SubversionCheckoutTest extends AbstractSubversionTest {
         String[] invalidUsernames = new String[]{
                 "\\user",
                 "DOMAIN\\",
-                "DOMAIN@user",
-                "DOMAIN.user"};
+                "DOMAIN@user"};
 
         for (String invalidUsername : invalidUsernames) {
             assertEquals(
