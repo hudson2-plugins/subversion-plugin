@@ -14,9 +14,6 @@
  *******************************************************************************/
 package org.eclipse.hudson.scm.subversion;
 
-import org.eclipse.hudson.scm.SubversionSCM;
-import org.eclipse.hudson.scm.subversion.CheckoutUpdater;
-import org.eclipse.hudson.scm.subversion.WorkspaceUpdater;
 import org.junit.Test;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;

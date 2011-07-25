@@ -19,8 +19,8 @@ package org.eclipse.hudson.scm.subversion;
 
 import hudson.Extension;
 import hudson.Util;
-import org.eclipse.hudson.scm.SubversionSCM.External;
-import org.eclipse.hudson.scm.SubversionSCM.ModuleLocation;
+import org.eclipse.hudson.scm.subversion.SubversionSCM.External;
+import org.eclipse.hudson.scm.subversion.SubversionSCM.ModuleLocation;
 import hudson.util.IOException2;
 import hudson.util.StreamCopyThread;
 import org.kohsuke.stapler.DataBoundConstructor;

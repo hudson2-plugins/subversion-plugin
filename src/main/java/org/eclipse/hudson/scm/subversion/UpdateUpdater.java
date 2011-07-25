@@ -18,9 +18,9 @@ package org.eclipse.hudson.scm.subversion;
 
 import hudson.Extension;
 import hudson.model.Hudson;
-import org.eclipse.hudson.scm.SubversionSCM.External;
-import org.eclipse.hudson.scm.SubversionSCM.ModuleLocation;
-import org.eclipse.hudson.scm.SubversionSCM.SvnInfo;
+import org.eclipse.hudson.scm.subversion.SubversionSCM.External;
+import org.eclipse.hudson.scm.subversion.SubversionSCM.ModuleLocation;
+import org.eclipse.hudson.scm.subversion.SubversionSCM.SvnInfo;
 import hudson.triggers.SCMTrigger;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.tmatesoft.svn.core.SVNDepth;

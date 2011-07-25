@@ -16,7 +16,6 @@ package org.eclipse.hudson.scm.subversion;
 
 import hudson.Plugin;
 import java.io.IOException;
-import org.eclipse.hudson.scm.SubversionSCM;
 
 /**
  * Plugin entry point.

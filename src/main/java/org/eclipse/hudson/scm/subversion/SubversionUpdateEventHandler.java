@@ -15,8 +15,7 @@
 package org.eclipse.hudson.scm.subversion;
 
 import hudson.remoting.Which;
-import org.eclipse.hudson.scm.SubversionEventHandlerImpl;
-import org.eclipse.hudson.scm.SubversionSCM.External;
+import org.eclipse.hudson.scm.subversion.SubversionSCM.External;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;

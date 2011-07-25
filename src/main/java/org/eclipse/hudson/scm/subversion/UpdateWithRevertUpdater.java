@@ -38,7 +38,7 @@
 package org.eclipse.hudson.scm.subversion;
 
 import hudson.Extension;
-import org.eclipse.hudson.scm.SubversionSCM.ModuleLocation;
+import org.eclipse.hudson.scm.subversion.SubversionSCM.ModuleLocation;
 import java.io.File;
 import java.io.IOException;
 import org.kohsuke.stapler.DataBoundConstructor;
