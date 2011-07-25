@@ -32,6 +32,7 @@ import hudson.model.BuildListener;
 import hudson.model.Computer;
 import hudson.model.Hudson;
 import hudson.model.Hudson.MasterComputer;
+import hudson.model.Items;
 import hudson.model.Node;
 import hudson.model.ParametersAction;
 import hudson.model.Run;
@@ -162,31 +163,6 @@ public class SubversionSCM extends SCM implements Serializable {
 
     private static final String HUDSON_SCM_SUBVERSION_DESCRIPTOR_ALIAS_NAME = HUDSON_SCM_SUBVERSION_ALIAS_NAME
         + "$DescriptorImpl";
-
-    /**
-     * Static block to save backward compatibility with old configuration.
-     */
-    static {
-        hudson.model.Items.XSTREAM.alias(HUDSON_SCM_SUBVERSION_ALIAS_NAME, SubversionSCM.class);
-        hudson.model.Items.XSTREAM.alias("hudson.scm.subversion.UpdateUpdater", UpdateUpdater.class);
-        hudson.model.Items.XSTREAM.alias("hudson.scm.subversion.UpdateWithCleanUpdater", UpdateWithCleanUpdater.class);
-        hudson.model.Items.XSTREAM.alias("hudson.scm.subversion.CheckoutUpdater", CheckoutUpdater.class);
-        hudson.model.Items.XSTREAM.alias("hudson.scm.subversion.CheckoutWithLocationFoldersCleanupUpdater",
-            CheckoutWithLocationFoldersCleanupUpdater.class);
-        hudson.model.Items.XSTREAM.alias("hudson.scm.subversion.UpdateWithRevertUpdater", UpdateWithRevertUpdater.class);
-        hudson.model.Items.XSTREAM.alias("hudson.scm.PerJobCredentialStore", PerJobCredentialStore.class);
-        hudson.model.Items.XSTREAM.alias("hudson.scm.SubversionTagAction", SubversionTagAction.class);
-        hudson.model.Items.XSTREAM.alias("hudson.scm.SubversionChangeLogParser", SubversionChangeLogParser.class);
-        hudson.model.Items.XSTREAM.alias("hudson.scm.SVNRevisionState", SVNRevisionState.class);
-        hudson.model.Items.XSTREAM.alias("hudson.scm.SubversionSCM$ModuleLocation", ModuleLocation.class);
-        hudson.model.Items.XSTREAM.alias("hudson.scm.SubversionSCM$DescriptorImpl$PasswordCredential",
-            DescriptorImpl.PasswordCredential.class);
-        hudson.model.Items.XSTREAM.alias("hudson.scm.SubversionSCM$DescriptorImpl$SshPublicKeyCredential",
-            DescriptorImpl.SshPublicKeyCredential.class);
-        hudson.model.Items.XSTREAM.alias("hudson.scm.SubversionSCM$DescriptorImpl$SslClientCertificateCredential",
-            DescriptorImpl.SslClientCertificateCredential.class);
-        XmlFile.DEFAULT_XSTREAM.alias(HUDSON_SCM_SUBVERSION_DESCRIPTOR_ALIAS_NAME, DescriptorImpl.class);
-    }
 
     /**
      * the locations field is used to store all configured SVN locations (with
@@ -354,6 +330,31 @@ public class SubversionSCM extends SCM implements Serializable {
         this.excludedRevprop = excludedRevprop;
         this.excludedCommitMessages = excludedCommitMessages;
         this.includedRegions = includedRegions;
+    }
+
+    /**
+     * Initializes aliases to save backward compatibility with old configuration.
+     */
+    public static void initialize() {
+        Items.XSTREAM.alias(HUDSON_SCM_SUBVERSION_ALIAS_NAME, SubversionSCM.class);
+        Items.XSTREAM.alias("hudson.scm.subversion.UpdateUpdater", UpdateUpdater.class);
+        Items.XSTREAM.alias("hudson.scm.subversion.UpdateWithCleanUpdater", UpdateWithCleanUpdater.class);
+        Items.XSTREAM.alias("hudson.scm.subversion.CheckoutUpdater", CheckoutUpdater.class);
+        Items.XSTREAM.alias("hudson.scm.subversion.CheckoutWithLocationFoldersCleanupUpdater",
+            CheckoutWithLocationFoldersCleanupUpdater.class);
+        Items.XSTREAM.alias("hudson.scm.subversion.UpdateWithRevertUpdater", UpdateWithRevertUpdater.class);
+        Items.XSTREAM.alias("hudson.scm.PerJobCredentialStore", PerJobCredentialStore.class);
+        Items.XSTREAM.alias("hudson.scm.SubversionTagAction", SubversionTagAction.class);
+        Items.XSTREAM.alias("hudson.scm.SubversionChangeLogParser", SubversionChangeLogParser.class);
+        Items.XSTREAM.alias("hudson.scm.SVNRevisionState", SVNRevisionState.class);
+        Items.XSTREAM.alias("hudson.scm.SubversionSCM$ModuleLocation", ModuleLocation.class);
+        Items.XSTREAM.alias("hudson.scm.SubversionSCM$DescriptorImpl$PasswordCredential",
+            DescriptorImpl.PasswordCredential.class);
+        Items.XSTREAM.alias("hudson.scm.SubversionSCM$DescriptorImpl$SshPublicKeyCredential",
+            DescriptorImpl.SshPublicKeyCredential.class);
+        Items.XSTREAM.alias("hudson.scm.SubversionSCM$DescriptorImpl$SslClientCertificateCredential",
+            DescriptorImpl.SslClientCertificateCredential.class);
+        XmlFile.DEFAULT_XSTREAM.alias(HUDSON_SCM_SUBVERSION_DESCRIPTOR_ALIAS_NAME, DescriptorImpl.class);
     }
 
     /**

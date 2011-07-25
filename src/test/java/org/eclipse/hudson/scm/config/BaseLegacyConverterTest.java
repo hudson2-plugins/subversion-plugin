@@ -24,6 +24,7 @@ import hudson.matrix.MatrixProject;
 import hudson.model.FreeStyleProject;
 import hudson.model.Items;
 import org.apache.commons.io.FileUtils;
+import org.eclipse.hudson.scm.SubversionSCM;
 import org.junit.Before;
 
 public abstract class BaseLegacyConverterTest {
@@ -34,6 +35,7 @@ public abstract class BaseLegacyConverterTest {
     static {
         XSTREAM.alias("project",FreeStyleProject.class);
         XSTREAM.alias("matrix-project",MatrixProject.class);
+        SubversionSCM.initialize();
     }
 
     @Before

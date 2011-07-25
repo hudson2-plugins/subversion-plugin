@@ -61,8 +61,6 @@ public class SubversionCommitTest extends AbstractSubversionTest {
      * {@link SubversionSCM#pollChanges(AbstractProject, hudson.Launcher, FilePath, TaskListener)} should notice
      * if the workspace and the current configuration is inconsistent and schedule a new build.
      */
-    //TODO fix me
-    @Ignore
     @Email("http://www.nabble.com/Proper-way-to-switch---relocate-SVN-tree---tt21173306.html")
     public void testPollingAfterRelocation() throws Exception {
         // fetch the current workspace
@@ -103,13 +101,11 @@ public class SubversionCommitTest extends AbstractSubversionTest {
     /**
      * Test that multiple repository URLs are all polled.
      */
-    //TODO fix me
-    @Ignore
     @Bug(3168)
     public void testPollMultipleRepositories() throws Exception {
         // fetch the current workspaces
         FreeStyleProject p = createFreeStyleProject();
-        String svnBase = "file://" + new CopyExisting(getClass().getResource("/svn-repo.zip")).allocate()
+        String svnBase = "file://" + new CopyExisting(getClass().getResource("svn-repo.zip")).allocate()
             .toURI()
             .toURL()
             .getPath();
@@ -134,8 +130,6 @@ public class SubversionCommitTest extends AbstractSubversionTest {
     /**
      * Makes sure that Subversion doesn't check out workspace in 1.6
      */
-    //TODO fix me
-    @Ignore
     @Bug(3168)
     @Email("http://www.nabble.com/SVN-1.6-td24081571.html")
     public void testWorkspaceVersion() throws Exception {
@@ -332,7 +326,7 @@ public class SubversionCommitTest extends AbstractSubversionTest {
      */
     private SubversionSCM loadSvnRepo() throws Exception {
         return new SubversionSCM(
-            "file://" + new CopyExisting(getClass().getResource("/svn-repo.zip")).allocate().toURI().toURL().getPath()
+            "file://" + new CopyExisting(getClass().getResource("svn-repo.zip")).allocate().toURI().toURL().getPath()
                 + "trunk/a", "a");
     }
 

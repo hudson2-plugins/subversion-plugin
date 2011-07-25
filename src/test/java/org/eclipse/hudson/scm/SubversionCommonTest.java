@@ -100,12 +100,13 @@ public class SubversionCommonTest extends AbstractSubversionTest {
 
     //TODO Investigate why System user is used instead of anonymous after migration to 2.0.0 version
     //TODO fix me
-    @Ignore
-    @PresetData(PresetData.DataSet.ANONYMOUS_READONLY)
     @Bug(2380)
-    public void testTaggingPermission() throws Exception {
+    public void ignore_testTaggingPermission() throws Exception {
+        File repo = new CopyExisting(getClass().getResource("anonymous-readonly.zip")).allocate();
+        SubversionSCM scm = new SubversionSCM("file://" + repo.getPath());
         // create a build
         FreeStyleProject p = createFreeStyleProject();
+        p.setScm(scm);
         //Set anonymous user for authentication.
         SecurityContextHolder.getContext().setAuthentication(Hudson.ANONYMOUS);
         p.setScm(loadSvnRepo());
@@ -383,7 +384,7 @@ public class SubversionCommonTest extends AbstractSubversionTest {
      */
     private SubversionSCM loadSvnRepo() throws Exception {
         return new SubversionSCM(
-            "file://" + new CopyExisting(getClass().getResource("/svn-repo.zip")).allocate().toURI().toURL().getPath()
+            "file://" + new CopyExisting(getClass().getResource("svn-repo.zip")).allocate().toURI().toURL().getPath()
                 + "trunk/a", "a");
     }
 

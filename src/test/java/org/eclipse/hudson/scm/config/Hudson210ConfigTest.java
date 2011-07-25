@@ -15,6 +15,8 @@
 package org.eclipse.hudson.scm.config;
 
 import hudson.model.FreeStyleProject;
+import org.apache.commons.lang.StringUtils;
+import org.eclipse.hudson.scm.SubversionSCM;
 import org.junit.Test;
 import static org.junit.Assert.*;
 
@@ -31,18 +33,19 @@ public class Hudson210ConfigTest extends BaseLegacyConverterTest {
     @Test
     public void testLegacyUnmarshall() throws Exception {
         FreeStyleProject project = (FreeStyleProject) getSourceConfigFile(XSTREAM).read();
-//        CVSSCM scm = (CVSSCM) project.getScm();
-//        assertNotNull(scm);
-//        assertEquals(scm.getModuleLocations().length, 1);
-//        assertEquals(scm.getModuleLocations()[0].getCvsroot(), ":pserver:anonymous:password@10.4.0.50:/var/cvsroot");
-//        assertEquals(scm.getModuleLocations()[0].getBranch(), "tag");
-//        assertEquals(scm.getModuleLocations()[0].getModule(), "test_cvs doc");
-//        assertEquals(scm.getModuleLocations()[0].getLocalDir(), ".");
-//        assertTrue(scm.getModuleLocations()[0].isTag());
-//        assertTrue(scm.getCanUseUpdate());
-//        assertTrue(scm.isLegacy());
-//        assertFalse(scm.isFlatten());
-//        assertEquals(scm.getExcludedRegions(), "");
+        SubversionSCM scm = (SubversionSCM) project.getScm();
+        assertNotNull(scm);
+        assertEquals(scm.getLocations().length, 1);
+        assertEquals(scm.getLocations()[0].getURL(), "http://10.4.0.50/repos/test3");
+        assertEquals(scm.getLocations()[0].getLocalDir(), ".");
+        assertEquals(scm.getLocations()[0].getDepthOption(), "infinity");
+        assertFalse(scm.getLocations()[0].isIgnoreExternalsOption());
+        assertTrue(StringUtils.isEmpty(scm.getExcludedRegions()));
+        assertTrue(StringUtils.isEmpty(scm.getIncludedRegions()));
+        assertTrue(StringUtils.isEmpty(scm.getExcludedUsers()));
+        assertTrue(StringUtils.isEmpty(scm.getExcludedRevprop()));
+        assertTrue(StringUtils.isEmpty(scm.getExcludedCommitMessages()));
+        assertEquals(scm.getWorkspaceUpdater().getClass().getName(), "org.eclipse.hudson.scm.subversion.UpdateUpdater");
     }
 
     @Test
