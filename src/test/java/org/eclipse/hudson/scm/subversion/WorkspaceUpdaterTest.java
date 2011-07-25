@@ -46,6 +46,7 @@ public class WorkspaceUpdaterTest extends AbstractSubversionTest {
      */
     public void testWorkspaceUpdaterCompatibility() throws Exception {
         Proc p = runSvnServe(getClass().getResource("small.zip"));
+        SubversionSCM.initialize();
         try {
             verifyCompatibility("legacy-update.xml", UpdateUpdater.class);
             verifyCompatibility("legacy-checkout.xml", CheckoutUpdater.class);
