@@ -46,7 +46,6 @@ import hudson.scm.RepositoryBrowser;
 import hudson.scm.SCM;
 import hudson.scm.SCMDescriptor;
 import hudson.scm.SCMRevisionState;
-import org.eclipse.hudson.scm.subversion.WorkspaceUpdater.UpdateTask;
 import hudson.util.EditDistance;
 import hudson.util.FormValidation;
 import hudson.util.MultipartFormDataParser;
@@ -90,6 +89,8 @@ import net.sf.json.JSONObject;
 import org.apache.commons.beanutils.PropertyUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
+import org.eclipse.hudson.scm.subversion.WorkspaceUpdater.UpdateTask;
+import org.eclipse.hudson.scm.subversion.util.RevisionUtil;
 import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
@@ -128,7 +129,6 @@ import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNWCClient;
 import org.tmatesoft.svn.core.wc.SVNWCUtil;
 
-//import static hudson.model.Items.*;
 import static hudson.scm.PollingResult.Change;
 
 /**
@@ -1101,6 +1101,12 @@ public class SubversionSCM extends SCM implements Serializable {
                                                       FilePath workspace, final TaskListener listener,
                                                       SCMRevisionState _baseline)
         throws IOException, InterruptedException {
+
+        if (project.getLastBuild() == null) {
+            listener.getLogger().println(Messages.SubversionSCM_pollChanges_noBuilds());
+            return PollingResult.BUILD_NOW;
+        }
+
         final SVNRevisionState baseline;
         if (_baseline instanceof SVNRevisionState) {
             baseline = (SVNRevisionState) _baseline;
@@ -1110,12 +1116,7 @@ public class SubversionSCM extends SCM implements Serializable {
             baseline = new SVNRevisionState(null);
         }
 
-        if (project.getLastBuild() == null) {
-            listener.getLogger().println(Messages.SubversionSCM_pollChanges_noBuilds());
-            return PollingResult.BUILD_NOW;
-        }
-
-        AbstractBuild<?, ?> lastCompletedBuild = project.getLastCompletedBuild();
+        final AbstractBuild<?, ?> lastCompletedBuild = project.getLastCompletedBuild();
         if (lastCompletedBuild != null) {
             if (repositoryLocationsNoLongerExist(lastCompletedBuild, listener)) {
                 // Disable this project, see HUDSON-763
@@ -1185,22 +1186,30 @@ public class SubversionSCM extends SCM implements Serializable {
                         is not to fire off builds. see HUDSON-6136.
                      */
                     revs.put(url, baseRev);
-                    try {
-                        final SVNURL svnurl = SVNURL.parseURIDecoded(url);
-                        long nowRev = new SvnInfo(parseSvnInfo(svnurl, authProvider)).revision;
+                    // skip baselineInfo if build location URL contains revision like svn://svnserver/scripts@184375
+                    if (isRevisionSpecifiedInBuildLocation(url, lastCompletedBuild, listener)) {
+                        listener.getLogger()
+                            .println("Poll processing of the URL: " + url
+                                + " skipped because it contains specified revision");
+                    } else {
+                        try {
+                            final SVNURL svnurl = SVNURL.parseURIDecoded(url);
+                            long nowRev = new SvnInfo(parseSvnInfo(svnurl, authProvider)).revision;
 
-                        changes |= (nowRev > baseRev);
+                            changes |= (nowRev > baseRev);
 
-                        listener.getLogger().println(Messages.SubversionSCM_pollChanges_remoteRevisionAt(url, nowRev));
-                        revs.put(url, nowRev);
-                        // make sure there's a change and it isn't excluded
-                        if (logHandler.findNonExcludedChanges(svnurl,
-                            baseRev + 1, nowRev, authProvider)) {
-                            listener.getLogger().println(Messages.SubversionSCM_pollChanges_changedFrom(baseRev));
-                            significantChanges = true;
+                            listener.getLogger()
+                                .println(Messages.SubversionSCM_pollChanges_remoteRevisionAt(url, nowRev));
+                            revs.put(url, nowRev);
+                            // make sure there's a change and it isn't excluded
+                            if (logHandler.findNonExcludedChanges(svnurl,
+                                baseRev + 1, nowRev, authProvider)) {
+                                listener.getLogger().println(Messages.SubversionSCM_pollChanges_changedFrom(baseRev));
+                                significantChanges = true;
+                            }
+                        } catch (SVNException e) {
+                            e.printStackTrace(listener.error(Messages.SubversionSCM_pollChanges_exception(url)));
                         }
-                    } catch (SVNException e) {
-                        e.printStackTrace(listener.error(Messages.SubversionSCM_pollChanges_exception(url)));
                     }
                 }
                 assert revs.size() == baseline.revisions.size();
@@ -1208,6 +1217,33 @@ public class SubversionSCM extends SCM implements Serializable {
                     significantChanges ? Change.SIGNIFICANT : changes ? Change.INSIGNIFICANT : Change.NONE);
             }
         });
+    }
+
+    /**
+     * Checks whether build location contains specified revision.
+     * @param url url to verify.
+     * @param lastCompletedBuild build.
+     * @param listener listener.
+     * @return true if build location contains specified revision.
+     */
+    boolean isRevisionSpecifiedInBuildLocation(String url, AbstractBuild<?, ?> lastCompletedBuild,
+                                                       TaskListener listener) {
+        for (ModuleLocation location : getLocations(lastCompletedBuild)) {
+            if(location.getURL() != null && location.getURL().contains(url)){
+                int idx = location.getOriginRemote().lastIndexOf(RevisionUtil.AT_SYMBOL);
+                if (idx > 0) {
+                    String revision = location.getOriginRemote().substring(idx + 1);
+                    try {
+                        Long.valueOf(revision);
+                        return true;
+                    } catch (NumberFormatException ignore) {
+                        listener.getLogger()
+                            .println("Specified incorrect revision:" + revision);
+                    }
+                }
+            }
+        }
+        return false;
     }
 
     /**
@@ -1890,7 +1926,7 @@ public class SubversionSCM extends SCM implements Serializable {
                     // something exists; now check revision if any
 
                     SVNRevision revision = getRevisionFromRemoteUrl(url);
-                    if (revision != null && !revision.isValid()) {
+                    if (revision != null && !"UNDEFINED".equals(revision.getName()) && !revision.isValid()) {
                         return FormValidation.errorWithMarkup(Messages.SubversionSCM_doCheckRemote_invalidRevision());
                     }
 

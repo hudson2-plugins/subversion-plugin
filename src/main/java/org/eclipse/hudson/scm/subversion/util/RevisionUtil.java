@@ -14,9 +14,9 @@
  *******************************************************************************/
 package org.eclipse.hudson.scm.subversion.util;
 
+import java.util.Date;
 import org.eclipse.hudson.scm.subversion.RevisionParameterAction;
 import org.eclipse.hudson.scm.subversion.SubversionSCM;
-import java.util.Date;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 
 /**
@@ -28,7 +28,7 @@ import org.tmatesoft.svn.core.wc.SVNRevision;
  */
 public final class RevisionUtil {
 
-    static final char AT_SYMBOL = '@';
+    public static final char AT_SYMBOL = '@';
 
     /**
      * Private constructor.
