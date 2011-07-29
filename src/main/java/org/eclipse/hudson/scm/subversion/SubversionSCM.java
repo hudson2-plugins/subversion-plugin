@@ -90,7 +90,6 @@ import org.apache.commons.beanutils.PropertyUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
 import org.eclipse.hudson.scm.subversion.WorkspaceUpdater.UpdateTask;
-import org.eclipse.hudson.scm.subversion.util.RevisionUtil;
 import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
@@ -156,6 +155,8 @@ public class SubversionSCM extends SCM implements Serializable {
     private static final String HUDSON_SCM_SUBVERSION_DESCRIPTOR_ALIAS_NAME = HUDSON_SCM_SUBVERSION_ALIAS_NAME
         + "$DescriptorImpl";
     protected static final String SUBVERSION_TAG_ACTION_ALIAS_NAME = "hudson.scm.SubversionTagAction";
+
+    private static final String UNDEFINED_REVISION_VALUE = "UNDEFINED";
 
     /**
      * the locations field is used to store all configured SVN locations (with
@@ -1187,11 +1188,7 @@ public class SubversionSCM extends SCM implements Serializable {
                      */
                     revs.put(url, baseRev);
                     // skip baselineInfo if build location URL contains revision like svn://svnserver/scripts@184375
-                    if (isRevisionSpecifiedInBuildLocation(url, lastCompletedBuild, listener)) {
-                        listener.getLogger()
-                            .println("Poll processing of the URL: " + url
-                                + " skipped because it contains specified revision");
-                    } else {
+                    if (!isRevisionSpecifiedInBuildLocation(url, lastCompletedBuild)) {
                         try {
                             final SVNURL svnurl = SVNURL.parseURIDecoded(url);
                             long nowRev = new SvnInfo(parseSvnInfo(svnurl, authProvider)).revision;
@@ -1223,27 +1220,22 @@ public class SubversionSCM extends SCM implements Serializable {
      * Checks whether build location contains specified revision.
      * @param url url to verify.
      * @param lastCompletedBuild build.
-     * @param listener listener.
      * @return true if build location contains specified revision.
      */
-    boolean isRevisionSpecifiedInBuildLocation(String url, AbstractBuild<?, ?> lastCompletedBuild,
-                                                       TaskListener listener) {
+    boolean isRevisionSpecifiedInBuildLocation(String url, AbstractBuild<?, ?> lastCompletedBuild) {
         for (ModuleLocation location : getLocations(lastCompletedBuild)) {
             if(location.getURL() != null && location.getURL().contains(url)){
-                int idx = location.getOriginRemote().lastIndexOf(RevisionUtil.AT_SYMBOL);
-                if (idx > 0) {
-                    String revision = location.getOriginRemote().substring(idx + 1);
-                    try {
-                        Long.valueOf(revision);
-                        return true;
-                    } catch (NumberFormatException ignore) {
-                        listener.getLogger()
-                            .println("Specified incorrect revision:" + revision);
-                    }
+                SVNRevision revision = getRevisionFromRemoteUrl(location.getOriginRemote());
+                if (isRevisionPresent(revision)) {
+                    return true;
                 }
             }
         }
         return false;
+    }
+
+    private static boolean isRevisionPresent(SVNRevision revision) {
+        return revision != null && !(UNDEFINED_REVISION_VALUE.equals(revision.getName()));
     }
 
     /**
@@ -1926,7 +1918,7 @@ public class SubversionSCM extends SCM implements Serializable {
                     // something exists; now check revision if any
 
                     SVNRevision revision = getRevisionFromRemoteUrl(url);
-                    if (revision != null && !"UNDEFINED".equals(revision.getName()) && !revision.isValid()) {
+                    if (isRevisionPresent(revision) && !revision.isValid()) {
                         return FormValidation.errorWithMarkup(Messages.SubversionSCM_doCheckRemote_invalidRevision());
                     }
 
