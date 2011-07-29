@@ -273,29 +273,6 @@ public class SubversionCommitTest extends AbstractSubversionTest {
     }
 
     /**
-     * Do the polling on the slave and make sure it works.
-     */
-    @Bug(4299)
-    public void testPolling() throws Exception {
-//        SLAVE_DEBUG_PORT = 8001;
-        File repo = new CopyExisting(getClass().getResource("two-revisions.zip")).allocate();
-        SubversionSCM scm = new SubversionSCM("file://" + repo.getPath());
-
-        FreeStyleProject p = createFreeStyleProject();
-        p.setScm(scm);
-        p.setAssignedLabel(createSlave().getSelfLabel());
-        assertBuildStatusSuccess(p.scheduleBuild2(0).get());
-
-        // initial polling on the slave for the code path that doesn't find any change
-        assertFalse(p.pollSCMChanges(new StreamTaskListener(System.out, Charset.defaultCharset())));
-
-        createCommit(scm, "foo");
-
-        // polling on the slave for the code path that doesn't find any change
-        assertTrue(p.pollSCMChanges(new StreamTaskListener(System.out, Charset.defaultCharset())));
-    }
-
-    /**
      * Tests a checkout triggered from the post-commit hook
      */
     public void testPostCommitTrigger() throws Exception {

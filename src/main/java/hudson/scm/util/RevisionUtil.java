@@ -16,7 +16,7 @@ import org.tmatesoft.svn.core.wc.SVNRevision;
  */
 public final class RevisionUtil {
 
-    static final char AT_SYMBOL = '@';
+    public static final char AT_SYMBOL = '@';
 
     /**
      * Private constructor.
