@@ -57,7 +57,6 @@ import hudson.scm.subversion.UpdateWithRevertUpdater;
 import hudson.scm.subversion.WorkspaceUpdater;
 import hudson.scm.subversion.WorkspaceUpdater.UpdateTask;
 import hudson.scm.subversion.WorkspaceUpdaterDescriptor;
-import hudson.scm.util.RevisionUtil;
 import hudson.util.EditDistance;
 import hudson.util.FormValidation;
 import hudson.util.MultipartFormDataParser;
@@ -160,6 +159,7 @@ import static hudson.scm.PollingResult.Change;
  * @author Kohsuke Kawaguchi
  */
 public class SubversionSCM extends SCM implements Serializable {
+    protected static final String UNDEFINED_REVISION_VALUE = "UNDEFINED";
     /**
      * the locations field is used to store all configured SVN locations (with
      * their local and remote part). Direct access to this field should be
@@ -1162,11 +1162,7 @@ public class SubversionSCM extends SCM implements Serializable {
                     */
                     revs.put(url, baseRev);
                     // skip baselineInfo if build location URL contains revision like svn://svnserver/scripts@184375
-                    if (isRevisionSpecifiedInBuildLocation(url, lastCompletedBuild, listener)) {
-                        listener.getLogger()
-                            .println("Poll processing of the URL: " + url
-                                + " skipped because it contains specified revision");
-                    } else {
+                    if (!isRevisionSpecifiedInBuildLocation(url, lastCompletedBuild)) {
                         try {
                             final SVNURL svnurl = SVNURL.parseURIDecoded(url);
                             long nowRev = new SvnInfo(parseSvnInfo(svnurl, authProvider)).revision;
@@ -1198,27 +1194,22 @@ public class SubversionSCM extends SCM implements Serializable {
      * Checks whether build location contains specified revision.
      * @param url url to verify.
      * @param lastCompletedBuild build.
-     * @param listener listener.
      * @return true if build location contains specified revision.
      */
-    boolean isRevisionSpecifiedInBuildLocation(String url, AbstractBuild<?, ?> lastCompletedBuild,
-                                                       TaskListener listener) {
+    boolean isRevisionSpecifiedInBuildLocation(String url, AbstractBuild<?, ?> lastCompletedBuild) {
         for (ModuleLocation location : getLocations(lastCompletedBuild)) {
             if(location.getURL() != null && location.getURL().contains(url)){
-                int idx = location.getOriginRemote().lastIndexOf(RevisionUtil.AT_SYMBOL);
-                if (idx > 0) {
-                    String revision = location.getOriginRemote().substring(idx + 1);
-                    try {
-                        Long.valueOf(revision);
-                        return true;
-                    } catch (NumberFormatException ignore) {
-                        listener.getLogger()
-                            .println("Specified incorrect revision:" + revision);
-                    }
+                SVNRevision revision = getRevisionFromRemoteUrl(location.getOriginRemote());
+                if (isRevisionPresent(revision)) {
+                    return true;
                 }
             }
         }
         return false;
+    }
+
+    private static boolean isRevisionPresent(SVNRevision revision) {
+        return revision != null && !(UNDEFINED_REVISION_VALUE.equals(revision.getName()));
     }
 
     /**
@@ -1889,7 +1880,7 @@ public class SubversionSCM extends SCM implements Serializable {
                     // something exists; now check revision if any
 
                     SVNRevision revision = getRevisionFromRemoteUrl(url);
-                    if (revision != null && !revision.getName().equals("UNDEFINED") && !revision.isValid()) {
+                    if (isRevisionPresent(revision) && !revision.isValid()) {
                         return FormValidation.errorWithMarkup(Messages.SubversionSCM_doCheckRemote_invalidRevision());
                     }
 
