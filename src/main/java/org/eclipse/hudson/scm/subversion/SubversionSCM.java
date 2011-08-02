@@ -2566,7 +2566,7 @@ public class SubversionSCM extends SCM implements Serializable {
         return m;
     }
 
-    private static String getUrlWithoutRevision(
+    static String getUrlWithoutRevision(
         String remoteUrlPossiblyWithRevision) {
         int idx = remoteUrlPossiblyWithRevision.lastIndexOf('@');
         if (idx > 0) {
