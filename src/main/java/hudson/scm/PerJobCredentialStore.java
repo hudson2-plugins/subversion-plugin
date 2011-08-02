@@ -66,15 +66,28 @@ final class PerJobCredentialStore implements Saveable, RemotableSVNAuthenticatio
     }
 
     public Credential getCredential(SVNURL url, String realm) {
-        return null == url ? get(realm) : get(url.toDecodedString());
+        return get(getCredentialsKey(url.toDecodedString(), realm));
     }
 
     public void acknowledgeAuthentication(String realm, Credential cred) {
         try {
-            acknowledge(null == url? realm : url, cred);
+            acknowledge(getCredentialsKey(url, realm), cred);
         } catch (IOException e) {
             LOGGER.log(INFO, Messages.PerJobCredentialStore_acknowledgeAuthentication_error(), e);
         }
+    }
+
+    /**
+     * Method retuns credentials key based on realm and url. If url is not null and if it will be processed
+     * without revision number, realm is used if url is null,
+     *
+     * @param url svn url
+     * @param realm realm
+     * @return credentials key.
+     * @see SubversionSCM#getUrlWithoutRevision(String)
+     */
+    private String getCredentialsKey(String url, String realm) {
+        return null == url ? realm : url.lastIndexOf("@") > 0 ? SubversionSCM.getUrlWithoutRevision(url) : url;
     }
 
     private synchronized void acknowledge(String key, Credential cred) throws IOException {
