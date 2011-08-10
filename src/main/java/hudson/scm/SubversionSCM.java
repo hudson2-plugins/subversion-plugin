@@ -349,12 +349,6 @@ public class SubversionSCM extends SCM implements Serializable {
         return null;
     }
 
-    //TODO It seems there is delete operation in checkoutUpdater, verify it
-    public boolean processWorkspaceBeforeDeletion(AbstractProject<?, ?> project, FilePath workspace, Node node)
-        throws IOException, InterruptedException {
-        return (workspaceUpdater instanceof CheckoutUpdater);
-    }
-
     /**
      * list of all configured svn locations
      *
