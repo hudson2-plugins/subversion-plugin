@@ -101,7 +101,7 @@ public class CheckoutUpdater extends WorkspaceUpdater {
                             svnDepth, true);
                 }
             } catch (SVNCancelException e) {
-                listener.error("Svn command was canceled");
+                listener.error("Svn command was aborted");
                 throw (InterruptedException) new InterruptedException().initCause(e);
             } catch (SVNException e) {
                 e.printStackTrace(listener.error("Failed to check out " + location.remote));
