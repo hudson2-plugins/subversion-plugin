@@ -134,7 +134,7 @@ public class UpdateUpdater extends WorkspaceUpdater {
                         " ignoreExternals: " + l.isIgnoreExternalsOption());
                     svnuc.doUpdate(local.getCanonicalFile(), revision, svnDepth, true, false);
                 } catch (SVNCancelException e) {
-                    listener.error("Svn command was canceled");
+                    listener.error("Svn command was aborted");
                     throw (InterruptedException) new InterruptedException().initCause(e);
                 } catch (final SVNException e) {
                     if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_LOCKED) {
