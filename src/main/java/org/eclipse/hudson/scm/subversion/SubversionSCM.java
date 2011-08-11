@@ -57,7 +57,6 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
-import java.io.InterruptedIOException;
 import java.io.OutputStream;
 import java.io.PrintStream;
 import java.io.PrintWriter;
@@ -804,7 +803,7 @@ public class SubversionSCM extends SCM implements Serializable {
             this.revisionPolicy = (scm.getDescriptor() != null ? scm.getDescriptor().getRevisionPolicy() : null);
         }
 
-        public List<External> invoke(File ws, VirtualChannel channel) throws IOException {
+        public List<External> invoke(File ws, VirtualChannel channel) throws IOException, InterruptedException {
             manager = createSvnClientManager(authProvider);
             this.ws = ws;
             try {
@@ -814,8 +813,6 @@ public class SubversionSCM extends SCM implements Serializable {
 
                 return externals;
 
-            } catch (InterruptedException e) {
-                throw (InterruptedIOException) new InterruptedIOException().initCause(e);
             } finally {
                 manager.dispose();
             }
