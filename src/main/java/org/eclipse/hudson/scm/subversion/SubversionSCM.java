@@ -2064,9 +2064,9 @@ public class SubversionSCM extends SCM implements Serializable {
 
         /**
          * Regular expression for matching one username. Matches 'windows' names ('DOMAIN&#92;user') and
-         * 'normal' names ('user'). Where user (and DOMAIN) has one or more characters in 'a-zA-Z_0-9')
+         * 'normal' names ('user'). Where user (and DOMAIN) has one or more characters in 'a-zA-Z_0-9-.')
          */
-        private static final Pattern USERNAME_PATTERN = Pattern.compile("(\\w+\\\\)?+(\\w+)");
+        private static final Pattern USERNAME_PATTERN = Pattern.compile("(\\w+\\\\)?+((\\w|[-\\.])+)");
 
         /**
          * Validates the excludeUsers field.
@@ -2084,7 +2084,7 @@ public class SubversionSCM extends SCM implements Serializable {
                     continue;
                 }
 
-                if (!USERNAME_PATTERN.matcher(user).matches()) {
+                if (!validateExcludedUser(user)) {
                     return FormValidation.error("Invalid username: " + user);
                 }
             }
@@ -2172,6 +2172,15 @@ public class SubversionSCM extends SCM implements Serializable {
             new Initializer();
         }
 
+        /**
+         * Validates the excluded user name.
+         *
+         * @param value value to validate.
+         * @return true if user name is valid.
+         */
+        static boolean validateExcludedUser(String value) {
+            return USERNAME_PATTERN.matcher(value).matches();
+        }
     }
 
     public boolean repositoryLocationsNoLongerExist(AbstractBuild<?, ?> build, TaskListener listener) {
