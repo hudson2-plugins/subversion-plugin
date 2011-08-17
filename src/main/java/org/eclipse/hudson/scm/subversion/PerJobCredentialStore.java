@@ -30,6 +30,7 @@ import java.util.logging.Logger;
 import org.tmatesoft.svn.core.SVNURL;
 
 import static java.util.logging.Level.INFO;
+import static org.eclipse.hudson.scm.subversion.SubversionSCM.DescriptorImpl.Credential;
 
 /**
  * Persists the credential per job. This object is remotable.
@@ -76,20 +77,33 @@ final class PerJobCredentialStore implements Saveable, SubversionSCM.DescriptorI
         return credentials.get(key);
     }
 
-    public SubversionSCM.DescriptorImpl.Credential getCredential(SVNURL url, String realm) {
-        return null == url ? get(realm) : get(url.toDecodedString());
+    public Credential getCredential(SVNURL url, String realm) {
+        return get(getCredentialsKey(url.toDecodedString(), realm));
     }
 
     public void acknowledgeAuthentication(String realm, SubversionSCM.DescriptorImpl.Credential cred) {
         try {
-            acknowledge(null == url? realm : url, cred);
+            acknowledge(getCredentialsKey(url, realm), cred);
         } catch (IOException e) {
             LOGGER.log(INFO, Messages.PerJobCredentialStore_acknowledgeAuthentication_error(), e);
         }
     }
 
-    private synchronized void acknowledge(String key, SubversionSCM.DescriptorImpl.Credential cred) throws IOException {
-        SubversionSCM.DescriptorImpl.Credential old = cred == null ? credentials.remove(key) : credentials.put(key, cred);
+    /**
+     * Method retuns credentials key based on realm and url. If url is not null and if it will be processed
+     * without revision number, realm is used if url is null,
+     *
+     * @param url svn url
+     * @param realm realm
+     * @return credentials key.
+     * @see SubversionSCM#getUrlWithoutRevision(String)
+     */
+    private String getCredentialsKey(String url, String realm) {
+        return null == url ? realm : url.lastIndexOf("@") > 0 ? SubversionSCM.getUrlWithoutRevision(url) : url;
+    }
+
+    private synchronized void acknowledge(String key, Credential cred) throws IOException {
+        Credential old = cred == null ? credentials.remove(key) : credentials.put(key, cred);
         // save only if there was a change
         if (old == null && cred == null) {
             return;
