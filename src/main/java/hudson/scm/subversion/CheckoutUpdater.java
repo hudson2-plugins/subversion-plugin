@@ -33,7 +33,6 @@ import hudson.scm.SubversionSCM.ModuleLocation;
 import hudson.util.IOException2;
 import hudson.util.StreamCopyThread;
 import org.kohsuke.stapler.DataBoundConstructor;
-import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.wc.SVNRevision;
@@ -100,10 +99,13 @@ public class CheckoutUpdater extends WorkspaceUpdater {
                     svnuc.doCheckout(l.getSVNURL(), local.getCanonicalFile(), SVNRevision.HEAD, revision,
                             svnDepth, true);
                 }
-            } catch (SVNCancelException e) {
-                listener.error("Svn command was aborted");
-                throw (InterruptedException) new InterruptedException().initCause(e);
             } catch (SVNException e) {
+                //TODO find better solution than this workaround, svnkit uses the same exception and
+                // the same error code in case of aborted builds and builds with invalid credentials
+                if (e.getMessage() != null && e.getMessage().contains(SVN_CANCEL_EXCEPTION_MESSAGE)) {
+                    listener.error("Svn command was aborted");
+                    throw (InterruptedException) new InterruptedException().initCause(e);
+                }
                 e.printStackTrace(listener.error("Failed to check out " + location.remote));
                 return null;
             } finally {
