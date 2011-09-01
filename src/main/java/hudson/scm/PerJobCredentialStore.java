@@ -3,6 +3,7 @@ package hudson.scm;
 import hudson.Extension;
 import hudson.ExtensionList;
 import hudson.XmlFile;
+import hudson.matrix.MatrixConfiguration;
 import hudson.model.AbstractProject;
 import hudson.model.Hudson;
 import hudson.model.Saveable;
@@ -114,8 +115,14 @@ final class PerJobCredentialStore implements Saveable, RemotableSVNAuthenticatio
         }
     }
 
-    private XmlFile getXmlFile() {
-        return new XmlFile(new File(project.getRootDir(), credentialsFileName));
+    XmlFile getXmlFile() {
+        File rootDir;
+        if (project instanceof MatrixConfiguration && project.getParent() != null) {
+            rootDir = project.getParent().getRootDir();
+        } else{
+            rootDir = project.getRootDir();
+        }
+        return new XmlFile(new File(rootDir, credentialsFileName));
     }
 
     /*package*/
