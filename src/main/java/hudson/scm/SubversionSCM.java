@@ -1539,7 +1539,7 @@ public class SubversionSCM extends SCM implements Serializable {
         /**
          * See {@link DescriptorImpl#createAuthenticationProvider(AbstractProject)}.
          */
-        private static final class SVNAuthenticationProviderImpl
+        static final class SVNAuthenticationProviderImpl
             implements ISVNAuthenticationProvider, ISVNAuthenticationOutcomeListener, Serializable {
             /**
              * Project-scoped authentication source. For historical reasons, can be null.
@@ -1560,6 +1560,15 @@ public class SubversionSCM extends SCM implements Serializable {
                                                  RemotableSVNAuthenticationProvider global) {
                 this.global = global;
                 this.local = local;
+            }
+
+            /**
+             * For the tests only.
+             *
+             * @return local SVNAuthenticationProvide (PerJobCredentialStore).
+             */
+            RemotableSVNAuthenticationProvider getLocal() {
+                return local;
             }
 
             private SVNAuthentication fromProvider(SVNURL url, String realm, String kind,
