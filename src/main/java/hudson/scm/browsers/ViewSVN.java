@@ -33,6 +33,8 @@ import hudson.scm.SubversionRepositoryBrowser;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 /**
@@ -87,5 +89,28 @@ public class ViewSVN extends SubversionRepositoryBrowser {
         public String getDisplayName() {
             return "ViewSVN";
         }
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+
+        ViewSVN that = (ViewSVN) o;
+
+        return new EqualsBuilder()
+            .append(url, that.url)
+            .isEquals();
+    }
+
+    @Override
+    public int hashCode() {
+        return new HashCodeBuilder()
+            .append(url)
+            .toHashCode();
     }
 }

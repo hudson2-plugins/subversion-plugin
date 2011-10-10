@@ -40,7 +40,10 @@ import hudson.model.FreeStyleBuild;
 import hudson.model.FreeStyleProject;
 import hudson.model.Hudson;
 import hudson.model.Result;
+import hudson.scm.browsers.CollabNetSVN;
 import hudson.scm.browsers.Sventon;
+import hudson.scm.subversion.CheckoutUpdater;
+import hudson.scm.subversion.UpdateUpdater;
 import hudson.triggers.SCMTrigger;
 import hudson.util.StreamTaskListener;
 import java.io.File;
@@ -321,7 +324,7 @@ public class SubversionCommonTest extends AbstractSubversionTest {
             new SubversionSCM.ModuleLocation(SVN_URL1, null),
             new SubversionSCM.ModuleLocation(SVN_URL2, null)
         };
-        p.setScm(new SubversionSCM(Arrays.asList(locations), false, false, null, null, null, null, null, null));
+        p.setScm(new SubversionSCM(Arrays.asList(locations), new UpdateUpdater(), null, null, null, null, null, null));
 
         CaptureEnvironmentBuilder builder = new CaptureEnvironmentBuilder();
         p.getBuildersList().add(builder);
