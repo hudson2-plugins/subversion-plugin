@@ -102,7 +102,7 @@ public class PerJobCredentialStoreTest extends AbstractSubversionTest {
                 createAuthenticationProvider(configuration);
         PerJobCredentialStore perJobCredentialStore = (PerJobCredentialStore)provider.getLocal();
         String correctPath = "matrix" + File.separator + "subversion.credentials";
-        assertTrue(perJobCredentialStore.getXmlFile().getFile().getCanonicalPath().endsWith(correctPath));
+        assertTrue(perJobCredentialStore.getXmlFile(configuration).getFile().getCanonicalPath().endsWith(correctPath));
     }
 
     /**
@@ -237,7 +237,6 @@ public class PerJobCredentialStoreTest extends AbstractSubversionTest {
     protected MatrixProject createMatrixProject(String name) throws IOException {
         MatrixProject p = super.createMatrixProject(name);
 
-        // set up 2x2 matrix
         AxisList axes = new AxisList();
         axes.add(new TextAxis("db","mysql","oracle"));
         p.setAxes(axes);
