@@ -6,6 +6,7 @@ import hudson.XmlFile;
 import hudson.matrix.MatrixConfiguration;
 import hudson.model.AbstractProject;
 import hudson.model.Hudson;
+import hudson.model.ItemGroup;
 import hudson.model.Job;
 import hudson.model.Saveable;
 import hudson.model.listeners.SaveableListener;
@@ -123,12 +124,11 @@ final class PerJobCredentialStore implements Saveable, RemotableSVNAuthenticatio
         if (credentialFile.exists()) {
             return new XmlFile(credentialFile);
         }
-        //matrix project
+        //matrix configuration project
         if (prj instanceof MatrixConfiguration && prj.getParent() != null) {
-            rootDir = prj.getParent().getRootDir();
-            credentialFile = new File(rootDir, credentialsFileName);
-            if (credentialFile.exists()) {
-                return new XmlFile(credentialFile);
+            ItemGroup parent = prj.getParent();
+            if (parent instanceof Job){
+                return getXmlFile((Job)parent);
             }
         }
         if (prj.hasCascadingProject()) {
