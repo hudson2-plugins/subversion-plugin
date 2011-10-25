@@ -41,7 +41,7 @@ import org.junit.runners.Parameterized;
 import static junit.framework.Assert.assertEquals;
 
 /**
- * Verifies equals and hashcode of subcalsses of {@link SubversionRepositoryBrowser}.
+ * Verifies equals and hashcode of {@link SubversionRepositoryBrowser}.
  * <p/>
  * Date: 10/5/2011
  *

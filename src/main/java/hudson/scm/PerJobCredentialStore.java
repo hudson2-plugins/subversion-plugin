@@ -126,7 +126,12 @@ final class PerJobCredentialStore implements Saveable, RemotableSVNAuthenticatio
         //matrix project
         if (prj instanceof MatrixConfiguration && prj.getParent() != null) {
             rootDir = prj.getParent().getRootDir();
-        } else if (prj.hasCascadingProject()) {
+            credentialFile = new File(rootDir, credentialsFileName);
+            if (credentialFile.exists()) {
+                return new XmlFile(credentialFile);
+            }
+        }
+        if (prj.hasCascadingProject()) {
             return getXmlFile(prj.getCascadingProject());
         }
         return new XmlFile(new File(rootDir, credentialsFileName));
