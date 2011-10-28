@@ -1,7 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2010, Manufacture Francaise des Pneumatiques Michelin, Romain Seguy
+ * Copyright 2011 Hudson.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated
  * documentation files (the "Software"), to deal in the Software without restriction, including without limitation the
@@ -18,33 +18,16 @@
  */
 package hudson.scm.listtagsparameter;
 
-import hudson.Util;
-import java.util.ArrayList;
 import java.util.List;
-import org.tmatesoft.svn.core.SVNDirEntry;
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNNodeKind;
+import org.tmatesoft.svn.core.ISVNDirEntryHandler;
 
 /**
- * Simple {@link ISVNDirEntryHandler} used to get a list containing all the directories in a given Subversion
- * repository.
- * <p/>
- * @author Romain Seguy (http://openromain.blogspot.com)
+ * {@link ISVNDirEntryHandler} with the possibility to get the handled directory names.
  */
-public class SimpleSVNDirEntryHandler implements DirectoriesSvnEntryHandler {
+public interface DirectoriesSvnEntryHandler extends ISVNDirEntryHandler {
 
-    private List<String> dirs = new ArrayList<String>();
-
-    @Override
-    public List<String> getDirectoryNames() {
-        return dirs;
-    }
-
-    @Override
-    public void handleDirEntry(SVNDirEntry dirEntry) throws SVNException {
-        if (!dirEntry.getKind().equals(SVNNodeKind.DIR)) {
-            return;
-        }
-        dirs.add(Util.removeTrailingSlash(dirEntry.getName()));
-    }
+    /**
+     * Get the handled Directory names.
+     */
+    List<String> getDirectoryNames();
 }
