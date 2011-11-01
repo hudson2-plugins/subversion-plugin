@@ -14,6 +14,8 @@ import java.net.URLEncoder;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
@@ -112,5 +114,32 @@ public class WebSVN2 extends SubversionRepositoryBrowser {
             }
             return result;
         }
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+
+        WebSVN2 that = (WebSVN2) o;
+
+        return new EqualsBuilder()
+            .append(baseUrl, that.baseUrl)
+            .append(repname, that.repname)
+            .append(url, that.url)
+            .isEquals();
+    }
+
+    @Override
+    public int hashCode() {
+        return new HashCodeBuilder()
+            .append(baseUrl)
+            .append(repname)
+            .append(url)
+            .toHashCode();
     }
 }
