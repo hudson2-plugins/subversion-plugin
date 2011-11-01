@@ -6,6 +6,8 @@ import hudson.XmlFile;
 import hudson.matrix.MatrixConfiguration;
 import hudson.model.AbstractProject;
 import hudson.model.Hudson;
+import hudson.model.ItemGroup;
+import hudson.model.Job;
 import hudson.model.Saveable;
 import hudson.model.listeners.SaveableListener;
 import hudson.remoting.Channel;
@@ -51,7 +53,7 @@ final class PerJobCredentialStore implements Saveable, RemotableSVNAuthenticatio
         this.project = project;
         this.url = url;
         // read existing credential
-        XmlFile xml = getXmlFile();
+        XmlFile xml = getXmlFile(project);
         try {
             if (xml.exists()) {
                 xml.unmarshal(this);
@@ -106,7 +108,7 @@ final class PerJobCredentialStore implements Saveable, RemotableSVNAuthenticatio
         IS_SAVING.set(Boolean.TRUE);
         try {
             if (!credentials.isEmpty()) {
-                XmlFile xmlFile = getXmlFile();
+                XmlFile xmlFile = getXmlFile(project);
                 xmlFile.write(this);
                 SaveableListener.fireOnChange(this, xmlFile);
             }
@@ -115,12 +117,22 @@ final class PerJobCredentialStore implements Saveable, RemotableSVNAuthenticatio
         }
     }
 
-    XmlFile getXmlFile() {
-        File rootDir;
-        if (project instanceof MatrixConfiguration && project.getParent() != null) {
-            rootDir = project.getParent().getRootDir();
-        } else{
-            rootDir = project.getRootDir();
+    XmlFile getXmlFile(Job prj) {
+        //default behaviour
+        File rootDir = prj.getRootDir();
+        File credentialFile = new File(rootDir, credentialsFileName);
+        if (credentialFile.exists()) {
+            return new XmlFile(credentialFile);
+        }
+        //matrix configuration project
+        if (prj instanceof MatrixConfiguration && prj.getParent() != null) {
+            ItemGroup parent = prj.getParent();
+            if (parent instanceof Job){
+                return getXmlFile((Job)parent);
+            }
+        }
+        if (prj.hasCascadingProject()) {
+            return getXmlFile(prj.getCascadingProject());
         }
         return new XmlFile(new File(rootDir, credentialsFileName));
     }
