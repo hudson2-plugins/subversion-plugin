@@ -38,6 +38,8 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLEncoder;
 import javax.servlet.ServletException;
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
@@ -129,6 +131,31 @@ public class Sventon2 extends AbstractSventon {
 
             return new SventonUrlChecker(value, 2).check();
         }
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+
+        Sventon2 that = (Sventon2) o;
+
+        return new EqualsBuilder()
+            .append(url, that.url)
+            .append(repositoryInstance, that.repositoryInstance)
+            .isEquals();
+    }
+
+    @Override
+    public int hashCode() {
+        return new HashCodeBuilder()
+            .append(url)
+            .append(repositoryInstance)
+            .toHashCode();
     }
 
     private static final long serialVersionUID = 1L;
