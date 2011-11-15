@@ -312,7 +312,7 @@ public class SubversionSCM extends SCM implements Serializable {
                          SubversionRepositoryBrowser browser, String excludedRegions, String excludedUsers,
                          String excludedRevprop, String excludedCommitMessages,
                          String includedRegions) {
-        for (Iterator<ModuleLocation> itr = locations.iterator(); itr.hasNext();) {
+        for (Iterator<ModuleLocation> itr = locations.iterator(); itr.hasNext(); ) {
             ModuleLocation ml = itr.next();
             if (ml.remote == null) {
                 itr.remove();
@@ -1126,6 +1126,7 @@ public class SubversionSCM extends SCM implements Serializable {
         final SVNLogHandler logHandler = new SVNLogHandler(listener);
         // figure out the remote revisions
         final ISVNAuthenticationProvider authProvider = getDescriptor().createAuthenticationProvider(project);
+        final ModuleLocation[] moduleLocations = getLocations(lastCompletedBuild);
 
         return ch.call(new DelegatingCallable<PollingResult, IOException>() {
             public ClassLoader getClassLoader() {
@@ -1155,7 +1156,7 @@ public class SubversionSCM extends SCM implements Serializable {
                     */
                     revs.put(url, baseRev);
                     // skip baselineInfo if build location URL contains revision like svn://svnserver/scripts@184375
-                    if (!isRevisionSpecifiedInBuildLocation(url, lastCompletedBuild)) {
+                    if (!isRevisionSpecifiedInBuildLocation(url, moduleLocations)) {
                         try {
                             final SVNURL svnurl = SVNURL.parseURIDecoded(url);
                             long nowRev = new SvnInfo(parseSvnInfo(svnurl, authProvider)).revision;
@@ -1184,17 +1185,20 @@ public class SubversionSCM extends SCM implements Serializable {
     }
 
     /**
-     * Checks whether build location contains specified revision.
+     * Checks whether build locations contain specified revision.
+     *
      * @param url url to verify.
-     * @param lastCompletedBuild build.
-     * @return true if build location contains specified revision.
+     * @param locations module locations.
+     * @return true if build locations contain specified revision.
      */
-    boolean isRevisionSpecifiedInBuildLocation(String url, AbstractBuild<?, ?> lastCompletedBuild) {
-        for (ModuleLocation location : getLocations(lastCompletedBuild)) {
-            if(location.getURL() != null && location.getURL().contains(url)){
-                SVNRevision revision = getRevisionFromRemoteUrl(location.getOriginRemote());
-                if (isRevisionPresent(revision)) {
-                    return true;
+    boolean isRevisionSpecifiedInBuildLocation(String url, ModuleLocation[] locations) {
+        if (null != locations) {
+            for (ModuleLocation location : locations) {
+                if (location.getURL() != null && location.getURL().contains(url)) {
+                    SVNRevision revision = getRevisionFromRemoteUrl(location.getOriginRemote());
+                    if (isRevisionPresent(revision)) {
+                        return true;
+                    }
                 }
             }
         }
@@ -1997,9 +2001,8 @@ public class SubversionSCM extends SCM implements Serializable {
          *
          * @param value value to validate.
          * @return {@link FormValidation}.
-         * @throws java.io.IOException IOException.
+         * @throws java.io.IOException            IOException.
          * @throws javax.servlet.ServletException ServletException.
-         *
          */
         public FormValidation doCheckLocal(@QueryParameter String value) throws IOException, ServletException {
             String v = Util.nullify(value);
@@ -2026,7 +2029,7 @@ public class SubversionSCM extends SCM implements Serializable {
          *
          * @param value value to validate.
          * @return {@link FormValidation}.
-         * @throws java.io.IOException IOException.
+         * @throws java.io.IOException            IOException.
          * @throws javax.servlet.ServletException ServletException.
          */
         public FormValidation doCheckExcludedRegions(@QueryParameter String value)
@@ -2046,7 +2049,7 @@ public class SubversionSCM extends SCM implements Serializable {
          *
          * @param value value to validate.
          * @return {@link FormValidation}.
-         * @throws java.io.IOException IOException.
+         * @throws java.io.IOException            IOException.
          * @throws javax.servlet.ServletException ServletException.
          */
         public FormValidation doCheckIncludedRegions(@QueryParameter String value)
@@ -2065,7 +2068,7 @@ public class SubversionSCM extends SCM implements Serializable {
          *
          * @param value value to validate.
          * @return {@link FormValidation}.
-         * @throws java.io.IOException IOException.
+         * @throws java.io.IOException            IOException.
          * @throws javax.servlet.ServletException ServletException.
          */
         public FormValidation doCheckExcludedUsers(@QueryParameter String value) throws IOException, ServletException {
@@ -2093,7 +2096,7 @@ public class SubversionSCM extends SCM implements Serializable {
          *
          * @param value value to validate.
          * @return {@link FormValidation}.
-         * @throws java.io.IOException IOException.
+         * @throws java.io.IOException            IOException.
          * @throws javax.servlet.ServletException ServletException.
          */
         public FormValidation doCheckExcludedCommitMessages(@QueryParameter String value)
@@ -2114,7 +2117,7 @@ public class SubversionSCM extends SCM implements Serializable {
          * @param context {@link AbstractProject}.
          * @param value value to validate.
          * @return {@link FormValidation}.
-         * @throws java.io.IOException IOException.
+         * @throws java.io.IOException            IOException.
          * @throws javax.servlet.ServletException ServletException.
          */
         public FormValidation doCheckRevisionPropertiesSupported(@AncestorInPath AbstractProject context,
@@ -2594,7 +2597,7 @@ public class SubversionSCM extends SCM implements Serializable {
 
         SubversionSCM that = (SubversionSCM) o;
 
-        if(!isEqualsWithoutOrdering(locations, that.locations)) {
+        if (!isEqualsWithoutOrdering(locations, that.locations)) {
             return false;
         }
 
@@ -2611,6 +2614,7 @@ public class SubversionSCM extends SCM implements Serializable {
 
     /**
      * Verify if two arrays of objects are equal without same order of elements.
+     *
      * @param array1 first array.
      * @param array2 second array.
      * @return true if two arrays equals and false in other way.
@@ -2639,7 +2643,9 @@ public class SubversionSCM extends SCM implements Serializable {
                     break;
                 }
             }
-            if (!contains) return false;
+            if (!contains) {
+                return false;
+            }
         }
         return true;
     }
