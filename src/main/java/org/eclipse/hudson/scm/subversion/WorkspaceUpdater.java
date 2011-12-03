@@ -89,6 +89,8 @@ public abstract class WorkspaceUpdater extends AbstractDescribableImpl<Workspace
     public static abstract class UpdateTask implements Serializable {
         private static final long serialVersionUID = 1L;
 
+        protected static final String SVN_CANCEL_EXCEPTION_MESSAGE = "svn: Operation cancelled";
+
         // fields that are set by the caller as context for the perform method
 
         /**

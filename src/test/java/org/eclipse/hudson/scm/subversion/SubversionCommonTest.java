@@ -14,6 +14,7 @@
  *******************************************************************************/
 package org.eclipse.hudson.scm.subversion;
 
+import org.springframework.security.context.SecurityContextHolder;
 import com.gargoylesoftware.htmlunit.ElementNotFoundException;
 import com.gargoylesoftware.htmlunit.FailingHttpStatusCodeException;
 import com.gargoylesoftware.htmlunit.HttpMethod;
@@ -39,7 +40,6 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import org.acegisecurity.context.SecurityContextHolder;
 import org.dom4j.Document;
 import org.dom4j.io.DOMReader;
 import org.jvnet.hudson.test.Bug;
@@ -74,6 +74,8 @@ public class SubversionCommonTest extends AbstractSubversionTest {
     private static final String BOGUS_USER_LOGIN = "bogus";
     private static final String BOGUS_USER_PASSWORD = "boguspass";
     private static final Integer LOG_LIMIT = 1000;
+    protected static final String SVN_URL1 = "http://svn.apache.org/repos/asf/subversion/trunk/doc";
+    protected static final String SVN_URL2 = "http://svn.apache.org/repos/asf/subversion/trunk/packages";
 
     public void testMatcher() {
         check("http://foobar/");
@@ -309,10 +311,8 @@ public class SubversionCommonTest extends AbstractSubversionTest {
     public void testMultiModuleEnvironmentVariables() throws Exception {
         FreeStyleProject p = createFreeStyleProject();
         SubversionSCM.ModuleLocation[] locations = {
-            new SubversionSCM.ModuleLocation(
-                "https://svn.java.net/svn/hudson~svn/trunk/hudson/test-projects/trivial-ant", null),
-            new SubversionSCM.ModuleLocation(
-                "https://svn.java.net/svn/hudson~svn/trunk/hudson/test-projects/trivial-maven", null)
+            new SubversionSCM.ModuleLocation(SVN_URL1, null),
+            new SubversionSCM.ModuleLocation(SVN_URL2, null)
         };
         p.setScm(new SubversionSCM(Arrays.asList(locations), false, false, null, null, null, null, null, null));
 
@@ -321,31 +321,25 @@ public class SubversionCommonTest extends AbstractSubversionTest {
 
         assertBuildStatusSuccess(p.scheduleBuild2(0).get());
 
-        assertEquals("https://svn.java.net/svn/hudson~svn/trunk/hudson/test-projects/trivial-ant",
-            builder.getEnvVars().get("SVN_URL_1"));
-        assertEquals("https://svn.java.net/svn/hudson~svn/trunk/hudson/test-projects/trivial-maven",
-            builder.getEnvVars().get("SVN_URL_2"));
-        assertEquals(getActualRevision(p.getLastBuild(),
-            "https://svn.java.net/svn/hudson~svn/trunk/hudson/test-projects/trivial-ant").toString(),
+        assertEquals(SVN_URL1, builder.getEnvVars().get("SVN_URL_1"));
+        assertEquals(SVN_URL2, builder.getEnvVars().get("SVN_URL_2"));
+        assertEquals(getActualRevision(p.getLastBuild(),SVN_URL1).toString(),
             builder.getEnvVars().get("SVN_REVISION_1"));
-        assertEquals(getActualRevision(p.getLastBuild(),
-            "https://svn.java.net/svn/hudson~svn/trunk/hudson/test-projects/trivial-maven").toString(),
+        assertEquals(getActualRevision(p.getLastBuild(), SVN_URL2).toString(),
             builder.getEnvVars().get("SVN_REVISION_2"));
 
     }
 
     public void testSingleModuleEnvironmentVariables() throws Exception {
         FreeStyleProject p = createFreeStyleProject();
-        p.setScm(new SubversionSCM("https://svn.java.net/svn/hudson~svn/trunk/hudson/test-projects/trivial-ant"));
+        p.setScm(new SubversionSCM(SVN_URL1));
 
         CaptureEnvironmentBuilder builder = new CaptureEnvironmentBuilder();
         p.getBuildersList().add(builder);
 
         assertBuildStatusSuccess(p.scheduleBuild2(0).get());
-        assertEquals("https://svn.java.net/svn/hudson~svn/trunk/hudson/test-projects/trivial-ant",
-            builder.getEnvVars().get("SVN_URL"));
-        assertEquals(getActualRevision(p.getLastBuild(),
-            "https://svn.java.net/svn/hudson~svn/trunk/hudson/test-projects/trivial-ant").toString(),
+        assertEquals(SVN_URL1, builder.getEnvVars().get("SVN_URL"));
+        assertEquals(getActualRevision(p.getLastBuild(), SVN_URL1).toString(),
             builder.getEnvVars().get("SVN_REVISION"));
     }
 

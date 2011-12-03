@@ -42,10 +42,10 @@ public class SubversionCheckoutTest extends AbstractSubversionTest {
     @Email("http://www.nabble.com/Hudson-1.266-and-1.267%3A-Subversion-authentication-broken--td21156950.html")
     public void testHttpsCheckOut() throws Exception {
         FreeStyleProject p = createFreeStyleProject();
-        p.setScm(new SubversionSCM("https://svn.java.net/svn/hudson~svn/trunk/hudson/test-projects/trivial-ant"));
+        p.setScm(new SubversionSCM("https://datacard.googlecode.com/svn/trunk"));
 
         FreeStyleBuild b = assertBuildStatusSuccess(p.scheduleBuild2(0, new Cause.UserCause()).get());
-        assertTrue(b.getWorkspace().child("build.xml").exists());
+        assertTrue(b.getWorkspace().child("README.txt").exists());
     }
 
     @Email("http://hudson.361315.n4.nabble.com/Hudson-1-266-and-1-267-Subversion-authentication-broken-td375737.html")
@@ -62,10 +62,10 @@ public class SubversionCheckoutTest extends AbstractSubversionTest {
         DumbSlave s = createSlave();
         FreeStyleProject p = createFreeStyleProject();
         p.setAssignedLabel(s.getSelfLabel());
-        p.setScm(new SubversionSCM("https://svn.java.net/svn/hudson~svn/trunk/hudson/test-projects/trivial-ant"));
+        p.setScm(new SubversionSCM("http://svn.apache.org/repos/asf/subversion/trunk/doc"));
 
         FreeStyleBuild b = assertBuildStatusSuccess(p.scheduleBuild2(0, new Cause.UserCause()).get());
-        assertTrue(b.getWorkspace().child("build.xml").exists());
+        assertTrue(b.getWorkspace().child("README").exists());
         b = assertBuildStatusSuccess(p.scheduleBuild2(0).get());
     }
 
@@ -75,16 +75,11 @@ public class SubversionCheckoutTest extends AbstractSubversionTest {
     @Bug(262)
     public void testRevisionedCheckout() throws Exception {
         FreeStyleProject p = createFreeStyleProject();
-        p.setScm(new SubversionSCM("https://svn.java.net/svn/hudson~svn/trunk/hudson/test-projects/trivial-ant@13000"));
+        p.setScm(new SubversionSCM("http://svn.apache.org/repos/asf/subversion/trunk/doc@1162787"));
 
         FreeStyleBuild b = p.scheduleBuild2(0, new Cause.UserCause()).get();
         System.out.println(b.getLog(LOG_LIMIT));
-        assertTrue(b.getLog(LOG_LIMIT).contains("At revision 13000"));
-        assertBuildStatus(Result.SUCCESS, b);
-
-        b = p.scheduleBuild2(0, new Cause.UserCause()).get();
-        System.out.println(b.getLog(LOG_LIMIT));
-        assertTrue(b.getLog(LOG_LIMIT).contains("At revision 13000"));
+        assertTrue(b.getLog(LOG_LIMIT).contains("At revision 1162787"));
         assertBuildStatus(Result.SUCCESS, b);
     }
 
@@ -147,33 +142,33 @@ public class SubversionCheckoutTest extends AbstractSubversionTest {
      */
     public void testRevisionParameter() throws Exception {
         FreeStyleProject p = createFreeStyleProject();
-        String url = "https://svn.java.net/svn/hudson~svn/trunk/hudson/test-projects/trivial-ant";
+        String url = "http://svn.apache.org/repos/asf/subversion/trunk/doc";
         p.setScm(new SubversionSCM(url));
 
         FreeStyleBuild b = p.scheduleBuild2(0, new Cause.UserCause(),
-                new RevisionParameterAction(new SubversionSCM.SvnInfo(url, 13000))).get();
+                new RevisionParameterAction(new SubversionSCM.SvnInfo(url, 1162787))).get();
         System.out.println(b.getLog(LOG_LIMIT));
-        assertTrue(b.getLog(LOG_LIMIT).contains("At revision 13000"));
+        assertTrue(b.getLog(LOG_LIMIT).contains("At revision 1162787"));
         assertBuildStatus(Result.SUCCESS, b);
     }
 
     public void testRevisionParameterFolding() throws Exception {
         FreeStyleProject p = createFreeStyleProject();
-        String url = "https://svn.java.net/svn/hudson~svn/trunk/hudson/test-projects/trivial-ant";
+        String url = "http://svn.apache.org/repos/asf/subversion/trunk/doc";
 	p.setScm(new SubversionSCM(url));
 
 	// Schedule build of a specific revision with a quiet period
         Future<FreeStyleBuild> f = p.scheduleBuild2(60, new Cause.UserCause(),
-        		new RevisionParameterAction(new SubversionSCM.SvnInfo(url, 13000)));
+        		new RevisionParameterAction(new SubversionSCM.SvnInfo(url, 1162786)));
 
 	// Schedule another build at a more recent revision
 	p.scheduleBuild2(0, new Cause.UserCause(),
-        		new RevisionParameterAction(new SubversionSCM.SvnInfo(url, 14000)));
+        		new RevisionParameterAction(new SubversionSCM.SvnInfo(url, 1162787)));
 
         FreeStyleBuild b = f.get();
 
         System.out.println(b.getLog(LOG_LIMIT));
-        assertTrue(b.getLog(LOG_LIMIT).contains("At revision 14000"));
+        assertTrue(b.getLog(LOG_LIMIT).contains("At revision 1162787"));
         assertBuildStatus(Result.SUCCESS,b);
     }
 

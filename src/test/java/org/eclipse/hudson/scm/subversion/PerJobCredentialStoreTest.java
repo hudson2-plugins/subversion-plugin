@@ -1,6 +1,10 @@
 /*******************************************************************************
  *
+<<<<<<< HEAD:src/test/java/org/eclipse/hudson/scm/subversion/PerJobCredentialStoreTest.java
  * Copyright (c) 2011 Oracle Corporation.
+=======
+ * Copyright (c) 2011, Oracle Corporation, Nikita Levyankov, Anton Kozak
+>>>>>>> refs/heads/master:src/test/java/hudson/scm/PerJobCredentialStoreTest.java
  *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
@@ -15,10 +19,16 @@
 package org.eclipse.hudson.scm.subversion;
 
 import hudson.Proc;
+import hudson.matrix.AxisList;
+import hudson.matrix.MatrixConfiguration;
+import hudson.matrix.MatrixProject;
+import hudson.matrix.TextAxis;
 import hudson.model.FreeStyleProject;
 import hudson.model.Result;
+import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.Collection;
 import org.jvnet.hudson.test.Bug;
 import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.SVNException;
@@ -72,10 +82,28 @@ public class PerJobCredentialStoreTest extends AbstractSubversionTest {
         assertFalse(credentialStore.getSaveableListener().isFileChanged());
     }
 
+    @Bug(3)
+    public void testMatrixConfigurationCredentialsFileNamePath() throws IOException {
+        MatrixProject p = createMatrixProject("matrix");
+        p.setScm(new SubversionSCM("https://datacard.googlecode.com/svn/trunk"));
+        Collection<MatrixConfiguration> configurations =  p.getItems();
+        assertEquals(configurations.size(), 2);
+
+        MatrixConfiguration configuration = configurations.iterator().next();
+        SubversionSCM scm = (SubversionSCM)configuration.getScm();
+
+        SubversionSCM.DescriptorImpl.SVNAuthenticationProviderImpl provider =
+            (SubversionSCM.DescriptorImpl.SVNAuthenticationProviderImpl)scm.getDescriptor().
+                createAuthenticationProvider(configuration);
+        PerJobCredentialStore perJobCredentialStore = (PerJobCredentialStore)provider.getLocal();
+        String correctPath = "matrix" + File.separator + "subversion.credentials";
+        assertTrue(perJobCredentialStore.getXmlFile().getFile().getCanonicalPath().endsWith(correctPath));
+    }
+
     /**
      * There was a bug that credentials stored in the remote call context was serialized wrongly.
      */
-//    @Bug(8061)
+    @Bug(8061)
     public void testRemoteBuild() throws Exception {
         Proc p = null;
         try {
@@ -198,5 +226,17 @@ public class PerJobCredentialStoreTest extends AbstractSubversionTest {
         SVNRepository repository = SVNRepositoryFactory.create(repo);
         repository.setAuthenticationManager(m);
         repository.testConnection();
+    }
+
+    @Override
+    protected MatrixProject createMatrixProject(String name) throws IOException {
+        MatrixProject p = super.createMatrixProject(name);
+
+        // set up 2x2 matrix
+        AxisList axes = new AxisList();
+        axes.add(new TextAxis("db","mysql","oracle"));
+        p.setAxes(axes);
+
+        return p;
     }
 }

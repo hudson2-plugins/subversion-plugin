@@ -16,8 +16,7 @@
     <parent>
         <groupId>org.eclipse.hudson.plugins</groupId>
         <artifactId>hudson-plugin-parent</artifactId>
-        <version>3.0-SNAPSHOT</version>
-        <relativePath>../pom.xml</relativePath>
+        <version>3.0.0-SNAPSHOT</version>
     </parent>
 
     <artifactId>subversion</artifactId>
@@ -45,9 +44,9 @@
 
     <dependencies>
         <dependency>
-            <groupId>org.jvnet.hudson.svnkit</groupId>
+            <groupId>org.hudsonci.tools</groupId>
             <artifactId>svnkit</artifactId>
-            <version>1.3.4-hudson-2</version>
+            <version>1.3.5-hudson-1</version>
         </dependency>
         <dependency>
             <groupId>org.eclipse.hudson.main</groupId>

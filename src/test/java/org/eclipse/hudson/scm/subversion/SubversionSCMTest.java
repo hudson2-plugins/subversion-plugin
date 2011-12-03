@@ -23,6 +23,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.jvnet.hudson.test.Bug;
 
+import static junit.framework.Assert.assertEquals;
 
 /**
  * Test for {@link SubversionSCM}
@@ -53,6 +54,6 @@ public class SubversionSCMTest {
     @Bug(8700)
     @Test
     public void testValidateExcludedUsers() {
-        Assert.assertEquals(expectedResult, SubversionSCM.DescriptorImpl.validateExcludedUser(userName));
+        assertEquals(expectedResult, SubversionSCM.DescriptorImpl.validateExcludedUser(userName));
     }
 }

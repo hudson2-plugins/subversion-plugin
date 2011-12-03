@@ -155,7 +155,7 @@ public class SubversionSCM extends SCM implements Serializable {
         + "$DescriptorImpl";
     protected static final String SUBVERSION_TAG_ACTION_ALIAS_NAME = "hudson.scm.SubversionTagAction";
 
-    private static final String UNDEFINED_REVISION_VALUE = "UNDEFINED";
+    protected static final String UNDEFINED_REVISION_VALUE = "UNDEFINED";
 
     /**
      * the locations field is used to store all configured SVN locations (with
@@ -1172,11 +1172,11 @@ public class SubversionSCM extends SCM implements Serializable {
                     String url = baselineInfo.getKey();
                     long baseRev = baselineInfo.getValue();
                     /*
-                        If we fail to check the remote revision, assume there's no change.
-                        In this way, a temporary SVN server problem won't result in bogus builds,
-                        which will fail anyway. So our policy in the error handling in the polling
-                        is not to fire off builds. see HUDSON-6136.
-                     */
+                       If we fail to check the remote revision, assume there's no change.
+                       In this way, a temporary SVN server problem won't result in bogus builds,
+                       which will fail anyway. So our policy in the error handling in the polling
+                       is not to fire off builds. see HUDSON-6136.
+                    */
                     revs.put(url, baseRev);
                     // skip baselineInfo if build location URL contains revision like svn://svnserver/scripts@184375
                     if (!isRevisionSpecifiedInBuildLocation(url, lastCompletedBuild)) {
@@ -1577,7 +1577,7 @@ public class SubversionSCM extends SCM implements Serializable {
         /**
          * See {@link DescriptorImpl#createAuthenticationProvider(AbstractProject)}.
          */
-        private static final class SVNAuthenticationProviderImpl
+        static final class SVNAuthenticationProviderImpl
             implements ISVNAuthenticationProvider, ISVNAuthenticationOutcomeListener, Serializable {
             /**
              * Project-scoped authentication source. For historical reasons, can be null.
@@ -1598,6 +1598,15 @@ public class SubversionSCM extends SCM implements Serializable {
                                                  RemotableSVNAuthenticationProvider global) {
                 this.global = global;
                 this.local = local;
+            }
+
+            /**
+             * For the tests only.
+             *
+             * @return local SVNAuthenticationProvide (PerJobCredentialStore).
+             */
+            RemotableSVNAuthenticationProvider getLocal() {
+                return local;
             }
 
             private SVNAuthentication fromProvider(SVNURL url, String realm, String kind,
@@ -2239,6 +2248,7 @@ public class SubversionSCM extends SCM implements Serializable {
     static {
         new Initializer();
     }
+
 
     private static final class Initializer {
         static {
