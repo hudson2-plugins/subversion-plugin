@@ -314,7 +314,7 @@ public class SubversionCommonTest extends AbstractSubversionTest {
             new SubversionSCM.ModuleLocation(SVN_URL1, null),
             new SubversionSCM.ModuleLocation(SVN_URL2, null)
         };
-        p.setScm(new SubversionSCM(Arrays.asList(locations), false, false, null, null, null, null, null, null));
+        p.setScm(new SubversionSCM(Arrays.asList(locations), new UpdateUpdater(), null, null, null, null, null, null));
 
         CaptureEnvironmentBuilder builder = new CaptureEnvironmentBuilder();
         p.getBuildersList().add(builder);

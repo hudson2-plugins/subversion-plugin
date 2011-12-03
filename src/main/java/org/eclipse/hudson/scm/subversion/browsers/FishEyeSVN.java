@@ -24,6 +24,8 @@ import org.eclipse.hudson.scm.subversion.SubversionChangeLogSet.Path;
 import org.eclipse.hudson.scm.subversion.SubversionRepositoryBrowser;
 import hudson.util.FormValidation;
 import hudson.util.FormValidation.URLCheck;
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 
@@ -154,4 +156,29 @@ public class FishEyeSVN extends SubversionRepositoryBrowser {
     }
 
     private static final long serialVersionUID = 1L;
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+
+        FishEyeSVN that = (FishEyeSVN) o;
+
+        return new EqualsBuilder()
+            .append(url, that.url)
+            .append(rootModule, that.rootModule)
+            .isEquals();
+    }
+
+    @Override
+    public int hashCode() {
+        return new HashCodeBuilder()
+            .append(url)
+            .append(rootModule)
+            .toHashCode();
+    }
 }

@@ -20,6 +20,8 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import javax.servlet.ServletException;
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
 
 /**
  * Common part of {@link Sventon} and {@link Sventon2}
@@ -88,5 +90,30 @@ public abstract class AbstractSventon extends SubversionRepositoryBrowser {
                 return handleIOException(v, e);
             }
         }
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+
+        AbstractSventon that = (AbstractSventon) o;
+
+        return new EqualsBuilder()
+            .append(url, that.url)
+            .append(repositoryInstance, that.repositoryInstance)
+            .isEquals();
+    }
+
+    @Override
+    public int hashCode() {
+        return new HashCodeBuilder()
+            .append(url)
+            .append(repositoryInstance)
+            .toHashCode();
     }
 }

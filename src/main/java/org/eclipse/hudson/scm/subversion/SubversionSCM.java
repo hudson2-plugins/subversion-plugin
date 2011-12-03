@@ -89,6 +89,8 @@ import org.apache.commons.beanutils.PropertyUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
 import org.eclipse.hudson.scm.subversion.WorkspaceUpdater.UpdateTask;
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
@@ -2490,6 +2492,37 @@ public class SubversionSCM extends SCM implements Serializable {
             }
             return modules;
         }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
+
+            ModuleLocation that = (ModuleLocation) o;
+            return new EqualsBuilder()
+                .append(depthOption, that.depthOption)
+                .append(getLocalDir(), that.getLocalDir())
+                .append(remote, that.remote)
+                .append(repositoryRoot, that.repositoryRoot)
+                .append(repositoryUUID, that.repositoryUUID)
+                .append(ignoreExternalsOption, that.ignoreExternalsOption)
+                .isEquals();
+        }
+
+        @Override
+        public int hashCode() {
+            return new HashCodeBuilder()
+                .append(remote)
+                .append(getLocalDir())
+                .append(depthOption)
+                .append(ignoreExternalsOption)
+                .append(repositoryUUID)
+                .append(repositoryRoot).hashCode();
+        }
     }
 
     private static final Logger LOGGER = Logger.getLogger(SubversionSCM.class.getName());
@@ -2596,4 +2629,82 @@ public class SubversionSCM extends SCM implements Serializable {
         return null;
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+
+        SubversionSCM that = (SubversionSCM) o;
+
+        if(!isEqualsWithoutOrdering(locations, that.locations)) {
+            return false;
+        }
+
+        return new EqualsBuilder()
+            .append(browser, that.browser)
+            .append(workspaceUpdater, that.workspaceUpdater)
+            .append(excludedCommitMessages, that.excludedCommitMessages)
+            .append(excludedRegions, that.excludedRegions)
+            .append(excludedRevprop, that.excludedRevprop)
+            .append(excludedUsers, that.excludedUsers)
+            .append(includedRegions, that.includedRegions)
+            .isEquals();
+    }
+
+    /**
+     * Verify if two arrays of objects are equal without same order of elements.
+     * @param array1 first array.
+     * @param array2 second array.
+     * @return true if two arrays equals and false in other way.
+     */
+    public static boolean isEqualsWithoutOrdering(Object[] array1, Object[] array2) {
+        if (array1 == null && array2 == null) {
+            return true;
+        }
+        if (array1 == null || array2 == null) {
+            return false;
+        }
+        if (array1.length != array2.length) {
+            return false;
+        }
+
+        for (int i = 0; i < array1.length; i++) {
+            boolean contains = false;
+            for (int j = 0; j < array2.length; j++) {
+                if (array1[i] == null && array2[i] == null) {
+                    contains = true;
+                    break;
+                }
+
+                if (array1[i] != null && array1[i].equals(array2[j])) {
+                    contains = true;
+                    break;
+                }
+            }
+            if (!contains) return false;
+        }
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        int locationsHash = 0;
+        for (ModuleLocation location : locations) {
+            locationsHash += location.hashCode();
+        }
+        return new HashCodeBuilder()
+            .append(locationsHash)
+            .append(browser)
+            .append(excludedRegions)
+            .append(includedRegions)
+            .append(excludedUsers)
+            .append(excludedRevprop)
+            .append(excludedCommitMessages)
+            .append(workspaceUpdater)
+            .hashCode();
+    }
 }
