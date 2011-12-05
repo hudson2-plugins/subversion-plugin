@@ -12,9 +12,8 @@
  * Anton Kozak
  *
  *******************************************************************************/
-package org.eclipse.hudson.scm.subversion.config;
+package hudson.model;
 
-import hudson.model.FreeStyleProject;
 import org.apache.commons.lang.StringUtils;
 import org.eclipse.hudson.scm.subversion.SubversionSCM;
 import org.junit.Test;
@@ -33,6 +32,9 @@ public class Hudson210ConfigTest extends BaseLegacyConverterTest {
     @Test
     public void testLegacyUnmarshall() throws Exception {
         FreeStyleProject project = (FreeStyleProject) getSourceConfigFile(XSTREAM).read();
+        project.setAllowSave(false);
+        project.initProjectProperties();
+        project.convertScmProperty();
         SubversionSCM scm = (SubversionSCM) project.getScm();
         assertNotNull(scm);
         assertEquals(scm.getLocations().length, 1);
@@ -56,5 +58,4 @@ public class Hudson210ConfigTest extends BaseLegacyConverterTest {
         getTargetConfigFile(XSTREAM).write(item);
         getTargetConfigFile(XSTREAM).read();
     }
-
 }

@@ -12,7 +12,7 @@
  * Nikita Levyankov
  *
  *******************************************************************************/
-package org.eclipse.hudson.scm.subversion.config;
+package hudson.model;
 
 import com.thoughtworks.xstream.XStream;
 import hudson.XmlFile;

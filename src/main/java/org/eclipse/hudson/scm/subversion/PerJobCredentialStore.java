@@ -20,6 +20,8 @@ import hudson.XmlFile;
 import hudson.matrix.MatrixConfiguration;
 import hudson.model.AbstractProject;
 import hudson.model.Hudson;
+import hudson.model.ItemGroup;
+import hudson.model.Job;
 import hudson.model.Saveable;
 import hudson.model.listeners.SaveableListener;
 import hudson.remoting.Channel;
@@ -57,13 +59,13 @@ final class PerJobCredentialStore implements Saveable, SubversionSCM.DescriptorI
     /**
      * SVN authentication realm to its associated credentials, scoped to this project.
      */
-    private final Map<String, SubversionSCM.DescriptorImpl.Credential> credentials = new Hashtable<String, SubversionSCM.DescriptorImpl.Credential>();
+    private final Map<String, Credential> credentials = new Hashtable<String, Credential>();
 
     PerJobCredentialStore(AbstractProject<?, ?> project, String url) {
         this.project = project;
         this.url = url;
         // read existing credential
-        XmlFile xml = getXmlFile();
+        XmlFile xml = getXmlFile(project);
         try {
             if (xml.exists()) {
                 xml.unmarshal(this);
@@ -74,7 +76,7 @@ final class PerJobCredentialStore implements Saveable, SubversionSCM.DescriptorI
         }
     }
 
-    private synchronized SubversionSCM.DescriptorImpl.Credential get(String key) {
+    private synchronized Credential get(String key) {
         return credentials.get(key);
     }
 
@@ -82,7 +84,7 @@ final class PerJobCredentialStore implements Saveable, SubversionSCM.DescriptorI
         return get(getCredentialsKey(url.toDecodedString(), realm));
     }
 
-    public void acknowledgeAuthentication(String realm, SubversionSCM.DescriptorImpl.Credential cred) {
+    public void acknowledgeAuthentication(String realm, Credential cred) {
         try {
             acknowledge(getCredentialsKey(url, realm), cred);
         } catch (IOException e) {
@@ -118,7 +120,7 @@ final class PerJobCredentialStore implements Saveable, SubversionSCM.DescriptorI
         IS_SAVING.set(Boolean.TRUE);
         try {
             if (!credentials.isEmpty()) {
-                XmlFile xmlFile = getXmlFile();
+                XmlFile xmlFile = getXmlFile(project);
                 xmlFile.write(this);
                 SaveableListener.fireOnChange(this, xmlFile);
             }
@@ -127,12 +129,22 @@ final class PerJobCredentialStore implements Saveable, SubversionSCM.DescriptorI
         }
     }
 
-    XmlFile getXmlFile() {
-        File rootDir;
-        if (project instanceof MatrixConfiguration && project.getParent() != null) {
-            rootDir = project.getParent().getRootDir();
-        } else{
-            rootDir = project.getRootDir();
+    XmlFile getXmlFile(Job prj) {
+        //default behaviour
+        File rootDir = prj.getRootDir();
+        File credentialFile = new File(rootDir, credentialsFileName);
+        if (credentialFile.exists()) {
+            return new XmlFile(credentialFile);
+        }
+        //matrix configuration project
+        if (prj instanceof MatrixConfiguration && prj.getParent() != null) {
+            ItemGroup parent = prj.getParent();
+            if (parent instanceof Job){
+                return getXmlFile((Job)parent);
+            }
+        }
+        if (prj.hasCascadingProject()) {
+            return getXmlFile(prj.getCascadingProject());
         }
         return new XmlFile(new File(rootDir, credentialsFileName));
     }

@@ -1,10 +1,6 @@
 /*******************************************************************************
  *
-<<<<<<< HEAD:src/test/java/org/eclipse/hudson/scm/subversion/PerJobCredentialStoreTest.java
- * Copyright (c) 2011 Oracle Corporation.
-=======
  * Copyright (c) 2011, Oracle Corporation, Nikita Levyankov, Anton Kozak
->>>>>>> refs/heads/master:src/test/java/hudson/scm/PerJobCredentialStoreTest.java
  *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
@@ -97,7 +93,7 @@ public class PerJobCredentialStoreTest extends AbstractSubversionTest {
                 createAuthenticationProvider(configuration);
         PerJobCredentialStore perJobCredentialStore = (PerJobCredentialStore)provider.getLocal();
         String correctPath = "matrix" + File.separator + "subversion.credentials";
-        assertTrue(perJobCredentialStore.getXmlFile().getFile().getCanonicalPath().endsWith(correctPath));
+        assertTrue(perJobCredentialStore.getXmlFile(configuration).getFile().getCanonicalPath().endsWith(correctPath));
     }
 
     /**
@@ -232,7 +228,6 @@ public class PerJobCredentialStoreTest extends AbstractSubversionTest {
     protected MatrixProject createMatrixProject(String name) throws IOException {
         MatrixProject p = super.createMatrixProject(name);
 
-        // set up 2x2 matrix
         AxisList axes = new AxisList();
         axes.add(new TextAxis("db","mysql","oracle"));
         p.setAxes(axes);

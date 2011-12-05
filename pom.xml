@@ -53,12 +53,16 @@
             <artifactId>hudson-test-framework</artifactId>
             <version>${project.parent.version}</version>
             <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.easymock</groupId>
-            <artifactId>easymock</artifactId>
-            <scope>test</scope>
-            <version>${easymock.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.eclipse.hudson.main</groupId>
+                    <artifactId>subversion</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.eclipse.hudson.main</groupId>
+                    <artifactId>rest-plugin</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
     </dependencies>
 
