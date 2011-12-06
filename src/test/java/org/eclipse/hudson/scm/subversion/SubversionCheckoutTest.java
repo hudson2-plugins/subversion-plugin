@@ -21,14 +21,10 @@ import hudson.model.Result;
 import hudson.slaves.DumbSlave;
 import hudson.util.FormValidation;
 import java.io.File;
-import java.util.Arrays;
-import java.util.concurrent.Future;
-import org.junit.Ignore;
 import org.jvnet.hudson.test.Bug;
 import org.jvnet.hudson.test.Email;
 import org.jvnet.hudson.test.HudsonHomeLoader.CopyExisting;
 import org.jvnet.hudson.test.Url;
-import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 
 /**
@@ -37,8 +33,6 @@ import org.tmatesoft.svn.core.wc.SVNRevision;
 public class SubversionCheckoutTest extends AbstractSubversionTest {
 
     private static final int LOG_LIMIT = 1000;
-
-    String kind = ISVNAuthenticationManager.PASSWORD;
 
     @Email("http://www.nabble.com/Hudson-1.266-and-1.267%3A-Subversion-authentication-broken--td21156950.html")
     public void testHttpsCheckOut() throws Exception {
@@ -122,58 +116,6 @@ public class SubversionCheckoutTest extends AbstractSubversionTest {
         assertEquals("https://svn.java.net/svn/hudson~svn/trunk/hudson/test-projects/trivial-ant@FAKE", m.getURL());
     }
 
-    /**
-     * Test parsing of @revision information from the tail of the URL
-     */
-    //TODO fix me
-    public void ignore_testModuleLocationWithDepthIgnoreExternalsOption() throws Exception {
-        FreeStyleProject p = createFreeStyleProject();
-
-        SubversionSCM scm = new SubversionSCM(
-                Arrays.asList(
-                        new SubversionSCM.ModuleLocation("https://svn.java.net/svn/hudson~svn/trunk/hudson/test-projects/testSubversionExclusion", "c", "infinity", true),
-                        new SubversionSCM.ModuleLocation("https://svn.java.net/svn/hudson~svn/trunk/hudson/test-projects/testSubversionExclusion", "d", "files", false)),
-               false, false, null, null, null, null, null, null);
-        p.setScm(scm);
-        submit(new WebClient().getPage(p, "configure").getFormByName("config"));
-        verify(scm, (SubversionSCM) p.getScm());
-    }
-
-    /**
-     * Tests a checkout with RevisionParameterAction
-     */
-    public void testRevisionParameter() throws Exception {
-        FreeStyleProject p = createFreeStyleProject();
-        String url = "http://svn.apache.org/repos/asf/subversion/trunk/doc";
-        p.setScm(new SubversionSCM(url));
-
-        FreeStyleBuild b = p.scheduleBuild2(0, new Cause.UserCause(),
-                new RevisionParameterAction(new SubversionSCM.SvnInfo(url, 1162787))).get();
-        System.out.println(b.getLog(LOG_LIMIT));
-        assertTrue(b.getLog(LOG_LIMIT).contains("At revision 1162787"));
-        assertBuildStatus(Result.SUCCESS, b);
-    }
-
-    public void testRevisionParameterFolding() throws Exception {
-        FreeStyleProject p = createFreeStyleProject();
-        String url = "http://svn.apache.org/repos/asf/subversion/trunk/doc";
-	p.setScm(new SubversionSCM(url));
-
-	// Schedule build of a specific revision with a quiet period
-        Future<FreeStyleBuild> f = p.scheduleBuild2(60, new Cause.UserCause(),
-        		new RevisionParameterAction(new SubversionSCM.SvnInfo(url, 1162786)));
-
-	// Schedule another build at a more recent revision
-	p.scheduleBuild2(0, new Cause.UserCause(),
-        		new RevisionParameterAction(new SubversionSCM.SvnInfo(url, 1162787)));
-
-        FreeStyleBuild b = f.get();
-
-        System.out.println(b.getLog(LOG_LIMIT));
-        assertTrue(b.getLog(LOG_LIMIT).contains("At revision 1162787"));
-        assertBuildStatus(Result.SUCCESS,b);
-    }
-
     @Bug(5684)
     public void testDoCheckExcludedUsers() throws Exception {
         String[] validUsernames = new String[]{
@@ -206,31 +148,5 @@ public class SubversionCheckoutTest extends AbstractSubversionTest {
                     new SubversionSCM.DescriptorImpl().doCheckExcludedUsers(invalidUsername).kind);
         }
 
-    }
-
-    private void verify(SubversionSCM lhs, SubversionSCM rhs) {
-        SubversionSCM.ModuleLocation[] ll = lhs.getLocations();
-        SubversionSCM.ModuleLocation[] rl = rhs.getLocations();
-        assertEquals(ll.length, rl.length);
-        for (int i = 0; i < ll.length; i++) {
-            assertEquals(ll[i].local, rl[i].local);
-            assertEquals(ll[i].remote, rl[i].remote);
-            assertEquals(ll[i].getDepthOption(), rl[i].getDepthOption());
-            assertEquals(ll[i].isIgnoreExternalsOption(), rl[i].isIgnoreExternalsOption());
-        }
-
-        assertNullEquals(lhs.getExcludedRegions(), rhs.getExcludedRegions());
-        assertNullEquals(lhs.getExcludedUsers(), rhs.getExcludedUsers());
-        assertNullEquals(lhs.getExcludedRevprop(), rhs.getExcludedRevprop());
-        assertNullEquals(lhs.getExcludedCommitMessages(), rhs.getExcludedCommitMessages());
-        assertNullEquals(lhs.getIncludedRegions(), rhs.getIncludedRegions());
-    }
-
-    private void assertNullEquals(String left, String right) {
-        if (left == null)
-            left = "";
-        if (right == null)
-            right = "";
-        assertEquals(left, right);
     }
 }
