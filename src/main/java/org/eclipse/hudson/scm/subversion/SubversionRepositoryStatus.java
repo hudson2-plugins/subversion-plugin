@@ -9,7 +9,7 @@
  *
  * Contributors:
  *
- * Kohsuke Kawaguchi
+ * Kohsuke Kawaguchi, Patrick van Dissel (id:pvdissel).
  *
  *******************************************************************************/
 
@@ -21,6 +21,7 @@ import hudson.model.Hudson;
 import hudson.scm.SCM;
 import hudson.triggers.SCMTrigger;
 
+import hudson.util.QueryParameterMap;
 import org.apache.commons.io.IOUtils;
 import org.kohsuke.stapler.StaplerRequest;
 import org.kohsuke.stapler.StaplerResponse;
@@ -33,19 +34,17 @@ import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
-import static java.util.logging.Level.FINE;
-import static java.util.logging.Level.FINER;
-import static java.util.logging.Level.WARNING;
-
+import static java.util.logging.Level.*;
 import java.util.logging.Logger;
 
 /**
  * Per repository status.
- *
+ * <p/>
  * @author Kohsuke Kawaguchi
  * @see SubversionStatus
  */
 public class SubversionRepositoryStatus extends AbstractModelObject {
+
     public final UUID uuid;
 
     public SubversionRepositoryStatus(UUID uuid) {
@@ -74,25 +73,26 @@ public class SubversionRepositoryStatus extends AbstractModelObject {
         Set<String> affectedPath = new HashSet<String>();
         String line;
         BufferedReader r = new BufferedReader(req.getReader());
-        
+
         try {
-	        while((line=r.readLine())!=null) {
-	        	if (LOGGER.isLoggable(FINER)) {
-	        		LOGGER.finer("Reading line: "+line);
-	        	}
-	            affectedPath.add(line.substring(4));
-	            if (line.startsWith("svnlook changed --revision ")) {
-	                String msg = "Expecting the output from the svnlook command but instead you just sent me the svnlook invocation command line: " + line;
-	                LOGGER.warning(msg);
-	                throw new IllegalArgumentException(msg);
-	            }
-	        }
+            while ((line = r.readLine()) != null) {
+                if (LOGGER.isLoggable(FINER)) {
+                    LOGGER.finer("Reading line: " + line);
+                }
+                affectedPath.add(line.substring(4));
+                if (line.startsWith("svnlook changed --revision ")) {
+                    String msg = "Expecting the output from the svnlook command but instead you just sent me the svnlook invocation command line: " + line;
+                    LOGGER.warning(msg);
+                    throw new IllegalArgumentException(msg);
+                }
+            }
         } finally {
-        	IOUtils.closeQuietly(r);
+            IOUtils.closeQuietly(r);
         }
 
-        if(LOGGER.isLoggable(FINE))
-            LOGGER.fine("Change reported to Subversion repository "+uuid+" on "+affectedPath);
+        if (LOGGER.isLoggable(FINE)) {
+            LOGGER.fine("Change reported to Subversion repository " + uuid + " on " + affectedPath);
+        }
         boolean scmFound = false, triggerFound = false, uuidFound = false, pathFound = false;
 
         // we can't reliably use req.getParameter() as it can try to parse the payload, which we've already consumed above.
@@ -111,41 +111,60 @@ public class SubversionRepositoryStatus extends AbstractModelObject {
         }
 
         OUTER:
-        for (AbstractProject<?,?> p : Hudson.getInstance().getItems(AbstractProject.class)) {
+        for (AbstractProject<?, ?> p : Hudson.getInstance().getItems(AbstractProject.class)) {
             try {
                 SCM scm = p.getScm();
-                if (scm instanceof SubversionSCM) scmFound = true; else continue;
+                if (scm instanceof SubversionSCM) {
+                    scmFound = true;
+                } else {
+                    continue;
+                }
 
                 SCMTrigger trigger = p.getTrigger(SCMTrigger.class);
-                if (trigger!=null) triggerFound = true; else continue;
+                if (trigger != null) {
+                    triggerFound = true;
+                } else {
+                    continue;
+                }
 
                 SubversionSCM sscm = (SubversionSCM) scm;
                 for (SubversionSCM.ModuleLocation loc : sscm.getLocations()) {
-                    if (loc.getUUID(p).equals(uuid)) uuidFound = true; else continue;
+                    if (loc.getUUID(p).equals(uuid)) {
+                        uuidFound = true;
+                    } else {
+                        continue;
+                    }
 
                     String m = loc.getSVNURL().getPath();
                     String n = loc.getRepositoryRoot(p).getPath();
-                    if(!m.startsWith(n))    continue;   // repository root should be a subpath of the module path, but be defensive
-
+                    if (!m.startsWith(n)) {
+                        continue;   // repository root should be a subpath of the module path, but be defensive
+                    }
                     String remaining = m.substring(n.length());
-                    if(remaining.startsWith("/"))   remaining=remaining.substring(1);
+                    if (remaining.startsWith("/")) {
+                        remaining = remaining.substring(1);
+                    }
                     String remainingSlash = remaining + '/';
 
                     final RevisionParameterAction[] actions;
-                    if ( rev != -1 ) {
-                        SubversionSCM.SvnInfo info[] = { new SubversionSCM.SvnInfo(loc.getURL(), rev) };
+                    if (rev != -1) {
+                        SubversionSCM.SvnInfo info[] = {new SubversionSCM.SvnInfo(loc.getURL(), rev)};
                         RevisionParameterAction action = new RevisionParameterAction(info);
-                        actions = new RevisionParameterAction[] {action};
+                        actions = new RevisionParameterAction[]{action};
 
                     } else {
                         actions = new RevisionParameterAction[0];
                     }
 
                     for (String path : affectedPath) {
-                        if(path.equals(remaining) /*for files*/ || path.startsWith(remainingSlash) /*for dirs*/) {
+                        if (path.equals(remaining) /*
+                                 * for files
+                                 */ || path.startsWith(remainingSlash) /*
+                                 * for dirs
+                                 */) {
                             // this project is possibly changed. poll now.
                             // if any of the data we used was bogus, the trigger will not detect a change
-                            LOGGER.fine("Scheduling the immediate polling of "+p);
+                            LOGGER.fine("Scheduling the immediate polling of " + p);
                             trigger.run(actions);
                             pathFound = true;
 
@@ -154,17 +173,21 @@ public class SubversionRepositoryStatus extends AbstractModelObject {
                     }
                 }
             } catch (SVNException e) {
-                LOGGER.log(WARNING,"Failed to handle Subversion commit notification",e);
+                LOGGER.log(WARNING, "Failed to handle Subversion commit notification", e);
             }
         }
 
-        if (!scmFound)          LOGGER.warning("No subversion jobs found");
-        else if (!triggerFound) LOGGER.warning("No subversion jobs using SCM polling");
-        else if (!uuidFound)    LOGGER.warning("No subversion jobs using repository: " + uuid);
-        else if (!pathFound)    LOGGER.fine("No jobs found matching the modified files");
+        if (!scmFound) {
+            LOGGER.warning("No subversion jobs found");
+        } else if (!triggerFound) {
+            LOGGER.warning("No subversion jobs using SCM polling");
+        } else if (!uuidFound) {
+            LOGGER.warning("No subversion jobs using repository: " + uuid);
+        } else if (!pathFound) {
+            LOGGER.fine("No jobs found matching the modified files");
+        }
 
         rsp.setStatus(SC_OK);
     }
-
     private static final Logger LOGGER = Logger.getLogger(SubversionRepositoryStatus.class.getName());
 }

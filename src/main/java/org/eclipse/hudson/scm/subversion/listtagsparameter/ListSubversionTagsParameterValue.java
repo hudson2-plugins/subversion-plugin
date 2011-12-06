@@ -1,6 +1,6 @@
 /*******************************************************************************
  *
- * Copyright (c) 2010 Oracle Corporation.
+ * Copyright (c) 2010-2011 Oracle Corporation.
  *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
@@ -9,7 +9,7 @@
  *
  * Contributors:
  *
- *    Manufacture Francaise des Pneumatiques Michelin, Romain Seguy
+ *    Manufacture Francaise des Pneumatiques Michelin, Romain Seguy, Patrick van Dissel (id:pvdissel).
  *
  *******************************************************************************/
 package org.eclipse.hudson.scm.subversion.listtagsparameter;
@@ -24,7 +24,6 @@ import org.kohsuke.stapler.export.Exported;
 /**
  * This class represents the actual {@link ParameterValue} for the
  * {@link ListSubversionTagsParameterDefinition} parameter.
- *
  * @author Romain Seguy (http://openromain.blogspot.com)
  */
 public class ListSubversionTagsParameterValue extends ParameterValue {
@@ -49,6 +48,7 @@ public class ListSubversionTagsParameterValue extends ParameterValue {
     @Override
     public VariableResolver<String> createVariableResolver(AbstractBuild<?, ?> build) {
         return new VariableResolver<String>() {
+
             public String resolve(String name) {
                 return ListSubversionTagsParameterValue.this.name.equals(name) ? getTag() : null;
             }
@@ -70,5 +70,4 @@ public class ListSubversionTagsParameterValue extends ParameterValue {
     public void setTagsDir(String tagsDir) {
         this.tagsDir = tagsDir;
     }
-
 }

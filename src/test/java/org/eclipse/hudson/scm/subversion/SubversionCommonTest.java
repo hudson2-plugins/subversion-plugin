@@ -153,8 +153,7 @@ public class SubversionCommonTest extends AbstractSubversionTest {
         submit(form);
     }
 
-    //TODO fix me
-    public void ignore_testConfigRoundtrip() throws Exception {
+    public void testConfigRoundtrip() throws Exception {
         FreeStyleProject p = createFreeStyleProject();
 
         SubversionSCM scm = new SubversionSCM(
@@ -178,9 +177,8 @@ public class SubversionCommonTest extends AbstractSubversionTest {
         verify(scm, (SubversionSCM) p.getScm());
     }
 
-    //TODO fix me
     @Bug(7944)
-    public void ignore_testConfigRoundtrip2() throws Exception {
+    public void testConfigRoundtrip2() throws Exception {
         FreeStyleProject p = createFreeStyleProject();
 
         SubversionSCM scm = new SubversionSCM(
