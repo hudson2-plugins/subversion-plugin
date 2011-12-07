@@ -143,8 +143,7 @@ public class SubversionCommonTest extends AbstractSubversionTest {
         submit(form);
     }
 
-    //TODO fix me
-    public void ignore_testConfigRoundtrip() throws Exception {
+    public void testConfigRoundtrip() throws Exception {
         FreeStyleProject p = createFreeStyleProject();
 
         SubversionSCM scm = new SubversionSCM(
@@ -155,6 +154,8 @@ public class SubversionCommonTest extends AbstractSubversionTest {
                     "https://svn.java.net/svn/hudson~svn/trunk/hudson/test-projects/testSubversionExclusion", "d")),
             true, new Sventon(new URL("http://www.sun.com/"), "test"), "exclude", "user", "revprop", "excludeMessage");
         p.setScm(scm);
+        WebClient webclient = new WebClient();
+        webclient.setThrowExceptionOnScriptError(false);
         submit(new WebClient().getPage(p, "configure").getFormByName("config"));
         verify(scm, (SubversionSCM) p.getScm());
 
@@ -164,22 +165,16 @@ public class SubversionCommonTest extends AbstractSubversionTest {
                     "https://svn.java.net/svn/hudson~svn/trunk/hudson/test-projects/testSubversionExclusion", "c")),
             false, null, "", "", "", "");
         p.setScm(scm);
-        submit(new WebClient().getPage(p, "configure").getFormByName("config"));
+        submit(webclient.getPage(p, "configure").getFormByName("config"));
         verify(scm, (SubversionSCM) p.getScm());
-    }
 
-    //TODO fix me
-    @Bug(7944)
-    public void ignore_testConfigRoundtrip2() throws Exception {
-        FreeStyleProject p = createFreeStyleProject();
-
-        SubversionSCM scm = new SubversionSCM(
+        scm = new SubversionSCM(
             Arrays.asList(
                 new SubversionSCM.ModuleLocation(
                     "https://svn.java.net/svn/hudson~svn/trunk/hudson/test-projects/testSubversionExclusion", "")),
             true, null, null, null, null, null);
         p.setScm(scm);
-        configRoundtrip(p);
+        submit(webclient.getPage(p, "configure").getFormByName("config"));
         verify(scm, (SubversionSCM) p.getScm());
     }
 
