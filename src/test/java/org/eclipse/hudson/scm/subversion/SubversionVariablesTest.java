@@ -162,23 +162,6 @@ public class SubversionVariablesTest extends AbstractSubversionTest {
     }
 
     /**
-     * Test parsing of @revision information from the tail of the URL
-     */
-    //TODO fix me
-    public void ignore_testModuleLocationWithDepthIgnoreExternalsOption() throws Exception {
-        FreeStyleProject p = createFreeStyleProject();
-
-        SubversionSCM scm = new SubversionSCM(
-                Arrays.asList(
-                        new SubversionSCM.ModuleLocation("https://svn.java.net/svn/hudson~svn/trunk/hudson/test-projects/testSubversionExclusion", "c", "infinity", true),
-                        new SubversionSCM.ModuleLocation("https://svn.java.net/svn/hudson~svn/trunk/hudson/test-projects/testSubversionExclusion", "d", "files", false)),
-               false, false, null, null, null, null, null, null);
-        p.setScm(scm);
-        submit(new WebClient().getPage(p, "configure").getFormByName("config"));
-        verify(scm, (SubversionSCM) p.getScm());
-    }
-
-    /**
      * Tests a checkout with RevisionParameterAction
      */
     public void testRevisionParameter() throws Exception {
@@ -194,25 +177,6 @@ public class SubversionVariablesTest extends AbstractSubversionTest {
     }
 
 
-
-    private void verify(SubversionSCM lhs, SubversionSCM rhs) {
-        SubversionSCM.ModuleLocation[] ll = lhs.getLocations();
-        SubversionSCM.ModuleLocation[] rl = rhs.getLocations();
-        assertEquals(ll.length, rl.length);
-        for (int i = 0; i < ll.length; i++) {
-            assertEquals(ll[i].local, rl[i].local);
-            assertEquals(ll[i].remote, rl[i].remote);
-            assertEquals(ll[i].getDepthOption(), rl[i].getDepthOption());
-            assertEquals(ll[i].isIgnoreExternalsOption(), rl[i].isIgnoreExternalsOption());
-        }
-
-        assertNullEquals(lhs.getExcludedRegions(), rhs.getExcludedRegions());
-        assertNullEquals(lhs.getExcludedUsers(), rhs.getExcludedUsers());
-        assertNullEquals(lhs.getExcludedRevprop(), rhs.getExcludedRevprop());
-        assertNullEquals(lhs.getExcludedCommitMessages(), rhs.getExcludedCommitMessages());
-        assertNullEquals(lhs.getIncludedRegions(), rhs.getIncludedRegions());
-    }
-
     private Long getActualRevision(FreeStyleBuild b, String url) throws Exception {
         SVNRevisionState revisionState = b.getAction(SVNRevisionState.class);
         if (revisionState == null) {
@@ -221,13 +185,5 @@ public class SubversionVariablesTest extends AbstractSubversionTest {
 
         return revisionState.revisions.get(url).longValue();
 
-    }
-
-    private void assertNullEquals(String left, String right) {
-        if (left == null)
-            left = "";
-        if (right == null)
-            right = "";
-        assertEquals(left, right);
     }
 }

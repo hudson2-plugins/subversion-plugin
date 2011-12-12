@@ -2327,7 +2327,9 @@ public class SubversionSCM extends SCM implements Serializable {
          *
          * @param remote remote repository.
          * @param local local repository.
+         * @deprecated as of 3.3.0
          */
+        @Deprecated
         public ModuleLocation(String remote, String local) {
             this(remote, local, null, false);
         }

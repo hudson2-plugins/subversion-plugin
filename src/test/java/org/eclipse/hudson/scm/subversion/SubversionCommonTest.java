@@ -237,71 +237,6 @@ public class SubversionCommonTest extends AbstractSubversionTest {
             srv.kill();
         }
     }
-
-    //TODO fix the test, it works unstable
-    public void ignore_testConfigRoundtrip() throws Exception {
-        FreeStyleProject p = createFreeStyleProject();
-
-        SubversionSCM scm = new SubversionSCM(
-            Arrays.asList(
-                new SubversionSCM.ModuleLocation(
-                    "https://svn.java.net/svn/hudson~svn/trunk/hudson/test-projects/testSubversionExclusion", "c"),
-                new SubversionSCM.ModuleLocation(
-                    "https://svn.java.net/svn/hudson~svn/trunk/hudson/test-projects/testSubversionExclusion", "d")),
-            true, new Sventon(new URL("http://www.sun.com/"), "test"), "exclude", "user", "revprop", "excludeMessage");
-        p.setScm(scm);
-        WebClient webclient = new WebClient();
-        webclient.setThrowExceptionOnScriptError(false);
-        submit(webclient.getPage(p, "configure").getFormByName("config"));
-        verify(scm, (SubversionSCM) p.getScm());
-
-        scm = new SubversionSCM(
-            Arrays.asList(
-                new SubversionSCM.ModuleLocation(
-                    "https://svn.java.net/svn/hudson~svn/trunk/hudson/test-projects/testSubversionExclusion", "c")),
-            false, null, "", "", "", "");
-        p.setScm(scm);
-        submit(webclient.getPage(p, "configure").getFormByName("config"));
-        verify(scm, (SubversionSCM) p.getScm());
-
-        scm = new SubversionSCM(
-            Arrays.asList(
-                new SubversionSCM.ModuleLocation(
-                    "https://svn.java.net/svn/hudson~svn/trunk/hudson/test-projects/testSubversionExclusion", "")),
-            true, null, null, null, null, null);
-        p.setScm(scm);
-        submit(webclient.getPage(p, "configure").getFormByName("config"));
-        verify(scm, (SubversionSCM) p.getScm());
-    }
-
-    private void verify(SubversionSCM lhs, SubversionSCM rhs) {
-        SubversionSCM.ModuleLocation[] ll = lhs.getLocations();
-        SubversionSCM.ModuleLocation[] rl = rhs.getLocations();
-        assertEquals(ll.length, rl.length);
-        for (int i = 0; i < ll.length; i++) {
-            assertEquals(ll[i].local, rl[i].local);
-            assertEquals(ll[i].remote, rl[i].remote);
-            assertEquals(ll[i].getDepthOption(), rl[i].getDepthOption());
-            assertEquals(ll[i].isIgnoreExternalsOption(), rl[i].isIgnoreExternalsOption());
-        }
-
-        assertNullEquals(lhs.getExcludedRegions(), rhs.getExcludedRegions());
-        assertNullEquals(lhs.getExcludedUsers(), rhs.getExcludedUsers());
-        assertNullEquals(lhs.getExcludedRevprop(), rhs.getExcludedRevprop());
-        assertNullEquals(lhs.getExcludedCommitMessages(), rhs.getExcludedCommitMessages());
-        assertNullEquals(lhs.getIncludedRegions(), rhs.getIncludedRegions());
-    }
-
-    private void assertNullEquals(String left, String right) {
-        if (left == null) {
-            left = "";
-        }
-        if (right == null) {
-            right = "";
-        }
-        assertEquals(left, right);
-    }
-
     /**
      * Loads a test Subversion repository into a temporary directory, and creates {@link org.eclipse.hudson.scm.subversion.SubversionSCM} for it.
      */
@@ -309,31 +244,6 @@ public class SubversionCommonTest extends AbstractSubversionTest {
         return new SubversionSCM(
             "file://" + new CopyExisting(getClass().getResource("svn-repo.zip")).allocate().toURI().toURL().getPath()
                 + "trunk/a", "a");
-    }
-
-    private FreeStyleBuild sendCommitTrigger(FreeStyleProject p, boolean includeRevision) throws Exception {
-        String repoUUID = "71c3de6d-444a-0410-be80-ed276b4c234a";
-
-        WebClient wc = new WebClient();
-        WebRequestSettings wr = new WebRequestSettings(new URL(getURL() + "subversion/" + repoUUID + "/notifyCommit"),
-            HttpMethod.POST);
-        wr.setRequestBody("A   trunk/hudson/test-projects/trivial-ant/build.xml");
-        wr.setAdditionalHeader("Content-Type", "text/plain;charset=UTF-8");
-
-        if (includeRevision) {
-            wr.setAdditionalHeader("X-Hudson-Subversion-Revision", "13000");
-        }
-
-        WebConnection conn = wc.getWebConnection();
-        WebResponse resp = conn.getResponse(wr);
-        assertTrue(isGoodHttpStatus(resp.getStatusCode()));
-
-        waitUntilNoActivity();
-        FreeStyleBuild b = p.getLastBuild();
-        assertNotNull(b);
-        assertBuildStatus(Result.SUCCESS, b);
-
-        return b;
     }
 
     private void _idem(SVNAuthentication a) {

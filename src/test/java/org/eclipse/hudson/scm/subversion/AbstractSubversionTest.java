@@ -41,7 +41,7 @@ public abstract class AbstractSubversionTest extends HudsonTestCase {
     @Override
     protected void setUp() throws Exception {
         //Enable classic plugin strategy, because some extensions are duplicated with default strategy
-//        System.setProperty("hudson.PluginStrategy", "hudson.ClassicPluginStrategy");
+        System.setProperty("hudson.PluginStrategy", "hudson.ClassicPluginStrategy");
         super.setUp();
         descriptor = hudson.getDescriptorByType(DescriptorImpl.class);
     }
