@@ -15,14 +15,13 @@
 
 package org.eclipse.hudson.scm.subversion;
 
-import hudson.ClassicPluginStrategy;
 import hudson.Launcher.LocalLauncher;
 import hudson.Proc;
-import org.eclipse.hudson.scm.subversion.SubversionSCM.DescriptorImpl;
 import hudson.util.StreamTaskListener;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
+import org.eclipse.hudson.scm.subversion.SubversionSCM.DescriptorImpl;
 import org.jvnet.hudson.test.HudsonHomeLoader.CopyExisting;
 import org.jvnet.hudson.test.HudsonTestCase;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
@@ -71,7 +70,32 @@ public abstract class AbstractSubversionTest extends HudsonTestCase {
         return m;
     }
 
-    static {
-        ClassicPluginStrategy.useAntClassLoader = true;
+    protected void verify(SubversionSCM lhs, SubversionSCM rhs) {
+        SubversionSCM.ModuleLocation[] ll = lhs.getLocations();
+        SubversionSCM.ModuleLocation[] rl = rhs.getLocations();
+        assertEquals(ll.length, rl.length);
+        for (int i = 0; i < ll.length; i++) {
+            assertEquals(ll[i].local, rl[i].local);
+            assertEquals(ll[i].remote, rl[i].remote);
+            assertEquals(ll[i].getDepthOption(), rl[i].getDepthOption());
+            assertEquals(ll[i].isIgnoreExternalsOption(), rl[i].isIgnoreExternalsOption());
+        }
+
+        assertNullEquals(lhs.getExcludedRegions(), rhs.getExcludedRegions());
+        assertNullEquals(lhs.getExcludedUsers(), rhs.getExcludedUsers());
+        assertNullEquals(lhs.getExcludedRevprop(), rhs.getExcludedRevprop());
+        assertNullEquals(lhs.getExcludedCommitMessages(), rhs.getExcludedCommitMessages());
+        assertNullEquals(lhs.getIncludedRegions(), rhs.getIncludedRegions());
     }
+
+    private void assertNullEquals(String left, String right) {
+        if (left == null) {
+            left = "";
+        }
+        if (right == null) {
+            right = "";
+        }
+        assertEquals(left, right);
+    }
+
 }
