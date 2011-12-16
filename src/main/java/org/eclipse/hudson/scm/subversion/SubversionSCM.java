@@ -149,7 +149,7 @@ import static hudson.scm.PollingResult.Change;
  * @author Kohsuke Kawaguchi
  */
 public class SubversionSCM extends SCM implements Serializable {
-
+    private static final String HUDSON_SCM_SUBVERSION_ALIAS_NAME = "hudson.scm.SubversionSCM";
     private static final String SVN_SCM_GLOBAL_CONFIG_FILE = "svn-scm-global-config.xml";
     
     protected static final String UNDEFINED_REVISION_VALUE = "UNDEFINED";
@@ -1655,8 +1655,18 @@ public class SubversionSCM extends SCM implements Serializable {
         public String getDisplayName() {
             return "Subversion";
         }
-        
-        
+
+        /**
+         * Returns descriptor id.
+         * We return old class name to save backward compatibility of global configuration and jelly files.
+         *
+         * @return descriptor id.
+         */
+        @Override
+        public String getId() {
+            return HUDSON_SCM_SUBVERSION_ALIAS_NAME;
+        }
+
         @Override
         public XmlFile getConfigFile() {
             File hudsonRoot = Hudson.getInstance().getRootDir();
@@ -1947,7 +1957,7 @@ public class SubversionSCM extends SCM implements Serializable {
                     + "<br/><pre id=\"svnerror\" style=\"display:none\">"
                     + Functions.printThrowable(e) + "</pre>"
                     + Messages.SubversionSCM_doCheckRemote_exceptionMsg2(
-                    "descriptorByName/" + SubversionSCM.class.getName() + "/enterCredential?" + url);
+                    "descriptorByName/" + HUDSON_SCM_SUBVERSION_ALIAS_NAME + "/enterCredential?" + url);
                 return FormValidation.errorWithMarkup(message);
             }
         }
