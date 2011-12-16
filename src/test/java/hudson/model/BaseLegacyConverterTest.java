@@ -21,21 +21,20 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 
 import hudson.matrix.MatrixProject;
-import hudson.model.FreeStyleProject;
-import hudson.model.Items;
 import org.apache.commons.io.FileUtils;
-import org.eclipse.hudson.scm.subversion.SubversionSCM;
+import org.eclipse.hudson.scm.subversion.PluginImpl;
 import org.junit.Before;
 
 public abstract class BaseLegacyConverterTest {
+
     private File sourceConfigFile;
     private File targetConfigFile;
     public static final com.thoughtworks.xstream.XStream XSTREAM = Items.XSTREAM;
 
     static {
-        XSTREAM.alias("project",FreeStyleProject.class);
-        XSTREAM.alias("matrix-project",MatrixProject.class);
-        SubversionSCM.initialize();
+        XSTREAM.alias("project", FreeStyleProject.class);
+        XSTREAM.alias("matrix-project", MatrixProject.class);
+        PluginImpl.setXtreamAliasForBackwardCompatibility();;
     }
 
     @Before
@@ -55,6 +54,4 @@ public abstract class BaseLegacyConverterTest {
     protected XmlFile getTargetConfigFile(XStream XSTREAM) {
         return new XmlFile(XSTREAM, targetConfigFile);
     }
-
 }
-

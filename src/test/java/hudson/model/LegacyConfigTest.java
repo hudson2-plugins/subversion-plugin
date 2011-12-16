@@ -22,6 +22,7 @@ import java.nio.charset.Charset;
 import org.apache.commons.io.IOUtils;
 import org.eclipse.hudson.scm.subversion.AbstractSubversionTest;
 import org.eclipse.hudson.scm.subversion.CheckoutUpdater;
+import org.eclipse.hudson.scm.subversion.PluginImpl;
 import org.eclipse.hudson.scm.subversion.SubversionSCM;
 import org.eclipse.hudson.scm.subversion.UpdateUpdater;
 import org.eclipse.hudson.scm.subversion.UpdateWithRevertUpdater;
@@ -40,7 +41,7 @@ public class LegacyConfigTest extends AbstractSubversionTest {
      */
     public void testWorkspaceUpdaterCompatibility() throws Exception {
         Proc p = runSvnServe(getClass().getResource("small.zip"));
-        SubversionSCM.initialize();
+        PluginImpl.setXtreamAliasForBackwardCompatibility();
         try {
             verifyCompatibility("legacy-update.xml", UpdateUpdater.class);
             verifyCompatibility("legacy-checkout.xml", CheckoutUpdater.class);
