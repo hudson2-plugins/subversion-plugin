@@ -1119,6 +1119,7 @@ public class SubversionSCM extends SCM implements Serializable {
         final SVNLogHandler logHandler = new SVNLogHandler(listener);
         // figure out the remote revisions
         final ISVNAuthenticationProvider authProvider = getDescriptor().createAuthenticationProvider(project);
+        final ModuleLocation[] moduleLocations = getLocations(lastCompletedBuild);
 
         return ch.call(new DelegatingCallable<PollingResult, IOException>() {
             public ClassLoader getClassLoader() {
@@ -1148,7 +1149,7 @@ public class SubversionSCM extends SCM implements Serializable {
                     */
                     revs.put(url, baseRev);
                     // skip baselineInfo if build location URL contains revision like svn://svnserver/scripts@184375
-                    if (!isRevisionSpecifiedInBuildLocation(url, lastCompletedBuild)) {
+                    if (!isRevisionSpecifiedInBuildLocation(url, moduleLocations)) {
                         try {
                             final SVNURL svnurl = SVNURL.parseURIDecoded(url);
                             long nowRev = new SvnInfo(parseSvnInfo(svnurl, authProvider)).revision;
@@ -1177,13 +1178,14 @@ public class SubversionSCM extends SCM implements Serializable {
     }
 
     /**
-     * Checks whether build location contains specified revision.
+     * Checks whether module locations contain specified revision.
+     *
      * @param url url to verify.
-     * @param lastCompletedBuild build.
+     * @param moduleLocations module location.
      * @return true if build location contains specified revision.
      */
-    boolean isRevisionSpecifiedInBuildLocation(String url, AbstractBuild<?, ?> lastCompletedBuild) {
-        for (ModuleLocation location : getLocations(lastCompletedBuild)) {
+    boolean isRevisionSpecifiedInBuildLocation(String url, ModuleLocation[] moduleLocations) {
+        for (ModuleLocation location : moduleLocations) {
             if(location.getURL() != null && location.getURL().contains(url)){
                 SVNRevision revision = getRevisionFromRemoteUrl(location.getOriginRemote());
                 if (isRevisionPresent(revision)) {
