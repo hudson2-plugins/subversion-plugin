@@ -57,10 +57,6 @@
                     <groupId>org.eclipse.hudson.main</groupId>
                     <artifactId>subversion</artifactId>
                 </exclusion>
-                <exclusion>
-                    <groupId>org.eclipse.hudson.main</groupId>
-                    <artifactId>rest-plugin</artifactId>
-                </exclusion>
             </exclusions>
         </dependency>
     </dependencies>
