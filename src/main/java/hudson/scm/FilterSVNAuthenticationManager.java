@@ -1,9 +1,14 @@
 package hudson.scm;
 
-import org.tmatesoft.svn.core.auth.*;
+import hudson.scm.auth.ISVNAuthenticationManager;
+import hudson.scm.auth.ISVNAuthenticationOutcomeListener;
+
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNErrorMessage;
+import org.tmatesoft.svn.core.auth.ISVNAuthenticationProvider;
+import org.tmatesoft.svn.core.auth.ISVNProxyManager;
+import org.tmatesoft.svn.core.auth.SVNAuthentication;
 import org.tmatesoft.svn.core.io.SVNRepository;
 
 import javax.net.ssl.TrustManager;
@@ -17,6 +22,11 @@ public class FilterSVNAuthenticationManager implements ISVNAuthenticationManager
 
     public FilterSVNAuthenticationManager(ISVNAuthenticationManager core) {
         this.core = core;
+    }
+
+    public FilterSVNAuthenticationManager(
+            org.tmatesoft.svn.core.auth.ISVNAuthenticationManager sam) {
+        this((ISVNAuthenticationManager)sam);
     }
 
     public void setAuthenticationProvider(ISVNAuthenticationProvider provider) {

@@ -25,14 +25,13 @@ package hudson.scm.credential;
 
 import com.trilead.ssh2.crypto.Base64;
 import hudson.scm.SubversionSCM;
+import hudson.scm.auth.ISVNAuthenticationManager;
 import hudson.util.Scrambler;
 import hudson.util.Secret;
 import java.io.File;
 import java.io.IOException;
 import org.apache.commons.io.FileUtils;
-import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.auth.SVNAuthentication;
-import org.tmatesoft.svn.core.auth.SVNSSLAuthentication;
 
 /**
  * SSL client certificate based authentication.
