@@ -121,7 +121,7 @@ public class WebSVN2 extends SubversionRepositoryBrowser {
         if (this == o) {
             return true;
         }
-        if (o == null || getClass() != o.getClass()) {
+        if (!(o instanceof WebSVN2)) {
             return false;
         }
 

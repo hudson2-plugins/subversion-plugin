@@ -23,6 +23,8 @@
  */
 package hudson.scm;
 
+import antlr.ANTLRException;
+
 import com.gargoylesoftware.htmlunit.HttpMethod;
 import com.gargoylesoftware.htmlunit.WebConnection;
 import com.gargoylesoftware.htmlunit.WebRequestSettings;
@@ -37,15 +39,16 @@ import hudson.model.Result;
 import hudson.model.StringParameterValue;
 import hudson.model.TaskListener;
 import hudson.triggers.SCMTrigger;
-import hudson.util.StreamTaskListener;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
+import java.io.IOException;
 import java.net.URL;
-import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
+
 import org.jvnet.hudson.test.Bug;
 import org.jvnet.hudson.test.Email;
 import org.jvnet.hudson.test.HudsonHomeLoader.CopyExisting;
@@ -173,10 +176,13 @@ public class SubversionCommitTest extends AbstractSubversionTest {
 
     /**
      * Makes sure the symbolic link is checked out correctly. There seems to be
+     * @throws IOException 
+     * @throws ExecutionException 
+     * @throws InterruptedException 
      */
     @Bug(3904)
     //TODO fix when svn repository for the tests will be created
-    public void ignore_testSymbolicLinkCheckout() throws Exception {
+    public void ignore_testSymbolicLinkCheckout() throws IOException, InterruptedException, ExecutionException {
         // Only perform if symlink behavior is enabled
         if (!"true".equals(System.getProperty("svnkit.symlinks"))) {
             return;
@@ -192,7 +198,7 @@ public class SubversionCommitTest extends AbstractSubversionTest {
             readFileAsString(source), readFileAsString(linked));
     }
 
-    public void testExcludeByUser() throws Exception {
+    public void testExcludeByUser() throws InterruptedException, ExecutionException, IOException {
         FreeStyleProject p = createFreeStyleProject("testExcludeByUser");
         p.setScm(new SubversionSCM(
             Arrays.asList(new SubversionSCM.ModuleLocation(
@@ -379,7 +385,7 @@ public class SubversionCommitTest extends AbstractSubversionTest {
     }
 
 
-    private FreeStyleProject createPostCommitTriggerJob() throws Exception {
+    private FreeStyleProject createPostCommitTriggerJob() throws IOException, ANTLRException {
         // Disable crumbs because HTMLUnit refuses to mix request bodies with
         // request parameters
         hudson.setCrumbIssuer(null);

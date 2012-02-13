@@ -148,7 +148,7 @@ public class SubversionRepositoryStatus extends AbstractModelObject {
                         continue;   // repository root should be a subpath of the module path, but be defensive
                     }
                     String remaining = m.substring(n.length());
-                    if (remaining.startsWith("/")) {
+                    if (remaining.charAt(0) == '/') {
                         remaining = remaining.substring(1);
                     }
                     String remainingSlash = remaining + '/';

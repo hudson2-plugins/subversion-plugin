@@ -40,7 +40,6 @@ import org.kohsuke.stapler.QueryParameter;
 
 import javax.servlet.ServletException;
 import java.io.IOException;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.regex.Pattern;
 
@@ -65,12 +64,12 @@ public class FishEyeSVN extends SubversionRepositoryBrowser {
     private final String rootModule;
 
     @DataBoundConstructor
-    public FishEyeSVN(URL url, String rootModule) throws MalformedURLException {
+    public FishEyeSVN(URL url, String rootModule) {
         this.url = normalizeToEndWithSlash(url);
 
         // normalize
         rootModule = rootModule.trim();
-        if(rootModule.startsWith("/"))
+        if(rootModule.charAt(0) == '/')
             rootModule = rootModule.substring(1);
         if(rootModule.endsWith("/"))
             rootModule = rootModule.substring(0,rootModule.length()-1);
@@ -171,7 +170,7 @@ public class FishEyeSVN extends SubversionRepositoryBrowser {
         if (this == o) {
             return true;
         }
-        if (o == null || getClass() != o.getClass()) {
+        if (!(o instanceof FishEyeSVN)) {
             return false;
         }
 

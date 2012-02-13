@@ -129,7 +129,7 @@ public class SubversionSCMEqualsHashCodeTest {
     }
 
     @Test
-    public void testHashCode() throws MalformedURLException {
+    public void testHashCode() {
         assertEquals(expectedResult, defaultSubversionSCM.hashCode() == subversionSCM.hashCode());
     }
 

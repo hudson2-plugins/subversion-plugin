@@ -23,6 +23,8 @@
  */
 package hudson.scm;
 
+import antlr.ANTLRException;
+
 import com.gargoylesoftware.htmlunit.ElementNotFoundException;
 import com.gargoylesoftware.htmlunit.FailingHttpStatusCodeException;
 import com.gargoylesoftware.htmlunit.HttpMethod;
@@ -48,6 +50,7 @@ import hudson.scm.subversion.UpdateUpdater;
 import hudson.triggers.SCMTrigger;
 import hudson.util.StreamTaskListener;
 import java.io.File;
+import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -55,6 +58,7 @@ import java.util.List;
 import org.acegisecurity.context.SecurityContextHolder;
 import org.dom4j.Document;
 import org.dom4j.io.DOMReader;
+import org.junit.Ignore;
 import org.jvnet.hudson.test.Bug;
 import org.jvnet.hudson.test.CaptureEnvironmentBuilder;
 import org.jvnet.hudson.test.HudsonHomeLoader.CopyExisting;
@@ -187,7 +191,7 @@ public class SubversionCommonTest extends AbstractSubversionTest {
     }
 
     @Bug(7944)
-    public void testConfigRoundtrip2() throws Exception {
+    public void testConfigRoundtrip2() throws IOException {
         FreeStyleProject p = createFreeStyleProject();
 
         SubversionSCM scm = new SubversionSCM(
@@ -230,7 +234,7 @@ public class SubversionCommonTest extends AbstractSubversionTest {
     }
 
 
-    public void testCompareSVNAuthentications() throws Exception {
+    public void testCompareSVNAuthentications() {
         assertFalse(compareSVNAuthentications(new SVNUserNameAuthentication("me", true),
             new SVNSSHAuthentication("me", "me", 22, true)));
         // same object should compare equal
@@ -452,7 +456,7 @@ public class SubversionCommonTest extends AbstractSubversionTest {
     }
 
 
-    private FreeStyleProject createPostCommitTriggerJob() throws Exception {
+    private FreeStyleProject createPostCommitTriggerJob() throws IOException, ANTLRException {
         // Disable crumbs because HTMLUnit refuses to mix request bodies with
         // request parameters
         hudson.setCrumbIssuer(null);

@@ -673,7 +673,7 @@ public class SubversionSCM extends SCM implements Serializable {
      * @return immutable list. Can be empty but never null.
      */
     /*package*/
-    static List<External> parseExternalsFile(AbstractProject project) throws IOException {
+    static List<External> parseExternalsFile(AbstractProject project) {
         File file = getExternalsFile(project);
         if (file.exists()) {
             try {
@@ -892,7 +892,7 @@ public class SubversionSCM extends SCM implements Serializable {
             if (this == o) {
                 return true;
             }
-            if (o == null || getClass() != o.getClass()) {
+            if (!(o instanceof SvnInfo)) {
                 return false;
             }
 
@@ -1989,7 +1989,7 @@ public class SubversionSCM extends SCM implements Serializable {
 
         public static String getRelativePath(SVNURL repoURL, SVNRepository repository) throws SVNException {
             String repoPath = repoURL.getPath().substring(repository.getRepositoryRoot(false).getPath().length());
-            if (!repoPath.startsWith("/")) {
+            if (repoPath.charAt(0) != '/') {
                 repoPath = "/" + repoPath;
             }
             return repoPath;
@@ -2016,7 +2016,7 @@ public class SubversionSCM extends SCM implements Serializable {
 
             // check if a absolute path has been supplied
             // (the last check with the regex will match windows drives)
-            if (v.startsWith("/") || v.startsWith("\\") || v.startsWith("..") || v.matches("^[A-Za-z]:.*")) {
+            if (v.charAt(0) == '/' || v.charAt(0) == '\\' || v.startsWith("..") || v.matches("^[A-Za-z]:.*")) {
                 return FormValidation.error("absolute path is not allowed");
             }
 
@@ -2455,7 +2455,7 @@ public class SubversionSCM extends SCM implements Serializable {
             if (this == o) {
                 return true;
             }
-            if (o == null || getClass() != o.getClass()) {
+            if (!(o instanceof ModuleLocation)) {
                 return false;
             }
 
@@ -2591,7 +2591,7 @@ public class SubversionSCM extends SCM implements Serializable {
         if (this == o) {
             return true;
         }
-        if (o == null || getClass() != o.getClass()) {
+        if (!(o instanceof SubversionSCM)) {
             return false;
         }
 

@@ -60,7 +60,7 @@ public class PasswordCredential extends SubversionSCM.DescriptorImpl.Credential 
         if (this == o) {
             return true;
         }
-        if (o == null || getClass() != o.getClass()) {
+        if (!(o instanceof PasswordCredential)) {
             return false;
         }
         PasswordCredential that = (PasswordCredential) o;

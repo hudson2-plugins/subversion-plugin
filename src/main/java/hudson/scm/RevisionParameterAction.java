@@ -109,10 +109,11 @@ public class RevisionParameterAction extends InvisibleAction implements Serializ
 
 	@Override
 	public String toString() {
-		String result = "[RevisionParameterAction ";
+		StringBuffer result = new StringBuffer("[RevisionParameterAction ");
 		for(SvnInfo i : revisions) {
-			result += i.url + "(" + i.revision + ") ";
+			result.append(i.url + "(" + i.revision + ") ");
 		}
-		return result + "]";
+		result.append("]");
+		return result.toString();
 	}
 }

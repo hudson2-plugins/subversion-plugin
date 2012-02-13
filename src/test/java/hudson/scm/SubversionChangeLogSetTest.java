@@ -23,14 +23,10 @@
  */
 package hudson.scm;
 
-import hudson.model.AbstractBuild;
-import hudson.model.FreeStyleBuild;
-import hudson.model.FreeStyleProject;
 import java.util.ArrayList;
 import java.util.List;
 import org.junit.Assert;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 
 /**
  * SubversionChangeLogSet TestCase
@@ -42,7 +38,7 @@ import org.junit.runner.RunWith;
 public class SubversionChangeLogSetTest {
 
     @Test
-    public void testRemoveDuplicateEntries() throws Exception{
+    public void testRemoveDuplicateEntries() {
         //One two duplicated entries. Total 8
         List<SubversionChangeLogSet.LogEntry> items = new ArrayList<SubversionChangeLogSet.LogEntry>();
         items.add(buildChangeLogEntry(1, "Test msg"));

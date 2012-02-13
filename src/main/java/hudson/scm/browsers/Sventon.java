@@ -122,7 +122,7 @@ public class Sventon extends AbstractSventon {
         if (this == o) {
             return true;
         }
-        if (o == null || getClass() != o.getClass()) {
+        if (!(o instanceof Sventon)) {
             return false;
         }
 

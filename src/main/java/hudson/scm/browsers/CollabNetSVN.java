@@ -110,7 +110,7 @@ public class CollabNetSVN extends SubversionRepositoryBrowser {
         if (this == o) {
             return true;
         }
-        if (o == null || getClass() != o.getClass()) {
+        if (!(o instanceof CollabNetSVN)) {
             return false;
         }
 

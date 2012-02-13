@@ -235,7 +235,7 @@ public abstract class WorkspaceUpdater extends AbstractDescribableImpl<Workspace
         if (this == o) {
             return true;
         }
-        if (o == null || getClass() != o.getClass()) {
+        if (!(o instanceof WorkspaceUpdater)) {
             return false;
         }
         return true;

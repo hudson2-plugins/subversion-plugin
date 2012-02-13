@@ -78,12 +78,12 @@ public class SubversionBrowserEqualsHashCodeTest {
     }
 
     @Test
-    public void testEquals() throws MalformedURLException {
+    public void testEquals() {
         assertEquals(expectedResult, defaultBrowser.equals(browser));
     }
 
     @Test
-    public void testHashCode() throws MalformedURLException {
+    public void testHashCode() {
         assertEquals(expectedResult, defaultBrowser.hashCode() == browser.hashCode());
     }
 }

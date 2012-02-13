@@ -53,7 +53,7 @@ public class UpdateWithCleanUpdater extends WorkspaceUpdater {
     // mostly "svn update" plus extra
     public static class TaskImpl extends UpdateUpdater.TaskImpl {
         @Override
-        protected void preUpdate(ModuleLocation module, File local) throws SVNException, IOException {
+        protected void preUpdate(ModuleLocation module, File local) throws SVNException {
             listener.getLogger().println("Cleaning up " + local);
 
             manager.getStatusClient().doStatus(local, null, SVNDepth.INFINITY, false, false, true, false, new ISVNStatusHandler() {

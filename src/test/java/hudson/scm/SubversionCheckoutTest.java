@@ -30,8 +30,12 @@ import hudson.model.Result;
 import hudson.slaves.DumbSlave;
 import hudson.util.FormValidation;
 import java.io.File;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.concurrent.Future;
+
+import javax.servlet.ServletException;
+
 import org.jvnet.hudson.test.Bug;
 import org.jvnet.hudson.test.Email;
 import org.jvnet.hudson.test.HudsonHomeLoader.CopyExisting;
@@ -111,7 +115,7 @@ public class SubversionCheckoutTest extends AbstractSubversionTest {
     /**
      * Test parsing of @revision information from the tail of the URL
      */
-    public void testModuleLocationRevisions() throws Exception {
+    public void testModuleLocationRevisions() {
         SubversionSCM.ModuleLocation m = new SubversionSCM.ModuleLocation("https://svn.java.net/svn/hudson~svn/trunk/hudson/test-projects/trivial-ant@13000", null);
         SVNRevision r = m.getRevision(null);
         assertTrue(r.isValid());
@@ -182,7 +186,7 @@ public class SubversionCheckoutTest extends AbstractSubversionTest {
     }
 
     @Bug(5684)
-    public void testDoCheckExcludedUsers() throws Exception {
+    public void testDoCheckExcludedUsers() throws IOException, ServletException {
         String[] validUsernames = new String[]{
                 "DOMAIN\\user",
                 "user",
