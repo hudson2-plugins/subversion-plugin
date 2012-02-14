@@ -50,6 +50,7 @@ import hudson.remoting.Channel;
 import hudson.remoting.DelegatingCallable;
 import hudson.remoting.VirtualChannel;
 import hudson.scm.UserProvidedCredential.AuthenticationManagerImpl;
+import hudson.scm.auth.ISVNAuthenticationManager;
 import hudson.scm.auth.ISVNAuthenticationOutcomeListener;
 import hudson.scm.subversion.CheckoutUpdater;
 import hudson.scm.subversion.Messages;
@@ -119,7 +120,6 @@ import org.tmatesoft.svn.core.SVNLogEntry;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationProvider;
 import org.tmatesoft.svn.core.auth.SVNAuthentication;
 import org.tmatesoft.svn.core.auth.SVNUserNameAuthentication;
@@ -835,9 +835,9 @@ public class SubversionSCM extends SCM implements Serializable {
      */
     public static SVNClientManager createSvnClientManager(ISVNAuthenticationProvider authProvider) {
         SubversionWorkspaceSelector.syncWorkspaceFormatFromMaster();
-        ISVNAuthenticationManager sam = SVNWCUtil.createDefaultAuthenticationManager();
+        ISVNAuthenticationManager sam = new DefaultSVNAuthenticationManager(SVNWCUtil.createDefaultAuthenticationManager());
         sam.setAuthenticationProvider(authProvider);
-        return SVNClientManager.newInstance(SVNWCUtil.createDefaultOptions(true), sam);
+        return SVNClientManager.newInstance(SVNWCUtil.createDefaultOptions(true), sam.getAuthenticationManager());
     }
 
     /**
@@ -1966,7 +1966,7 @@ public class SubversionSCM extends SCM implements Serializable {
         protected SVNRepository getRepository(AbstractProject context, SVNURL repoURL) throws SVNException {
             SVNRepository repository = SVNRepositoryFactory.create(repoURL);
 
-            ISVNAuthenticationManager sam = SVNWCUtil.createDefaultAuthenticationManager();
+            ISVNAuthenticationManager sam = new DefaultSVNAuthenticationManager(SVNWCUtil.createDefaultAuthenticationManager());
             sam = new FilterSVNAuthenticationManager(sam) {
                 // If there's no time out, the blocking read operation may hang forever, because TCP itself
                 // has no timeout. So always use some time out. If the underlying implementation gives us some
@@ -1982,7 +1982,7 @@ public class SubversionSCM extends SCM implements Serializable {
             };
             sam.setAuthenticationProvider(createAuthenticationProvider(context));
             repository.setTunnelProvider(SVNWCUtil.createDefaultOptions(true));
-            repository.setAuthenticationManager(sam);
+            repository.setAuthenticationManager(sam.getAuthenticationManager());
 
             return repository;
         }
@@ -2591,6 +2591,7 @@ public class SubversionSCM extends SCM implements Serializable {
         if (this == o) {
             return true;
         }
+        
         if (!(o instanceof SubversionSCM)) {
             return false;
         }
@@ -2609,12 +2610,13 @@ public class SubversionSCM extends SCM implements Serializable {
             .append(excludedRevprop, that.excludedRevprop)
             .append(excludedUsers, that.excludedUsers)
             .append(includedRegions, that.includedRegions)
+            .append(workspaceUpdater, that.workspaceUpdater)
             .isEquals();
     }
 
     /**
      * Verify if two arrays of objects are equal without same order of elements.
-     *
+     * TODO: Remove this methods
      * @param array1 first array.
      * @param array2 second array.
      * @return true if two arrays equals and false in other way.

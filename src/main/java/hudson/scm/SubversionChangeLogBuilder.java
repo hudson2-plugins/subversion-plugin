@@ -141,7 +141,7 @@ public final class SubversionChangeLogBuilder {
 
         try {
             if(debug)
-                listener.getLogger().printf("Computing changelog of %1s from %2s to %3s\n",
+                listener.getLogger().printf("Computing changelog of %1s from %2s to %3s%n",
                         SVNURL.parseURIEncoded(url), prevRev+1, thisRev);
             svnlc.doLog(SVNURL.parseURIEncoded(url),
                         null,

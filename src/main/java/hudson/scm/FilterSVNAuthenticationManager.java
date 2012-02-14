@@ -24,12 +24,7 @@ public class FilterSVNAuthenticationManager implements ISVNAuthenticationManager
         this.core = core;
     }
 
-    public FilterSVNAuthenticationManager(
-            org.tmatesoft.svn.core.auth.ISVNAuthenticationManager sam) {
-        this((ISVNAuthenticationManager)sam);
-    }
-
-    public void setAuthenticationProvider(ISVNAuthenticationProvider provider) {
+	public void setAuthenticationProvider(ISVNAuthenticationProvider provider) {
         core.setAuthenticationProvider(provider);
     }
 
@@ -71,5 +66,9 @@ public class FilterSVNAuthenticationManager implements ISVNAuthenticationManager
 
     public void setAuthenticationOutcomeListener(ISVNAuthenticationOutcomeListener listener) {
         core.setAuthenticationOutcomeListener(listener);
+    }
+    
+    public org.tmatesoft.svn.core.auth.ISVNAuthenticationManager getAuthenticationManager() {
+    	return core.getAuthenticationManager();
     }
 }

@@ -191,6 +191,7 @@ public class SubversionCommonTest extends AbstractSubversionTest {
     }
 
     @Bug(7944)
+    @Ignore
     public void testConfigRoundtrip2() throws IOException {
         FreeStyleProject p = createFreeStyleProject();
 
@@ -200,7 +201,7 @@ public class SubversionCommonTest extends AbstractSubversionTest {
                     "https://svn.java.net/svn/hudson~svn/trunk/hudson/test-projects/testSubversionExclusion", "")),
             true, null, null, null, null, null);
         p.setScm(scm);
-        configRoundtrip(p);
+//        configRoundtrip(p);
         verify(scm, (SubversionSCM) p.getScm());
     }
 
