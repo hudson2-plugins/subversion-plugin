@@ -125,12 +125,12 @@ public class SubversionSCMEqualsHashCodeTest {
 
     @Test
     public void testEquals() {
-        assertEquals(defaultSubversionSCM + ((expectedResult) ? " should be " : " should not be ") + " equal to: " + subversionSCM, expectedResult, defaultSubversionSCM.equals(subversionSCM));
+        assertEquals(expectedResult, defaultSubversionSCM.equals(subversionSCM));
     }
 
-//    @Test
-//    public void testHashCode() {
-//        assertEquals(expectedResult, defaultSubversionSCM.hashCode() == subversionSCM.hashCode());
-//    }
+    @Test
+    public void testHashCode() {
+        assertEquals(expectedResult, defaultSubversionSCM.hashCode() == subversionSCM.hashCode());
+    }
 
 }

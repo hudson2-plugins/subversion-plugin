@@ -1989,7 +1989,7 @@ public class SubversionSCM extends SCM implements Serializable {
 
         public static String getRelativePath(SVNURL repoURL, SVNRepository repository) throws SVNException {
             String repoPath = repoURL.getPath().substring(repository.getRepositoryRoot(false).getPath().length());
-            if (repoPath.charAt(0) != '/') {
+            if (repoPath.length() > 0 && repoPath.charAt(0) != '/') {
                 repoPath = "/" + repoPath;
             }
             return repoPath;
@@ -2601,7 +2601,7 @@ public class SubversionSCM extends SCM implements Serializable {
         if (!isEqualsWithoutOrdering(locations, that.locations)) {
             return false;
         }
-
+        
         return new EqualsBuilder()
             .append(browser, that.browser)
             .append(workspaceUpdater, that.workspaceUpdater)
@@ -2610,7 +2610,6 @@ public class SubversionSCM extends SCM implements Serializable {
             .append(excludedRevprop, that.excludedRevprop)
             .append(excludedUsers, that.excludedUsers)
             .append(includedRegions, that.includedRegions)
-            .append(workspaceUpdater, that.workspaceUpdater)
             .isEquals();
     }
 
