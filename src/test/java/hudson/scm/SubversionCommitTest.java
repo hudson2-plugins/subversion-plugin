@@ -43,6 +43,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.net.URI;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -221,7 +222,7 @@ public class SubversionCommitTest extends AbstractSubversionTest {
 //        SLAVE_DEBUG_PORT = 8001;
         File repo = new CopyExisting(getClass().getResource("HUDSON-6030.zip")).allocate();
         SubversionSCM scm = new SubversionSCM(
-            SubversionSCM.ModuleLocation.parse(new String[]{"file://" + repo.getPath()},
+            SubversionSCM.ModuleLocation.parse(new String[]{"file:///" + repo.getPath()},
                 new String[]{"."}, null, null),
             true, false, null, ".*//*bar", "", "", "", "");
 
@@ -230,19 +231,20 @@ public class SubversionCommitTest extends AbstractSubversionTest {
         assertBuildStatusSuccess(p.scheduleBuild2(0).get());
 
         // initial polling on the slave for the code path that doesn't find any change
-        assertFalse(p.pollSCMChanges(createTaskListener()));
-
+        assertFalse("Polling should not have any changes for an initially created slave",
+        	p.poll(createTaskListener()).hasChanges());
+        
         createCommit(scm, "bar");
 
         // polling on the slave for the code path that does have a change but should be excluded.
         assertFalse("Polling found changes that should have been ignored",
-            p.pollSCMChanges(createTaskListener()));
+            p.poll(createTaskListener()).hasChanges());
 
         createCommit(scm, "foo");
 
         // polling on the slave for the code path that doesn't find any change
         assertTrue("Polling didn't find a change it should have found.",
-            p.pollSCMChanges(createTaskListener()));
+            p.poll(createTaskListener()).hasChanges());
 
     }
 
@@ -258,24 +260,24 @@ public class SubversionCommitTest extends AbstractSubversionTest {
                 new String[]{"."}, null, null),
             true, false, null, "", "", "", "", ".*//*foo");
 
-        FreeStyleProject p = createFreeStyleProject("testExcludedRegions");
+        FreeStyleProject p = createFreeStyleProject("testIncludedRegions");
         p.setScm(scm);
         assertBuildStatusSuccess(p.scheduleBuild2(0).get());
 
         // initial polling on the slave for the code path that doesn't find any change
-        assertFalse(p.pollSCMChanges(createTaskListener()));
+        assertFalse(p.poll(createTaskListener()).hasChanges());
 
         createCommit(scm, "bar");
 
         // polling on the slave for the code path that does have a change but should be excluded.
         assertFalse("Polling found changes that should have been ignored",
-            p.pollSCMChanges(createTaskListener()));
+            p.poll(createTaskListener()).hasChanges());
 
         createCommit(scm, "foo");
 
         // polling on the slave for the code path that doesn't find any change
         assertTrue("Polling didn't find a change it should have found.",
-            p.pollSCMChanges(createTaskListener()));
+            p.poll(createTaskListener()).hasChanges());
 
     }
 

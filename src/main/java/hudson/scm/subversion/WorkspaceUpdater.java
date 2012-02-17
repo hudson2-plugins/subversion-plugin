@@ -231,4 +231,17 @@ public abstract class WorkspaceUpdater extends AbstractDescribableImpl<Workspace
             this.listener = listener;
         }
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o)
+            return true;
+        if (!(o instanceof WorkspaceUpdater))
+            return false;
+
+        WorkspaceUpdater that = (WorkspaceUpdater) o;
+        if (!(createTask().equals(that.createTask())))
+            return false;
+        return true;
+    }
 }

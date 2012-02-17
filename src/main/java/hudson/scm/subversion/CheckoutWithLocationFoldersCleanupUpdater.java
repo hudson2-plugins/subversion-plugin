@@ -41,7 +41,7 @@ import java.io.IOException;
  *
  * @author Anton Kozak
  */
-public class CheckoutWithLocationFoldersCleanupUpdater extends CheckoutUpdater {
+public class CheckoutWithLocationFoldersCleanupUpdater extends WorkspaceUpdater {
     /**
      * Constructor.
      */
