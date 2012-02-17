@@ -98,7 +98,7 @@ final class SubversionUpdateEventHandler extends SubversionEventHandlerImpl {
                 out.println("AssertionError: appears to be using unpatched svnkit at " + jarFile);
             } else {
                 out.println(Messages.SubversionUpdateEventHandler_FetchExternal(
-                    ext.getResolvedURL(), ext.getRevision().getNumber(), event.getFile()));
+                    ext.getResolvedURL(), Long.valueOf(ext.getRevision().getNumber()), event.getFile()));
                 //#1539 - an external inside an external needs to have the path appended 
                 externals.add(
                     new External(modulePath + "/" + path.substring(0, path.length() - ext.getPath().length()), ext));

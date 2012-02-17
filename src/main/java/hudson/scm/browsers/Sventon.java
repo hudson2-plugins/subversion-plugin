@@ -61,7 +61,7 @@ public class Sventon extends AbstractSventon {
         }
         int r = path.getLogEntry().getRevision();
         return new URL(url, String.format("diffprev.svn?name=%s&commitrev=%d&committedRevision=%d&revision=%d&path=%s",
-            repositoryInstance, r, r, r, URLEncoder.encode(getPath(path), URL_CHARSET)));
+            repositoryInstance, r, Integer.valueOf(r), r, URLEncoder.encode(getPath(path), URL_CHARSET)));
     }
 
     @Override
@@ -71,7 +71,7 @@ public class Sventon extends AbstractSventon {
         }
         int r = path.getLogEntry().getRevision();
         return new URL(url, String.format("goto.svn?name=%s&revision=%d&path=%s",
-            repositoryInstance, r, URLEncoder.encode(getPath(path), URL_CHARSET)));
+            repositoryInstance, Integer.valueOf(r), URLEncoder.encode(getPath(path), URL_CHARSET)));
     }
 
     /**

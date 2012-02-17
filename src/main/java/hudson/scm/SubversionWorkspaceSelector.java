@@ -91,7 +91,7 @@ public class SubversionWorkspaceSelector implements ISVNAdminAreaFactorySelector
                 try {
                     workspaceFormat = c.call(new Callable<Integer, RuntimeException>() {
                         public Integer call()  {
-                            return Hudson.getInstance().getDescriptorByType(SubversionSCM.DescriptorImpl.class).getWorkspaceFormat();
+                            return Integer.valueOf(Hudson.getInstance().getDescriptorByType(SubversionSCM.DescriptorImpl.class).getWorkspaceFormat());
                         }
                     });
                 } catch (IOException e) {

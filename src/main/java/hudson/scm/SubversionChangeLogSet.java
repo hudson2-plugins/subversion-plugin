@@ -79,7 +79,7 @@ public final class SubversionChangeLogSet extends ChangeLogSet<LogEntry> {
     public List<RevisionInfo> getRevisions() throws IOException {
         List<RevisionInfo> r = new ArrayList<RevisionInfo>();
         for (Map.Entry<String, Long> e : getRevisionMap().entrySet()) {
-            r.add(new RevisionInfo(e.getKey(), e.getValue()));
+            r.add(new RevisionInfo(e.getKey(), e.getValue().longValue()));
         }
         return r;
     }

@@ -136,7 +136,7 @@ public class SshPublicKeyCredential extends SubversionSCM.DescriptorImpl.Credent
                         Messages.SshPublicKeyCredential_private_key_encoding());
                 }
                 return new SVNSSHAuthentication(userName, privateKey.toCharArray(),
-                    Scrambler.descramble(passphrase), -1, false);
+                    Scrambler.descramble(passphrase), -1, false, null, false);
             } catch (IOException e) {
                 throw new SVNException(
                     SVNErrorMessage.create(SVNErrorCode.AUTHN_CREDS_UNAVAILABLE,

@@ -41,7 +41,7 @@ public abstract class AbstractSubversionTest extends HudsonTestCase {
      * @throws InterruptedException 
      */
     protected Proc runSvnServe(File repo) throws IOException, InterruptedException {
-        LocalLauncher launcher = new LocalLauncher(new StreamTaskListener(System.out));
+        LocalLauncher launcher = new LocalLauncher(new StreamTaskListener(System.out, null));
         try {
             launcher.launch().cmds("svnserve", "--help").start().join();
         } catch (IOException e) {

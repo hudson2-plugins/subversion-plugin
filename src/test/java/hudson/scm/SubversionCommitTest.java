@@ -43,7 +43,6 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
-import java.net.URI;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -289,7 +288,7 @@ public class SubversionCommitTest extends AbstractSubversionTest {
         FreeStyleProject p = createPostCommitTriggerJob();
         FreeStyleBuild b = sendCommitTrigger(p, true);
 
-        assertTrue(getActualRevision(b, "https://svn.java.net/svn/hudson~svn/trunk/hudson/test-projects/trivial-ant")
+        assertTrue(getActualRevision(b, "https://svn.java.net/svn/hudson~svn/trunk/hudson/test-projects/trivial-ant").longValue()
             <= 13000);
     }
 
@@ -303,17 +302,7 @@ public class SubversionCommitTest extends AbstractSubversionTest {
         FreeStyleBuild b = sendCommitTrigger(p, false);
 
         assertTrue(
-            getActualRevision(b, "https://svn.java.net/svn/hudson~svn/trunk/hudson/test-projects/trivial-ant") > 13000);
-    }
-
-    private void assertNullEquals(String left, String right) {
-        if (left == null) {
-            left = "";
-        }
-        if (right == null) {
-            right = "";
-        }
-        assertEquals(left, right);
+            getActualRevision(b, "https://svn.java.net/svn/hudson~svn/trunk/hudson/test-projects/trivial-ant").longValue() > 13000);
     }
 
     /**
@@ -382,7 +371,7 @@ public class SubversionCommitTest extends AbstractSubversionTest {
             throw new Exception("No revision found!");
         }
 
-        return revisionState.revisions.get(url).longValue();
+        return revisionState.revisions.get(url);
 
     }
 

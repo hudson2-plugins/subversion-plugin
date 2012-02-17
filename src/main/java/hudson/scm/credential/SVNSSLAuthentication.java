@@ -40,7 +40,7 @@ public class SVNSSLAuthentication extends SVNAuthentication {
      *                         credentials cache    
      */
     public SVNSSLAuthentication(File certFile, String password, boolean storageAllowed) throws IOException {
-        super(ISVNAuthenticationManager.SSL, null, storageAllowed);
+        super(ISVNAuthenticationManager.SSL, null, storageAllowed, null, false);
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         FileInputStream in = new FileInputStream(certFile);
         try {

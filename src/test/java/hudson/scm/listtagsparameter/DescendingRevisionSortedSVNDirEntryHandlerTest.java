@@ -100,43 +100,43 @@ public class DescendingRevisionSortedSVNDirEntryHandlerTest {
         return new LinkedHashMap<Long, String>() {
 
             {
-                put(8473L, "2.1.0-10");
-                put(9364L, "2.1.0-100");
-                put(9373L, "2.1.0-101");
-                put(9381L, "2.1.0-102");
-                put(7033L, "build-99-nl-b2c");
-                put(9554L, "2.1.0-119");
-                put(5828L, "20110623");
-                put(8483L, "2.1.0-12");
-                put(9561L, "2.1.0-120");
-                put(9646L, "2.1.0-129");
-                put(8503L, "2.1.0-13");
-                put(9666L, "2.1.0-130");
-                put(8389L, "build-207-nl-b2c");
-                put(9755L, "2.1.0-139");
-                put(8520L, "2.1.0-14");
-                put(9763L, "2.1.0-140");
-                put(9802L, "2.1.0-149");
-                put(9817L, "2.1.0-150");
-                put(9891L, "2.1.0-159");
-                put(6506L, "build-67-nl-b2c");
-                put(8527L, "2.1.0-16");
-                put(7095L, "build-104-nl-b2c");
-                put(9904L, "2.1.0-160");
-                put(8540L, "2.1.0-17");
-                put(8499L, "build-221-nl-b2c");
-                put(8577L, "2.1.0-19");
-                put(8582L, "2.1.0-20");
-                put(8602L, "2.1.0-22");
-                put(9115L, "2.1.0-79");
-                put(8458L, "2.1.0-8");
-                put(9125L, "2.1.0-80");
-                put(5322L, "20110609");
-                put(7075L, "build-102-nl-b2c");
-                put(8382L, "build-206-nl-b2c");
-                put(8441L, "build-219-nl-b2c");
-                put(6441L, "build-64-nl-b2c");
-                put(6913L, "build-93-nl-b2c");
+                put(Long.valueOf(8473L), "2.1.0-10");
+                put(Long.valueOf(9364L), "2.1.0-100");
+                put(Long.valueOf(9373L), "2.1.0-101");
+                put(Long.valueOf(9381L), "2.1.0-102");
+                put(Long.valueOf(7033L), "build-99-nl-b2c");
+                put(Long.valueOf(9554L), "2.1.0-119");
+                put(Long.valueOf(5828L), "20110623");
+                put(Long.valueOf(8483L), "2.1.0-12");
+                put(Long.valueOf(9561L), "2.1.0-120");
+                put(Long.valueOf(9646L), "2.1.0-129");
+                put(Long.valueOf(8503L), "2.1.0-13");
+                put(Long.valueOf(9666L), "2.1.0-130");
+                put(Long.valueOf(8389L), "build-207-nl-b2c");
+                put(Long.valueOf(9755L), "2.1.0-139");
+                put(Long.valueOf(8520L), "2.1.0-14");
+                put(Long.valueOf(9763L), "2.1.0-140");
+                put(Long.valueOf(9802L), "2.1.0-149");
+                put(Long.valueOf(9817L), "2.1.0-150");
+                put(Long.valueOf(9891L), "2.1.0-159");
+                put(Long.valueOf(6506L), "build-67-nl-b2c");
+                put(Long.valueOf(8527L), "2.1.0-16");
+                put(Long.valueOf(7095L), "build-104-nl-b2c");
+                put(Long.valueOf(9904L), "2.1.0-160");
+                put(Long.valueOf(8540L), "2.1.0-17");
+                put(Long.valueOf(8499L), "build-221-nl-b2c");
+                put(Long.valueOf(8577L), "2.1.0-19");
+                put(Long.valueOf(8582L), "2.1.0-20");
+                put(Long.valueOf(8602L), "2.1.0-22");
+                put(Long.valueOf(9115L), "2.1.0-79");
+                put(Long.valueOf(8458L), "2.1.0-8");
+                put(Long.valueOf(9125L), "2.1.0-80");
+                put(Long.valueOf(5322L), "20110609");
+                put(Long.valueOf(7075L), "build-102-nl-b2c");
+                put(Long.valueOf(8382L), "build-206-nl-b2c");
+                put(Long.valueOf(8441L), "build-219-nl-b2c");
+                put(Long.valueOf(6441L), "build-64-nl-b2c");
+                put(Long.valueOf(6913L), "build-93-nl-b2c");
             }
         };
     }
@@ -153,7 +153,7 @@ public class DescendingRevisionSortedSVNDirEntryHandlerTest {
     private List<SVNDirEntry> generateSvnDirEntries(final Map<Long, String> entryData, final SVNNodeKind kind) throws SVNException {
         List<SVNDirEntry> svnEntries = new LinkedList<SVNDirEntry>();
         for (Long revision : entryData.keySet()) {
-            svnEntries.add(generateSvnDirEntry(entryData.get(revision), revision, kind));
+            svnEntries.add(generateSvnDirEntry(entryData.get(revision), revision.longValue(), kind));
         }
         return svnEntries;
     }

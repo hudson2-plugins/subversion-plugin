@@ -49,9 +49,9 @@ public class PasswordCredential extends SubversionSCM.DescriptorImpl.Credential 
     @Override
     public SVNAuthentication createSVNAuthentication(String kind) {
         if (kind.equals(ISVNAuthenticationManager.SSH)) {
-            return new SVNSSHAuthentication(userName, Scrambler.descramble(password), -1, false);
+            return new SVNSSHAuthentication(userName, Scrambler.descramble(password), -1, false, null, false);
         } else {
-            return new SVNPasswordAuthentication(userName, Scrambler.descramble(password), false);
+            return new SVNPasswordAuthentication(userName, Scrambler.descramble(password), false, null, false);
         }
     }
 

@@ -206,7 +206,7 @@ public class UserProvidedCredential implements Closeable {
             // I don't set the cred field here, so that the 1st credential for ssh
             // won't get clobbered.
             {
-                return new SVNUserNameAuthentication(username, false);
+                return new SVNUserNameAuthentication(username, false, null, false);
             }
             if (kind.equals(ISVNAuthenticationManager.PASSWORD)) {
                 logWriter.println("Passing user name " + username + " and password you entered");
