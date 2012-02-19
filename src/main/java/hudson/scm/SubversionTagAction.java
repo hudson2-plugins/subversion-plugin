@@ -68,231 +68,248 @@ import java.util.regex.Pattern;
  * @author Kohsuke Kawaguchi
  */
 @ExportedBean
-public class SubversionTagAction extends AbstractScmTagAction implements Describable<SubversionTagAction> {
+public class SubversionTagAction extends AbstractScmTagAction implements
+		Describable<SubversionTagAction> {
 
-    /**
-     * Map is from the repository URL to the URLs of tags.
-     * If a module is not tagged, the value will be empty list.
-     * Never an empty map.
-     */
-    private final Map<SvnInfo,List<String>> tags = new CopyOnWriteMap.Tree<SvnInfo, List<String>>();
+	/**
+	 * Map is from the repository URL to the URLs of tags. If a module is not
+	 * tagged, the value will be empty list. Never an empty map.
+	 */
+	private final Map<SvnInfo, List<String>> tags = new CopyOnWriteMap.Tree<SvnInfo, List<String>>();
 
-    /*package*/ SubversionTagAction(AbstractBuild build,Collection<SvnInfo> svnInfos) {
-        super(build);
-        Map<SvnInfo,List<String>> m = new HashMap<SvnInfo,List<String>>();
-        for (SvnInfo si : svnInfos)
-            m.put(si,new ArrayList<String>());
-        tags.putAll(m);
-    }
+	/* package */SubversionTagAction(AbstractBuild build,
+			Collection<SvnInfo> svnInfos) {
+		super(build);
+		Map<SvnInfo, List<String>> m = new HashMap<SvnInfo, List<String>>();
+		for (SvnInfo si : svnInfos)
+			m.put(si, new ArrayList<String>());
+		tags.putAll(m);
+	}
 
-    /**
-     * Was any tag created by the user already?
-     */
-    public boolean hasTags() {
-        return isTagged();
-    }
+	/**
+	 * Was any tag created by the user already?
+	 */
+	public boolean hasTags() {
+		return isTagged();
+	}
 
-    public String getIconFileName() {
-        if(!isTagged() && !getACL().hasPermission(getPermission()))
-            return null;
-        return "save.gif";
-    }
+	public String getIconFileName() {
+		if (!isTagged() && !getACL().hasPermission(getPermission()))
+			return null;
+		return "save.gif";
+	}
 
-    public String getDisplayName() {
-        int nonNullTag = 0;
-        for (List<String> v : tags.values()) {
-            if(!v.isEmpty()) {
-                nonNullTag++;
-                if(nonNullTag>1)
-                    break;
-            }
-        }
-        if(nonNullTag==0)
-            return Messages.SubversionTagAction_DisplayName_HasNoTag();
-        if(nonNullTag==1)
-            return Messages.SubversionTagAction_DisplayName_HasATag();
-        else
-            return Messages.SubversionTagAction_DisplayName_HasTags();
-    }
+	public String getDisplayName() {
+		int nonNullTag = 0;
+		for (List<String> v : tags.values()) {
+			if (!v.isEmpty()) {
+				nonNullTag++;
+				if (nonNullTag > 1)
+					break;
+			}
+		}
+		if (nonNullTag == 0)
+			return Messages.SubversionTagAction_DisplayName_HasNoTag();
+		if (nonNullTag == 1)
+			return Messages.SubversionTagAction_DisplayName_HasATag();
+		return Messages.SubversionTagAction_DisplayName_HasTags();
+	}
 
-    /**
-     * @see #tags
-     */
-    public Map<SvnInfo,List<String>> getTags() {
-        return Collections.unmodifiableMap(tags);
-    }
+	/**
+	 * @see #tags
+	 */
+	public Map<SvnInfo, List<String>> getTags() {
+		return Collections.unmodifiableMap(tags);
+	}
 
-    @Exported(name="tags")
-    public List<TagInfo> getTagInfo() {
-        List<TagInfo> data = new ArrayList<TagInfo>();
-        for (Entry<SvnInfo,List<String>> e : tags.entrySet()) {
-            String module = e.getKey().toString();
-            for (String url : e.getValue())
-                data.add(new TagInfo(module, url));
-        }
-        return data;
-    }
+	@Exported(name = "tags")
+	public List<TagInfo> getTagInfo() {
+		List<TagInfo> data = new ArrayList<TagInfo>();
+		for (Entry<SvnInfo, List<String>> e : tags.entrySet()) {
+			String module = e.getKey().toString();
+			for (String url : e.getValue())
+				data.add(new TagInfo(module, url));
+		}
+		return data;
+	}
 
-    @ExportedBean
-    public static class TagInfo {
-        private String module, url;
-        private TagInfo(String module, String url) {
-            this.module = module;
-            this.url = url;
-        }
-        @Exported
-        public String getModule() {
-            return module;
-        }
-        @Exported
-        public String getUrl() {
-            return url;
-        }
-    }
+	@ExportedBean
+	public static class TagInfo {
+		private String module, url;
 
-    /**
-     * Returns true if this build has already been tagged at least once.
-     */
-    @Override
-    public boolean isTagged() {
-        for (List<String> t : tags.values()) {
-            if(!t.isEmpty())    return true;
-        }
-        return false;
-    }
+		private TagInfo(String module, String url) {
+			this.module = module;
+			this.url = url;
+		}
 
-    @Override
-    public String getTooltip() {
-        String tag = null;
-        for (List<String> v : tags.values()) {
-            for (String s : v) {
-                if (tag != null) return Messages.SubversionTagAction_Tooltip(); // Multiple tags
-                tag = s;
-            }
-        }
-        if(tag!=null)  return Messages.SubversionTagAction_Tooltip_OneTag(tag);
-        else           return null;
-    }
+		@Exported
+		public String getModule() {
+			return module;
+		}
 
-    private static final Pattern TRUNK_BRANCH_MARKER = Pattern.compile("/(trunk|branches)(/|$)");
+		@Exported
+		public String getUrl() {
+			return url;
+		}
+	}
 
-    /**
-     * Creates a URL, to be used as the default value of the module tag URL.
-     *
-     * @return
-     *      null if failed to guess.
-     */
-    public String makeTagURL(SvnInfo si) {
-        // assume the standard trunk/branches/tags repository layout
-        Matcher m = TRUNK_BRANCH_MARKER.matcher(si.url);
-        if(!m.find())
-            return null;    // doesn't have 'trunk' nor 'branches'
+	/**
+	 * Returns true if this build has already been tagged at least once.
+	 */
+	@Override
+	public boolean isTagged() {
+		for (List<String> t : tags.values()) {
+			if (!t.isEmpty())
+				return true;
+		}
+		return false;
+	}
 
-        return si.url.substring(0,m.start())+"/tags/"+getBuild().getProject().getName()+"-"+getBuild().getNumber();
-    }
+	@Override
+	public String getTooltip() {
+		String tag = null;
+		for (List<String> v : tags.values()) {
+			for (String s : v) {
+				if (tag != null)
+					return Messages.SubversionTagAction_Tooltip(); // Multiple
+																	// tags
+				tag = s;
+			}
+		}
+		if (tag != null)
+			return Messages.SubversionTagAction_Tooltip_OneTag(tag);
+		return null;
+	}
 
-    /**
-     * Invoked to actually tag the workspace.
-     */
-    public synchronized void doSubmit(StaplerRequest req, StaplerResponse rsp) throws IOException, ServletException {
-        getACL().checkPermission(getPermission());
+	private static final Pattern TRUNK_BRANCH_MARKER = Pattern
+			.compile("/(trunk|branches)(/|$)");
 
-        MultipartFormDataParser parser = new MultipartFormDataParser(req);
+	/**
+	 * Creates a URL, to be used as the default value of the module tag URL.
+	 * 
+	 * @return null if failed to guess.
+	 */
+	public String makeTagURL(SvnInfo si) {
+		// assume the standard trunk/branches/tags repository layout
+		Matcher m = TRUNK_BRANCH_MARKER.matcher(si.url);
+		if (!m.find())
+			return null; // doesn't have 'trunk' nor 'branches'
 
-        Map<SvnInfo,String> newTags = new HashMap<SvnInfo,String>();
+		return si.url.substring(0, m.start()) + "/tags/"
+				+ getBuild().getProject().getName() + "-"
+				+ getBuild().getNumber();
+	}
 
-        int i=-1;
-        for (SvnInfo e : tags.keySet()) {
-            i++;
-            if(tags.size()>1 && parser.get("tag"+i)==null)
-                continue; // when tags.size()==1, UI won't show the checkbox.
-            newTags.put(e,parser.get("name" + i));
-        }
+	/**
+	 * Invoked to actually tag the workspace.
+	 */
+	public synchronized void doSubmit(StaplerRequest req, StaplerResponse rsp)
+			throws IOException, ServletException {
+		getACL().checkPermission(getPermission());
 
-        UserProvidedCredential upc=null;
-        if (parser.get("credential")!=null)
-            upc = UserProvidedCredential.fromForm(req,parser);
+		MultipartFormDataParser parser = new MultipartFormDataParser(req);
 
-        new TagWorkerThread(newTags,upc,parser.get("comment")).start();
+		Map<SvnInfo, String> newTags = new HashMap<SvnInfo, String>();
 
-        rsp.sendRedirect(".");
-    }
+		int i = -1;
+		for (SvnInfo e : tags.keySet()) {
+			i++;
+			if (tags.size() > 1 && parser.get("tag" + i) == null)
+				continue; // when tags.size()==1, UI won't show the checkbox.
+			newTags.put(e, parser.get("name" + i));
+		}
 
-    @Override
-    public Permission getPermission() {
-        return SubversionSCM.TAG;
-    }
+		UserProvidedCredential upc = null;
+		if (parser.get("credential") != null)
+			upc = UserProvidedCredential.fromForm(req, parser);
 
-    /**
-     * The thread that performs tagging operation asynchronously.
-     */
-    public final class TagWorkerThread extends TaskThread {
-        private final Map<SvnInfo,String> tagSet;
-        /**
-         * If the user provided a separate credential, this object represents that.
-         */
-        private final UserProvidedCredential upc;
-        private final String comment;
+		new TagWorkerThread(newTags, upc, parser.get("comment")).start();
 
-        public TagWorkerThread(Map<SvnInfo,String> tagSet, UserProvidedCredential upc, String comment) {
-            super(SubversionTagAction.this,ListenerAndText.forMemory());
-            this.tagSet = tagSet;
-            this.upc = upc;
-            this.comment = comment;
-        }
+		rsp.sendRedirect(".");
+	}
 
-        @Override
-        protected void perform(TaskListener listener) {
-            try {
-                final SVNClientManager cm = upc!=null
-                        ? SVNClientManager.newInstance(SVNWCUtil.createDefaultOptions(true),upc.new AuthenticationManagerImpl(listener))
-                        : SubversionSCM.createSvnClientManager(getBuild().getProject());
-                try {
-                    for (Entry<SvnInfo, String> e : tagSet.entrySet()) {
-                        PrintStream logger = listener.getLogger();
-                        logger.println("Tagging "+e.getKey()+" to "+e.getValue());
+	@Override
+	public Permission getPermission() {
+		return SubversionSCM.TAG;
+	}
 
-                        try {
-                            SVNURL src = SVNURL.parseURIDecoded(e.getKey().url);
-                            SVNURL dst = SVNURL.parseURIDecoded(e.getValue());
+	/**
+	 * The thread that performs tagging operation asynchronously.
+	 */
+	public final class TagWorkerThread extends TaskThread {
+		private final Map<SvnInfo, String> tagSet;
+		/**
+		 * If the user provided a separate credential, this object represents
+		 * that.
+		 */
+		private final UserProvidedCredential upc;
+		private final String comment;
 
-                            SVNCopyClient svncc = cm.getCopyClient();
-                            SVNRevision sourceRevision = SVNRevision.create(e.getKey().revision);
-                            SVNCopySource csrc = new SVNCopySource(sourceRevision, sourceRevision, src);
-                            svncc.doCopy(
-                                    new SVNCopySource[]{csrc},
-                                    dst, false, true, false, comment, null);
-                        } catch (SVNException x) {
-                            x.printStackTrace(listener.error("Failed to tag"));
-                            return;
-                        }
-                    }
+		public TagWorkerThread(Map<SvnInfo, String> tagSet,
+				UserProvidedCredential upc, String comment) {
+			super(SubversionTagAction.this, ListenerAndText.forMemory());
+			this.tagSet = tagSet;
+			this.upc = upc;
+			this.comment = comment;
+		}
 
-                    // completed successfully
-                    for (Entry<SvnInfo,String> e : tagSet.entrySet())
-                        SubversionTagAction.this.tags.get(e.getKey()).add(e.getValue());
-                    getBuild().save();
-                    workerThread = null;
-                } finally {
-                    cm.dispose();
-                }
-           } catch (Throwable e) {
-               e.printStackTrace(listener.fatalError(e.getMessage()));
-           }
-        }
-    }
+		@Override
+		protected void perform(TaskListener listener) {
+			try {
+				final SVNClientManager cm = upc != null ? SVNClientManager
+						.newInstance(SVNWCUtil.createDefaultOptions(true),
+								upc.new AuthenticationManagerImpl(listener))
+						: SubversionSCM.createSvnClientManager(getBuild()
+								.getProject());
+				try {
+					for (Entry<SvnInfo, String> e : tagSet.entrySet()) {
+						PrintStream logger = listener.getLogger();
+						logger.println("Tagging " + e.getKey() + " to "
+								+ e.getValue());
 
-    public Descriptor<SubversionTagAction> getDescriptor() {
-        return Hudson.getInstance().getDescriptorOrDie(getClass());
-    }
+						try {
+							SVNURL src = SVNURL.parseURIDecoded(e.getKey().url);
+							SVNURL dst = SVNURL.parseURIDecoded(e.getValue());
 
-    /**
-     * Just for assisting form related stuff.
-     */
-    @Extension
-    public static class DescriptorImpl extends Descriptor<SubversionTagAction> {
-        public String getDisplayName() {
-            return null;
-        }
-    }
+							SVNCopyClient svncc = cm.getCopyClient();
+							SVNRevision sourceRevision = SVNRevision.create(e
+									.getKey().revision);
+							SVNCopySource csrc = new SVNCopySource(
+									sourceRevision, sourceRevision, src);
+							svncc.doCopy(new SVNCopySource[] { csrc }, dst,
+									false, true, false, comment, null);
+						} catch (SVNException x) {
+							x.printStackTrace(listener.error("Failed to tag"));
+							return;
+						}
+					}
+
+					// completed successfully
+					for (Entry<SvnInfo, String> e : tagSet.entrySet())
+						SubversionTagAction.this.tags.get(e.getKey()).add(
+								e.getValue());
+					getBuild().save();
+					workerThread = null;
+				} finally {
+					cm.dispose();
+				}
+			} catch (Throwable e) {
+				e.printStackTrace(listener.fatalError(e.getMessage()));
+			}
+		}
+	}
+
+	public Descriptor<SubversionTagAction> getDescriptor() {
+		return Hudson.getInstance().getDescriptorOrDie(getClass());
+	}
+
+	/**
+	 * Just for assisting form related stuff.
+	 */
+	@Extension
+	public static class DescriptorImpl extends Descriptor<SubversionTagAction> {
+		public String getDisplayName() {
+			return null;
+		}
+	}
 }

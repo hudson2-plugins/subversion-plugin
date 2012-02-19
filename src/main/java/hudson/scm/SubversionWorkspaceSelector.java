@@ -60,7 +60,7 @@ public class SubversionWorkspaceSelector implements ISVNAdminAreaFactorySelector
         SVNAdminAreaFactory.setUpgradeEnabled(false);
     }
 
-    @SuppressWarnings({"cast", "unchecked"})
+    @SuppressWarnings("unchecked")
     public Collection getEnabledFactories(File path, Collection factories, boolean writeAccess) throws SVNException {
         if(!writeAccess)    // for reading, use all our available factories
             return factories;
@@ -81,7 +81,8 @@ public class SubversionWorkspaceSelector implements ISVNAdminAreaFactorySelector
      */
     public static volatile int workspaceFormat = SVNAdminArea14.WC_FORMAT;
 
-    public static void syncWorkspaceFormatFromMaster() {
+	@SuppressWarnings("boxing")
+	public static void syncWorkspaceFormatFromMaster() {
         Hudson h = Hudson.getInstance();
         if (h!=null)
             workspaceFormat = h.getDescriptorByType(SubversionSCM.DescriptorImpl.class).getWorkspaceFormat();
@@ -90,7 +91,7 @@ public class SubversionWorkspaceSelector implements ISVNAdminAreaFactorySelector
             if (c!=null)    // just being defensive. cannot be null.
                 try {
                     workspaceFormat = c.call(new Callable<Integer, RuntimeException>() {
-                        public Integer call()  {
+						public Integer call()  {
                             return Integer.valueOf(Hudson.getInstance().getDescriptorByType(SubversionSCM.DescriptorImpl.class).getWorkspaceFormat());
                         }
                     });

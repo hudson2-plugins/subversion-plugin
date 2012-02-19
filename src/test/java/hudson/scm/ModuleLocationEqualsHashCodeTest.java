@@ -54,13 +54,13 @@ public class ModuleLocationEqualsHashCodeTest {
     @Parameterized.Parameters
     public static Collection generateData() {
         return Arrays.asList(new Object[][]{
-            {new SubversionSCM.ModuleLocation("url", "local", "options", false), true},
-            {new SubversionSCM.ModuleLocation("url1", "local", "options", false), false},
-            {new SubversionSCM.ModuleLocation(null, "local1", "options", false), false},
-            {new SubversionSCM.ModuleLocation("url", null, "options", false), false},
-            {new SubversionSCM.ModuleLocation("url", "local", "options1", false), false},
-            {new SubversionSCM.ModuleLocation("url", "local", null, false), false},
-            {new SubversionSCM.ModuleLocation("url", "local", "options", true), false}
+            {new SubversionSCM.ModuleLocation("url", "local", "options", false), Boolean.TRUE},
+            {new SubversionSCM.ModuleLocation("url1", "local", "options", false), Boolean.FALSE},
+            {new SubversionSCM.ModuleLocation(null, "local1", "options", false), Boolean.FALSE},
+            {new SubversionSCM.ModuleLocation("url", null, "options", false), Boolean.FALSE},
+            {new SubversionSCM.ModuleLocation("url", "local", "options1", false), Boolean.FALSE},
+            {new SubversionSCM.ModuleLocation("url", "local", null, false), Boolean.FALSE},
+            {new SubversionSCM.ModuleLocation("url", "local", "options", true), Boolean.FALSE}
         });
     }
 

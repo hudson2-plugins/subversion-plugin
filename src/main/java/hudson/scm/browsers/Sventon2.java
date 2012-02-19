@@ -62,7 +62,7 @@ public class Sventon2 extends AbstractSventon {
         }
         int r = path.getLogEntry().getRevision();
         return new URL(url, String.format("repos/%s/diff/%s?revision=%d",
-            encodePath(repositoryInstance), encodePath(getPath(path)), r));
+            encodePath(repositoryInstance), encodePath(getPath(path)), Integer.valueOf(r)));
     }
 
     @Override
@@ -72,7 +72,7 @@ public class Sventon2 extends AbstractSventon {
         }
         int r = path.getLogEntry().getRevision();
         return new URL(url, String.format("repos/%s/goto/%s?revision=%d",
-            encodePath(repositoryInstance), encodePath(getPath(path)), r));
+            encodePath(repositoryInstance), encodePath(getPath(path)), Integer.valueOf(r)));
     }
 
     /**
@@ -107,7 +107,7 @@ public class Sventon2 extends AbstractSventon {
     @Override
     public URL getChangeSetLink(LogEntry changeSet) throws IOException {
         return new URL(url, String.format("repos/%s/info?revision=%d",
-            encodePath(repositoryInstance), changeSet.getRevision()));
+            encodePath(repositoryInstance), Integer.valueOf(changeSet.getRevision())));
     }
 
     @Extension
@@ -129,7 +129,7 @@ public class Sventon2 extends AbstractSventon {
                 return FormValidation.ok();
             }
 
-            return new SventonUrlChecker(value, 2).check();
+            return new SventonUrlChecker(value, Integer.valueOf(2)).check();
         }
     }
 

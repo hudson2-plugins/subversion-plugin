@@ -68,14 +68,12 @@ final class SubversionUpdateEventHandler extends SubversionEventHandlerImpl {
     public void handleEvent(SVNEvent event, double progress) throws SVNException {
         File file = event.getFile();
         String path = null;
-        if (file != null) {
-            try {
-                path = getRelativePath(file);
-            } catch (IOException e) {
-                throw new SVNException(SVNErrorMessage.create(SVNErrorCode.FS_GENERAL), e);
-            }
-            path = getLocalPath(path);
+        try {
+            path = getRelativePath(file);
+        } catch (IOException e) {
+            throw new SVNException(SVNErrorMessage.create(SVNErrorCode.FS_GENERAL), e);
         }
+        path = getLocalPath(path);
 
         /*
          * Gets the current action. An action is represented by SVNEventAction.

@@ -61,7 +61,7 @@ public class Sventon extends AbstractSventon {
         }
         int r = path.getLogEntry().getRevision();
         return new URL(url, String.format("diffprev.svn?name=%s&commitrev=%d&committedRevision=%d&revision=%d&path=%s",
-            repositoryInstance, r, Integer.valueOf(r), r, URLEncoder.encode(getPath(path), URL_CHARSET)));
+            repositoryInstance, Integer.valueOf(r), Integer.valueOf(r), Integer.valueOf(r), URLEncoder.encode(getPath(path), URL_CHARSET)));
     }
 
     @Override
@@ -89,7 +89,7 @@ public class Sventon extends AbstractSventon {
     @Override
     public URL getChangeSetLink(LogEntry changeSet) throws IOException {
         return new URL(url, String.format("revinfo.svn?name=%s&revision=%d",
-            repositoryInstance, changeSet.getRevision()));
+            repositoryInstance, Integer.valueOf(changeSet.getRevision())));
     }
 
     @Extension
@@ -111,7 +111,7 @@ public class Sventon extends AbstractSventon {
                 return FormValidation.ok();
             }
 
-            return new SventonUrlChecker(value, 1).check();
+            return new SventonUrlChecker(value, Integer.valueOf(1)).check();
         }
     }
 

@@ -60,8 +60,7 @@ public class SslClientCertificateCredential extends SubversionSCM.DescriptorImpl
             } catch (IOException e) {
                 throw new Error(e); // can't happen
             }
-        } else {
-            return null; // unexpected authentication type
         }
+        return null; // unexpected authentication type
     }
 }

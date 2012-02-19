@@ -80,7 +80,7 @@ public class SubversionCommonTest extends AbstractSubversionTest {
     private static final String GUEST_USER_PASSWORD = "guestpass";
     private static final String BOGUS_USER_LOGIN = "bogus";
     private static final String BOGUS_USER_PASSWORD = "boguspass";
-    private static final Integer LOG_LIMIT = 1000;
+    private static final int LOG_LIMIT = 1000;
     protected static final String SVN_URL1 = "http://svn.apache.org/repos/asf/subversion/trunk/doc";
     protected static final String SVN_URL2 = "http://svn.apache.org/repos/asf/subversion/trunk/packages";
 
@@ -115,7 +115,7 @@ public class SubversionCommonTest extends AbstractSubversionTest {
         SecurityContextHolder.getContext().setAuthentication(Hudson.ANONYMOUS);
         p.setScm(loadSvnRepo());
         FreeStyleBuild b = p.scheduleBuild2(0, new Cause.UserCause()).get();
-        System.out.println(b.getLog(LOG_LIMIT.intValue()));
+        System.out.println(b.getLog(LOG_LIMIT));
         assertBuildStatus(Result.SUCCESS, b);
 
         SubversionTagAction action = b.getAction(SubversionTagAction.class);

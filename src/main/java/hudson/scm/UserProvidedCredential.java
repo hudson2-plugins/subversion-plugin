@@ -84,7 +84,7 @@ public class UserProvidedCredential implements Closeable {
     }
 
     public UserProvidedCredential(String username, String password, File keyFile, AbstractProject inContextOf) {
-        this(username, password, keyFile, true, inContextOf);
+        this(username, password, keyFile, Boolean.TRUE, inContextOf);
     }
 
     public UserProvidedCredential(String username, String password, File keyFile, Boolean overrideGlobal,
@@ -111,7 +111,7 @@ public class UserProvidedCredential implements Closeable {
 
         String username = parser.get("username" + idx);
         String password = parser.get("password" + idx);
-        Boolean overrideGlobal = Boolean.parseBoolean(parser.get("_.overrideGlobal"));
+        Boolean overrideGlobal = Boolean.valueOf(parser.get("_.overrideGlobal"));
 
         // SVNKit wants a key in a file
         final File keyFile;

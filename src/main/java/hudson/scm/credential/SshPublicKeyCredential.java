@@ -146,8 +146,7 @@ public class SshPublicKeyCredential extends SubversionSCM.DescriptorImpl.Credent
                     SVNErrorMessage.create(SVNErrorCode.AUTHN_CREDS_UNAVAILABLE,
                         Messages.SshPublicKeyCredential_private_key_load_error()), e);
             }
-        } else {
-            return null; // unknown
         }
+        return null; // unknown
     }
 }

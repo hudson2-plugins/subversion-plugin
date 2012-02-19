@@ -88,7 +88,7 @@ public class FishEyeSVN extends SubversionRepositoryBrowser {
         if(path.getEditType()!= EditType.EDIT)
             return null;    // no diff if this is not an edit change
         int r = path.getLogEntry().getRevision();
-        return new URL(url, getPath(path)+String.format("?r1=%d&r2=%d",r-1,r));
+        return new URL(url, getPath(path)+String.format("?r1=%d&r2=%d",Integer.valueOf(r-1), Integer.valueOf(r)));
     }
 
     @Override
@@ -150,9 +150,8 @@ public class FishEyeSVN extends SubversionRepositoryBrowser {
                     try {
                         if(findText(open(new URL(finalValue)),"FishEye")) {
                             return FormValidation.ok();
-                        } else {
-                            return FormValidation.error("This is a valid URL but it doesn't look like FishEye");
                         }
+                        return FormValidation.error("This is a valid URL but it doesn't look like FishEye");
                     } catch (IOException e) {
                         return handleIOException(finalValue,e);
                     }

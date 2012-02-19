@@ -367,10 +367,10 @@ public class SubversionSCM extends SCM implements Serializable {
         }
 
         // data must have been read from old configuration.
-        if (useUpdate != null && !useUpdate) {
+        if (useUpdate != null && !useUpdate.booleanValue()) {
             return new CheckoutUpdater();
         }
-        if (doRevert != null && doRevert) {
+        if (doRevert != null && doRevert.booleanValue()) {
             return new UpdateWithRevertUpdater();
         }
         return new UpdateUpdater();
@@ -649,7 +649,7 @@ public class SubversionSCM extends SCM implements Serializable {
                         continue;   // invalid line?
                     }
                     try {
-                        revisions.put(line.substring(0, index), Long.parseLong(line.substring(index + 1)));
+                        revisions.put(line.substring(0, index), Long.valueOf(line.substring(index + 1)));
                     } catch (NumberFormatException e) {
                         // perhaps a corrupted line. ignore
                         LOGGER.log(Level.FINEST, "Error parsing line", e);
@@ -911,7 +911,7 @@ public class SubversionSCM extends SCM implements Serializable {
 
         @Override
         public String toString() {
-            return String.format("%s (rev.%s)", url, revision);
+            return String.format("%s (rev.%s)", url, Long.valueOf(revision));
         }
 
         private static final long serialVersionUID = 1L;
@@ -1147,14 +1147,14 @@ public class SubversionSCM extends SCM implements Serializable {
 
                 for (Map.Entry<String, Long> baselineInfo : baseline.revisions.entrySet()) {
                     String url = baselineInfo.getKey();
-                    long baseRev = baselineInfo.getValue();
+                    long baseRev = baselineInfo.getValue().longValue();
                     /*
                        If we fail to check the remote revision, assume there's no change.
                        In this way, a temporary SVN server problem won't result in bogus builds,
                        which will fail anyway. So our policy in the error handling in the polling
                        is not to fire off builds. see HUDSON-6136.
                     */
-                    revs.put(url, baseRev);
+                    revs.put(url, Long.valueOf(baseRev));
                     // skip baselineInfo if build location URL contains revision like svn://svnserver/scripts@184375
                     if (!isRevisionSpecifiedInBuildLocation(url, moduleLocations)) {
                         try {
@@ -1164,12 +1164,12 @@ public class SubversionSCM extends SCM implements Serializable {
                             changes |= (nowRev > baseRev);
 
                             listener.getLogger()
-                                .println(Messages.SubversionSCM_pollChanges_remoteRevisionAt(url, nowRev));
-                            revs.put(url, nowRev);
+                                .println(Messages.SubversionSCM_pollChanges_remoteRevisionAt(url, Long.valueOf(nowRev)));
+                            revs.put(url, Long.valueOf(nowRev));
                             // make sure there's a change and it isn't excluded
                             if (logHandler.findNonExcludedChanges(svnurl,
                                 baseRev + 1, nowRev, authProvider)) {
-                                listener.getLogger().println(Messages.SubversionSCM_pollChanges_changedFrom(baseRev));
+                                listener.getLogger().println(Messages.SubversionSCM_pollChanges_changedFrom(Long.valueOf(baseRev)));
                                 significantChanges = true;
                             }
                         } catch (SVNException e) {
@@ -1300,7 +1300,7 @@ public class SubversionSCM extends SCM implements Serializable {
                 SVNProperties revprops = logEntry.getRevisionProperties();
                 if (revprops != null && revprops.containsName(excludedRevprop)) {
                     listener.getLogger().println(Messages.SubversionSCM_pollChanges_ignoredRevision(
-                        logEntry.getRevision(),
+                		Long.valueOf(logEntry.getRevision()),
                         Messages.SubversionSCM_pollChanges_ignoredRevision_revprop(excludedRevprop)));
                     return false;
                 }
@@ -1310,7 +1310,7 @@ public class SubversionSCM extends SCM implements Serializable {
             if (excludedUsers.contains(author)) {
                 // If the author is an excluded user, don't count this entry as a change
                 listener.getLogger().println(Messages.SubversionSCM_pollChanges_ignoredRevision(
-                    logEntry.getRevision(),
+            		Long.valueOf(logEntry.getRevision()),
                     Messages.SubversionSCM_pollChanges_ignoredRevision_author(author)));
                 return false;
             }
@@ -1349,7 +1349,7 @@ public class SubversionSCM extends SCM implements Serializable {
             // If no paths are included don't count this entry as a change
             if (includedPaths.isEmpty()) {
                 listener.getLogger().println(Messages.SubversionSCM_pollChanges_ignoredRevision(
-                    logEntry.getRevision(),
+            		Long.valueOf(logEntry.getRevision()),
                     Messages.SubversionSCM_pollChanges_ignoredRevision_noincpath()));
                 return false;
             }
@@ -1370,7 +1370,7 @@ public class SubversionSCM extends SCM implements Serializable {
             // If all included paths are in an excluded region, don't count this entry as a change
             if (includedPaths.size() == excludedPaths.size()) {
                 listener.getLogger().println(Messages.SubversionSCM_pollChanges_ignoredRevision(
-                    logEntry.getRevision(),
+            		Long.valueOf(logEntry.getRevision()),
                     Messages.SubversionSCM_pollChanges_ignoredRevision_path(Util.join(excludedPaths, ", "))));
                 return false;
             }
@@ -1778,7 +1778,7 @@ public class SubversionSCM extends SCM implements Serializable {
             } catch (SVNException e) {
                 logWriter.println("FAILED: " + e.getErrorMessage());
                 req.setAttribute("message", log.toString());
-                req.setAttribute("pre", true);
+                req.setAttribute("pre", Boolean.TRUE);
                 req.setAttribute("exception", e);
                 rsp.forward(Hudson.getInstance(), "error", req);
             } finally {
@@ -1821,7 +1821,7 @@ public class SubversionSCM extends SCM implements Serializable {
                 AuthenticationManagerImpl authManager = upc.new AuthenticationManagerImpl(logWriter) {
                     @Override
                     protected void onSuccess(String realm, Credential cred, Boolean overrideGlobal) {
-                        if (overrideGlobal) {
+                        if (overrideGlobal.booleanValue()) {
                             LOGGER.info("Persisted " + cred + " for " + realm);
                             credentials.put(realm, cred);
                             save();
@@ -2489,7 +2489,7 @@ public class SubversionSCM extends SCM implements Serializable {
      * The main point of this is to prevent infinite hang, so it should be a rather long value to avoid
      * accidental time out problem.
      */
-    public static int DEFAULT_TIMEOUT = Integer.getInteger(SubversionSCM.class.getName() + ".timeout", 3600 * 1000);
+    public static int DEFAULT_TIMEOUT = Integer.getInteger(SubversionSCM.class.getName() + ".timeout", 3600 * 1000).intValue();
 
     /**
      * Property to control whether SCM polling happens from the slave or master
