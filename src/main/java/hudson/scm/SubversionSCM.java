@@ -26,9 +26,6 @@
  */
 package hudson.scm;
 
-import com.thoughtworks.xstream.XStream;
-import com.trilead.ssh2.DebugLogger;
-import com.trilead.ssh2.SCPClient;
 import hudson.Extension;
 import hudson.FilePath;
 import hudson.FilePath.FileCallable;
@@ -36,34 +33,36 @@ import hudson.Functions;
 import hudson.Launcher;
 import hudson.Util;
 import hudson.XmlFile;
+import hudson.model.BuildListener;
+import hudson.model.TaskListener;
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
-import hudson.model.BuildListener;
 import hudson.model.Computer;
 import hudson.model.Hudson;
 import hudson.model.Hudson.MasterComputer;
 import hudson.model.Node;
 import hudson.model.ParametersAction;
 import hudson.model.Run;
-import hudson.model.TaskListener;
 import hudson.remoting.Channel;
 import hudson.remoting.DelegatingCallable;
 import hudson.remoting.VirtualChannel;
+import hudson.scm.PollingResult.Change;
 import hudson.scm.UserProvidedCredential.AuthenticationManagerImpl;
 import hudson.scm.auth.ISVNAuthenticationManager;
 import hudson.scm.auth.ISVNAuthenticationOutcomeListener;
-import hudson.scm.subversion.CheckoutUpdater;
 import hudson.scm.subversion.Messages;
+import hudson.scm.subversion.WorkspaceUpdaterDescriptor;
+import hudson.scm.subversion.CheckoutUpdater;
 import hudson.scm.subversion.UpdateUpdater;
 import hudson.scm.subversion.UpdateWithRevertUpdater;
 import hudson.scm.subversion.WorkspaceUpdater;
 import hudson.scm.subversion.WorkspaceUpdater.UpdateTask;
-import hudson.scm.subversion.WorkspaceUpdaterDescriptor;
 import hudson.util.EditDistance;
 import hudson.util.FormValidation;
 import hudson.util.MultipartFormDataParser;
 import hudson.util.TimeUnit2;
 import hudson.util.XStream2;
+
 import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
 import java.io.File;
@@ -95,9 +94,12 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
+
 import javax.servlet.ServletException;
 import javax.xml.transform.stream.StreamResult;
+
 import net.sf.json.JSONObject;
+
 import org.apache.commons.beanutils.PropertyUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
@@ -139,7 +141,9 @@ import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNWCClient;
 import org.tmatesoft.svn.core.wc.SVNWCUtil;
 
-import static hudson.scm.PollingResult.Change;
+import com.thoughtworks.xstream.XStream;
+import com.trilead.ssh2.DebugLogger;
+import com.trilead.ssh2.SCPClient;
 
 /**
  * Subversion SCM.
@@ -1502,12 +1506,53 @@ public class SubversionSCM extends SCM implements Serializable {
          * to read from local {@link DescriptorImpl#credentials}.
          */
         interface RemotableSVNAuthenticationProvider extends Serializable {
-            Credential getCredential(SVNURL url, String realm);
+            Credential getCredential(SerializableSVNURL serializableUrl, String realm) throws SVNException;
 
             /**
              * Indicates that the specified credential worked.
              */
             void acknowledgeAuthentication(String realm, Credential credential);
+        }
+
+        /**
+         * Wraps an SVNURL and reconstructs the SVNURL after deserialization
+         * 
+         * @author Jeff Lauterbach
+         *
+         */
+        static final class SerializableSVNURL implements Serializable {
+        	/**
+        	 * The SVNURL that we are wrapping
+        	 * SVNURL is not serializable so we have to declare it as transient        	
+        	 */
+        	private transient SVNURL url;
+        	
+        	/**
+        	 * Decoded SVNURL string that will be used to rebuild an SVNURL 
+        	 * object after it has been serialized
+        	 */
+        	private String decodedUrl;
+        	
+        	SerializableSVNURL(SVNURL url) {
+        		this.url = url;
+        		this.decodedUrl = url.toDecodedString();
+        	}
+        	
+        	/**
+        	 * Returns the SVNURL object that was wrapped 
+        	 * @return If this object has not been serialized yet, the original
+        	 *         SVNURL used to construct this object will be returned, after
+        	 *         serialization a new SVNURL object will be constructed based on 
+        	 *         the decoded string of the original SVNURL object
+        	 * @throws SVNException
+        	 */
+        	public SVNURL getSVNURL() throws SVNException {
+        		if (url == null) {
+        			url = SVNURL.parseURIDecoded(decodedUrl);
+        		}
+        		
+        		return url;
+        	} 
         }
 
         /**
@@ -1518,9 +1563,9 @@ public class SubversionSCM extends SCM implements Serializable {
             = new RemotableSVNAuthenticationProviderImpl();
 
         private final class RemotableSVNAuthenticationProviderImpl implements RemotableSVNAuthenticationProvider {
-            public Credential getCredential(SVNURL url, String realm) {
+            public Credential getCredential(SerializableSVNURL serializableUrl, String realm) throws SVNException {
                 for (SubversionCredentialProvider p : SubversionCredentialProvider.all()) {
-                    Credential c = p.getCredential(url, realm);
+                    Credential c = p.getCredential(serializableUrl.getSVNURL(), realm);
                     if (c != null) {
                         LOGGER.fine(String.format("getCredential(%s)=>%s by %s", realm, c, p));
                         return c;
@@ -1584,7 +1629,7 @@ public class SubversionSCM extends SCM implements Serializable {
                     return null;
                 }
 
-                Credential cred = src.getCredential(url, realm);
+                Credential cred = src.getCredential(new SerializableSVNURL(url), realm);
                 LOGGER.fine(
                     String.format("%s.requestClientAuthentication(%s,%s,%s)=>%s", debugName, kind, url, realm, cred));
                 this.lastCredential = cred;
