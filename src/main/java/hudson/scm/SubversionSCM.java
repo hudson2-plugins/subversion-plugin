@@ -1100,7 +1100,8 @@ public class SubversionSCM extends SCM implements Serializable {
 
             // are the locations checked out in the workspace consistent with the current configuration?
             for (ModuleLocation loc : getLocations(lastCompletedBuild)) {
-                if (!baseline.revisions.containsKey(loc.getURL())) {
+                String locURL = loc.getURL().replace("\\", "/"); //This is required for windows based machines. file:///C:\\dev\\ should be file:///C:/dev/
+                if (!baseline.revisions.containsKey(locURL)) {
                     listener.getLogger().println(
                         Messages.SubversionSCM_pollChanges_locationNotInWorkspace(loc.getURL()));
                     return PollingResult.BUILD_NOW;
