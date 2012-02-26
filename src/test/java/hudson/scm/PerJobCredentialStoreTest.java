@@ -152,8 +152,7 @@ public class PerJobCredentialStoreTest extends AbstractSubversionTest {
             }
 
             // teach a bogus credential and have SVNKit store it.
-            SVNPasswordAuthentication bogus = new SVNPasswordAuthentication(BOGUS_USER_LOGIN, BOGUS_USER_PASSWORD,
-                true);
+            SVNPasswordAuthentication bogus = new SVNPasswordAuthentication(BOGUS_USER_LOGIN, BOGUS_USER_PASSWORD, true, null, false);
             m.acknowledgeAuthentication(true, kind, realm, null, bogus);
             assertTrue(compareSVNAuthentications(m.getFirstAuthentication(kind, realm, repo), bogus));
             try {

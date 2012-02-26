@@ -84,7 +84,7 @@ public class UserProvidedCredential implements Closeable {
     }
 
     public UserProvidedCredential(String username, String password, File keyFile, AbstractProject inContextOf) {
-        this(username, password, keyFile, true, inContextOf);
+        this(username, password, keyFile, Boolean.TRUE, inContextOf);
     }
 
     public UserProvidedCredential(String username, String password, File keyFile, Boolean overrideGlobal,
@@ -111,7 +111,7 @@ public class UserProvidedCredential implements Closeable {
 
         String username = parser.get("username" + idx);
         String password = parser.get("password" + idx);
-        Boolean overrideGlobal = Boolean.parseBoolean(parser.get("_.overrideGlobal"));
+        Boolean overrideGlobal = Boolean.valueOf(parser.get("_.overrideGlobal"));
 
         // SVNKit wants a key in a file
         final File keyFile;
@@ -206,7 +206,7 @@ public class UserProvidedCredential implements Closeable {
             // I don't set the cred field here, so that the 1st credential for ssh
             // won't get clobbered.
             {
-                return new SVNUserNameAuthentication(username, false);
+                return new SVNUserNameAuthentication(username, false, null, false);
             }
             if (kind.equals(ISVNAuthenticationManager.PASSWORD)) {
                 logWriter.println("Passing user name " + username + " and password you entered");

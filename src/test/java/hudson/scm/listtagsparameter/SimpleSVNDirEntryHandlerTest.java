@@ -18,7 +18,6 @@
  */
 package hudson.scm.listtagsparameter;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
@@ -124,14 +123,6 @@ public class SimpleSVNDirEntryHandlerTest {
                 "build-67-nl-b2c",
                 "build-93-nl-b2c",
                 "build-99-nl-b2c");
-    }
-
-    private List<SVNDirEntry> generateSvnDirEntries(final List<String> names, final SVNNodeKind kind) throws SVNException {
-        List<SVNDirEntry> entries = new ArrayList<SVNDirEntry>(names.size());
-        for (String name : names) {
-            entries.add(generateSvnDirEntry(name, kind));
-        }
-        return entries;
     }
 
     private SVNDirEntry generateSvnDirEntry(final String name, final SVNNodeKind kind) throws SVNException {

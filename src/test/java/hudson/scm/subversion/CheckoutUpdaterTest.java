@@ -63,8 +63,8 @@ public class CheckoutUpdaterTest {
         task.setRevisionPolicy(SubversionSCM.RevisionPolicy.HEAD);
         svnuc.setIgnoreExternals(false);
         svnuc.setEventHandler((ISVNEventHandler) anyObject());
-        expect(svnuc.doCheckout(location.getSVNURL(), new File(ws, location.getLocalDir()).getCanonicalFile(),
-                SVNRevision.HEAD, SVNRevision.HEAD, SVNDepth.INFINITY, true)).andReturn(100L);
+        expect(Long.valueOf(svnuc.doCheckout(location.getSVNURL(), new File(ws, location.getLocalDir()).getCanonicalFile(),
+                SVNRevision.HEAD, SVNRevision.HEAD, SVNDepth.INFINITY, true))).andReturn(Long.valueOf(100));
         replay(manager, svnuc);
         task.perform();
         verify(manager, svnuc);

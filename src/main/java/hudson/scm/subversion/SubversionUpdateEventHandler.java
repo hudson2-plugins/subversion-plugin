@@ -39,7 +39,6 @@ import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.internal.wc.SVNExternal;
-import org.tmatesoft.svn.core.wc.SVNEvent;
 import org.tmatesoft.svn.core.wc.SVNEventAction;
 
 /**
@@ -69,14 +68,12 @@ final class SubversionUpdateEventHandler extends SubversionEventHandlerImpl {
     public void handleEvent(SVNEvent event, double progress) throws SVNException {
         File file = event.getFile();
         String path = null;
-        if (file != null) {
-            try {
-                path = getRelativePath(file);
-            } catch (IOException e) {
-                throw new SVNException(SVNErrorMessage.create(SVNErrorCode.FS_GENERAL), e);
-            }
-            path = getLocalPath(path);
+        try {
+            path = getRelativePath(file);
+        } catch (IOException e) {
+            throw new SVNException(SVNErrorMessage.create(SVNErrorCode.FS_GENERAL), e);
         }
+        path = getLocalPath(path);
 
         /*
          * Gets the current action. An action is represented by SVNEventAction.
@@ -99,7 +96,7 @@ final class SubversionUpdateEventHandler extends SubversionEventHandlerImpl {
                 out.println("AssertionError: appears to be using unpatched svnkit at " + jarFile);
             } else {
                 out.println(Messages.SubversionUpdateEventHandler_FetchExternal(
-                    ext.getResolvedURL(), ext.getRevision().getNumber(), event.getFile()));
+                    ext.getResolvedURL(), Long.valueOf(ext.getRevision().getNumber()), event.getFile()));
                 //#1539 - an external inside an external needs to have the path appended 
                 externals.add(
                     new External(modulePath + "/" + path.substring(0, path.length() - ext.getPath().length()), ext));

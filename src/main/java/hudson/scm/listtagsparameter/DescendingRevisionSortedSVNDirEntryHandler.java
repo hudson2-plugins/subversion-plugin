@@ -50,6 +50,6 @@ public class DescendingRevisionSortedSVNDirEntryHandler implements DirectoriesSv
             return;
         }
         String directoryName = Util.removeTrailingSlash(dirEntry.getName());
-        dirs.put(dirEntry.getRevision(), directoryName);
+        dirs.put(Long.valueOf(dirEntry.getRevision()), directoryName);
     }
 }

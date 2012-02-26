@@ -68,22 +68,22 @@ public class SubversionBrowserEqualsHashCodeTest {
     @Parameterized.Parameters
     public static Collection generateData() throws MalformedURLException {
         return Arrays.asList(new Object[][]{
-            {new WebSVN(new URL("http://websvn.com")), true},
-            {new WebSVN2(new URL("http://websvn2.com")), false},
-            {new CollabNetSVN(new URL("http://collabnetsvn.com")), false},
-            {new FishEyeSVN(new URL("http://fisheyesvn.com"), "module"), false},
-            {new Sventon(new URL("http://sventon.com"), "instance"), false},
-            {new Sventon2(new URL("http://sventon2.com"), "instance"), false}
+            {new WebSVN(new URL("http://websvn.com")), Boolean.TRUE},
+            {new WebSVN2(new URL("http://websvn2.com")), Boolean.FALSE},
+            {new CollabNetSVN(new URL("http://collabnetsvn.com")), Boolean.FALSE},
+            {new FishEyeSVN(new URL("http://fisheyesvn.com"), "module"), Boolean.FALSE},
+            {new Sventon(new URL("http://sventon.com"), "instance"), Boolean.FALSE},
+            {new Sventon2(new URL("http://sventon2.com"), "instance"), Boolean.FALSE}
         });
     }
 
     @Test
-    public void testEquals() throws MalformedURLException {
+    public void testEquals() {
         assertEquals(expectedResult, defaultBrowser.equals(browser));
     }
 
     @Test
-    public void testHashCode() throws MalformedURLException {
+    public void testHashCode() {
         assertEquals(expectedResult, defaultBrowser.hashCode() == browser.hashCode());
     }
 }

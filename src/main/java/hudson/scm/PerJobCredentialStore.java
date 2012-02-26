@@ -1,27 +1,29 @@
 package hudson.scm;
 
+import static java.util.logging.Level.INFO;
 import hudson.Extension;
 import hudson.ExtensionList;
 import hudson.XmlFile;
 import hudson.matrix.MatrixConfiguration;
+import hudson.model.ItemGroup;
+import hudson.model.Saveable;
 import hudson.model.AbstractProject;
 import hudson.model.Hudson;
-import hudson.model.ItemGroup;
 import hudson.model.Job;
-import hudson.model.Saveable;
 import hudson.model.listeners.SaveableListener;
 import hudson.remoting.Channel;
 import hudson.scm.SubversionSCM.DescriptorImpl.Credential;
 import hudson.scm.SubversionSCM.DescriptorImpl.RemotableSVNAuthenticationProvider;
+import hudson.scm.SubversionSCM.DescriptorImpl.SerializableSVNURL;
 import hudson.scm.subversion.Messages;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.Hashtable;
 import java.util.Map;
 import java.util.logging.Logger;
-import org.tmatesoft.svn.core.SVNURL;
 
-import static java.util.logging.Level.INFO;
+import org.tmatesoft.svn.core.SVNException;
 
 /**
  * Persists the credential per job. This object is remotable.
@@ -68,9 +70,12 @@ final class PerJobCredentialStore implements Saveable, RemotableSVNAuthenticatio
         return credentials.get(key);
     }
 
-    public Credential getCredential(SVNURL url, String realm) {
-        return get(getCredentialsKey(url.toDecodedString(), realm));
+    public Credential getCredential(SerializableSVNURL serializableURL, String realm) throws SVNException {
+        return get(getCredentialsKey(serializableURL.getSVNURL().toDecodedString(), realm));
     }
+    
+    
+    
 
     public void acknowledgeAuthentication(String realm, Credential cred) {
         try {

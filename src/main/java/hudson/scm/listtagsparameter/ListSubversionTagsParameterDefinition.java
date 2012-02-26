@@ -82,9 +82,8 @@ public class ListSubversionTagsParameterDefinition extends ParameterDefinition i
             // the parameter is mandatory, the build has to fail if it's not there (we
             // can't assume a default value)
             return null;
-        } else {
-            return new ListSubversionTagsParameterValue(getName(), getTagsDir(), values[0]);
         }
+        return new ListSubversionTagsParameterValue(getName(), getTagsDir(), values[0]);
     }
 
     // This method is invoked when the user clicks on the "Build" button of Hudon's GUI

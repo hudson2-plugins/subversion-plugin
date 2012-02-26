@@ -26,7 +26,6 @@ package hudson.scm;
 
 import java.util.Arrays;
 import java.util.Collection;
-import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -56,8 +55,8 @@ public class SubversionSCMTest {
     @Parameterized.Parameters
     public static Collection generateData() {
         return Arrays.asList(new Object[][]{
-            {"user", true}, {"user-123", true}, {"user_123", true}, {"domain\\user-123", true},
-            {"user\\", false}, {"user[]", false}
+            {"user", Boolean.TRUE}, {"user-123", Boolean.TRUE}, {"user_123", Boolean.TRUE}, {"domain\\user-123", Boolean.TRUE},
+            {"user\\", Boolean.FALSE}, {"user[]", Boolean.FALSE}
         });
     }
 

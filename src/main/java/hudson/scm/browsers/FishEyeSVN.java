@@ -40,7 +40,6 @@ import org.kohsuke.stapler.QueryParameter;
 
 import javax.servlet.ServletException;
 import java.io.IOException;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.regex.Pattern;
 
@@ -65,12 +64,12 @@ public class FishEyeSVN extends SubversionRepositoryBrowser {
     private final String rootModule;
 
     @DataBoundConstructor
-    public FishEyeSVN(URL url, String rootModule) throws MalformedURLException {
+    public FishEyeSVN(URL url, String rootModule) {
         this.url = normalizeToEndWithSlash(url);
 
         // normalize
         rootModule = rootModule.trim();
-        if(rootModule.startsWith("/"))
+        if(rootModule.charAt(0) == '/')
             rootModule = rootModule.substring(1);
         if(rootModule.endsWith("/"))
             rootModule = rootModule.substring(0,rootModule.length()-1);
@@ -89,7 +88,7 @@ public class FishEyeSVN extends SubversionRepositoryBrowser {
         if(path.getEditType()!= EditType.EDIT)
             return null;    // no diff if this is not an edit change
         int r = path.getLogEntry().getRevision();
-        return new URL(url, getPath(path)+String.format("?r1=%d&r2=%d",r-1,r));
+        return new URL(url, getPath(path)+String.format("?r1=%d&r2=%d",Integer.valueOf(r-1), Integer.valueOf(r)));
     }
 
     @Override
@@ -151,9 +150,8 @@ public class FishEyeSVN extends SubversionRepositoryBrowser {
                     try {
                         if(findText(open(new URL(finalValue)),"FishEye")) {
                             return FormValidation.ok();
-                        } else {
-                            return FormValidation.error("This is a valid URL but it doesn't look like FishEye");
                         }
+                        return FormValidation.error("This is a valid URL but it doesn't look like FishEye");
                     } catch (IOException e) {
                         return handleIOException(finalValue,e);
                     }
@@ -171,7 +169,7 @@ public class FishEyeSVN extends SubversionRepositoryBrowser {
         if (this == o) {
             return true;
         }
-        if (o == null || getClass() != o.getClass()) {
+        if (!(o instanceof FishEyeSVN)) {
             return false;
         }
 

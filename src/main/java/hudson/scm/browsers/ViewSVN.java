@@ -31,7 +31,6 @@ import hudson.scm.SubversionChangeLogSet;
 import hudson.scm.SubversionChangeLogSet.Path;
 import hudson.scm.SubversionRepositoryBrowser;
 import java.io.IOException;
-import java.net.MalformedURLException;
 import java.net.URL;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
@@ -55,7 +54,7 @@ public class ViewSVN extends SubversionRepositoryBrowser {
     public final URL url;
 
     @DataBoundConstructor
-    public ViewSVN(URL url) throws MalformedURLException {
+    public ViewSVN(URL url) {
         this.url = normalizeToEndWithSlash(url);
     }
 
@@ -96,7 +95,7 @@ public class ViewSVN extends SubversionRepositoryBrowser {
         if (this == o) {
             return true;
         }
-        if (o == null || getClass() != o.getClass()) {
+        if (!(o instanceof ViewSVN)) {
             return false;
         }
 

@@ -30,7 +30,7 @@ import hudson.scm.SubversionSCM;
 import hudson.util.Scrambler;
 import java.io.File;
 import java.io.IOException;
-import java.util.Random;
+import java.security.SecureRandom;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.apache.commons.io.FileUtils;
@@ -63,7 +63,7 @@ public class SshPublicKeyCredential extends SubversionSCM.DescriptorImpl.Credent
         this.userName = userName;
         this.passphrase = Scrambler.scramble(passphrase);
 
-        Random r = new Random();
+        SecureRandom r = new SecureRandom();
         StringBuilder buf = new StringBuilder();
         for (int i = 0; i < 16; i++) {
             buf.append(Integer.toHexString(r.nextInt(16)));
@@ -136,7 +136,7 @@ public class SshPublicKeyCredential extends SubversionSCM.DescriptorImpl.Credent
                         Messages.SshPublicKeyCredential_private_key_encoding());
                 }
                 return new SVNSSHAuthentication(userName, privateKey.toCharArray(),
-                    Scrambler.descramble(passphrase), -1, false);
+                    Scrambler.descramble(passphrase), -1, false, null, false);
             } catch (IOException e) {
                 throw new SVNException(
                     SVNErrorMessage.create(SVNErrorCode.AUTHN_CREDS_UNAVAILABLE,
@@ -146,8 +146,7 @@ public class SshPublicKeyCredential extends SubversionSCM.DescriptorImpl.Credent
                     SVNErrorMessage.create(SVNErrorCode.AUTHN_CREDS_UNAVAILABLE,
                         Messages.SshPublicKeyCredential_private_key_load_error()), e);
             }
-        } else {
-            return null; // unknown
         }
+        return null; // unknown
     }
 }

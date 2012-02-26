@@ -59,11 +59,11 @@ public class WorkspaceUpdaterEqualsHashCodeTest {
     @Parameterized.Parameters
     public static Collection generateData() {
         return Arrays.asList(new Object[][]{
-            {new CheckoutUpdater(), true},
-            {new CheckoutWithLocationFoldersCleanupUpdater(), false},
-            {new UpdateUpdater(), false},
-            {new UpdateWithCleanUpdater(), false},
-            {new UpdateWithRevertUpdater(), false}
+            {new CheckoutUpdater(), Boolean.TRUE},
+            {new CheckoutWithLocationFoldersCleanupUpdater(), Boolean.FALSE},
+            {new UpdateUpdater(), Boolean.FALSE},
+            {new UpdateWithCleanUpdater(), Boolean.FALSE},
+            {new UpdateWithRevertUpdater(), Boolean.FALSE}
         });
     }
 
