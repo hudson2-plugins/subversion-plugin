@@ -26,7 +26,6 @@ package hudson.scm.browsers;
 import hudson.scm.SubversionRepositoryBrowser;
 import hudson.util.FormValidation;
 import java.io.IOException;
-import java.net.MalformedURLException;
 import java.net.URL;
 import javax.servlet.ServletException;
 import org.apache.commons.lang3.builder.EqualsBuilder;
@@ -56,7 +55,7 @@ public abstract class AbstractSventon extends SubversionRepositoryBrowser {
      */
     protected static final String URL_CHARSET = "UTF-8";
 
-    public AbstractSventon(URL url, String repositoryInstance) throws MalformedURLException {
+    public AbstractSventon(URL url, String repositoryInstance) {
         this.url = normalizeToEndWithSlash(url);
 
         // normalize
@@ -106,7 +105,7 @@ public abstract class AbstractSventon extends SubversionRepositoryBrowser {
         if (this == o) {
             return true;
         }
-        if (o == null || getClass() != o.getClass()) {
+        if (!(o instanceof AbstractSventon)) {
             return false;
         }
 

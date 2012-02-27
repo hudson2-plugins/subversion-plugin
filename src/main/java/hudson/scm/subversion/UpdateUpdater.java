@@ -172,6 +172,8 @@ public class UpdateUpdater extends WorkspaceUpdater {
          *      Remote repository that corresponds to the workspace.
          * @param local
          *      Local directory that gets the update from the module.
+         * @throws SVNException 
+         * @throws IOException 
          */
         protected void preUpdate(ModuleLocation module, File local) throws SVNException, IOException {
             // noop by default

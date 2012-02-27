@@ -64,19 +64,19 @@ public class WebSVN2 extends SubversionRepositoryBrowser {
     public URL getDiffLink(SubversionChangeLogSet.Path path) throws IOException {
         return new URL(this.baseUrl,
             String.format(DIFF_FORMAT, this.repname, URLEncoder.encode(path.getValue(), "UTF-8"),
-                path.getLogEntry().getRevision()));
+            		Integer.valueOf(path.getLogEntry().getRevision())));
     }
 
     @Override
     public URL getFileLink(SubversionChangeLogSet.Path path) throws IOException {
         return new URL(this.baseUrl,
             String.format(FILE_FORMAT, this.repname, URLEncoder.encode(path.getValue(), "UTF-8"),
-                path.getLogEntry().getRevision()));
+            		Integer.valueOf(path.getLogEntry().getRevision())));
     }
 
     @Override
     public URL getChangeSetLink(SubversionChangeLogSet.LogEntry logEntry) throws IOException {
-        return new URL(this.baseUrl, String.format(CHANGE_SET_FORMAT, this.repname, logEntry.getRevision()));
+        return new URL(this.baseUrl, String.format(CHANGE_SET_FORMAT, this.repname, Integer.valueOf(logEntry.getRevision())));
     }
 
     @Extension
@@ -121,7 +121,7 @@ public class WebSVN2 extends SubversionRepositoryBrowser {
         if (this == o) {
             return true;
         }
-        if (o == null || getClass() != o.getClass()) {
+        if (!(o instanceof WebSVN2)) {
             return false;
         }
 

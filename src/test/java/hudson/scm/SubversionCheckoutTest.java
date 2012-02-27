@@ -30,8 +30,12 @@ import hudson.model.Result;
 import hudson.slaves.DumbSlave;
 import hudson.util.FormValidation;
 import java.io.File;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.concurrent.Future;
+
+import javax.servlet.ServletException;
+
 import org.jvnet.hudson.test.Bug;
 import org.jvnet.hudson.test.Email;
 import org.jvnet.hudson.test.HudsonHomeLoader.CopyExisting;
@@ -84,11 +88,11 @@ public class SubversionCheckoutTest extends AbstractSubversionTest {
     @Bug(262)
     public void testRevisionedCheckout() throws Exception {
         FreeStyleProject p = createFreeStyleProject();
-        p.setScm(new SubversionSCM("http://svn.apache.org/repos/asf/subversion/trunk/doc@1162787"));
+        p.setScm(new SubversionSCM("http://svn.apache.org/repos/asf/subversion/trunk/doc@1244918"));
 
         FreeStyleBuild b = p.scheduleBuild2(0, new Cause.UserCause()).get();
         System.out.println(b.getLog(LOG_LIMIT));
-        assertTrue(b.getLog(LOG_LIMIT).contains("At revision 1162787"));
+        assertTrue(b.getLog(LOG_LIMIT).contains("At revision 1244918"));
         assertBuildStatus(Result.SUCCESS, b);
     }
 
@@ -97,7 +101,7 @@ public class SubversionCheckoutTest extends AbstractSubversionTest {
      */
     public void testHeadRevisionCheckout() throws Exception {
         File testRepo = new CopyExisting(getClass().getResource("two-revisions.zip")).allocate();
-        SubversionSCM scm = new SubversionSCM("file://" + testRepo.getPath() + "@HEAD");
+        SubversionSCM scm = new SubversionSCM("file:///" + testRepo.getPath() + "@HEAD");
 
         FreeStyleProject p = createFreeStyleProject();
         p.setScm(scm);
@@ -111,7 +115,7 @@ public class SubversionCheckoutTest extends AbstractSubversionTest {
     /**
      * Test parsing of @revision information from the tail of the URL
      */
-    public void testModuleLocationRevisions() throws Exception {
+    public void testModuleLocationRevisions() {
         SubversionSCM.ModuleLocation m = new SubversionSCM.ModuleLocation("https://svn.java.net/svn/hudson~svn/trunk/hudson/test-projects/trivial-ant@13000", null);
         SVNRevision r = m.getRevision(null);
         assertTrue(r.isValid());
@@ -182,7 +186,7 @@ public class SubversionCheckoutTest extends AbstractSubversionTest {
     }
 
     @Bug(5684)
-    public void testDoCheckExcludedUsers() throws Exception {
+    public void testDoCheckExcludedUsers() throws IOException, ServletException {
         String[] validUsernames = new String[]{
                 "DOMAIN\\user",
                 "user",

@@ -79,7 +79,7 @@ public final class SubversionChangeLogSet extends ChangeLogSet<LogEntry> {
     public List<RevisionInfo> getRevisions() throws IOException {
         List<RevisionInfo> r = new ArrayList<RevisionInfo>();
         for (Map.Entry<String, Long> e : getRevisionMap().entrySet()) {
-            r.add(new RevisionInfo(e.getKey(), e.getValue()));
+            r.add(new RevisionInfo(e.getKey(), e.getValue().longValue()));
         }
         return r;
     }
@@ -204,11 +204,11 @@ public final class SubversionChangeLogSet extends ChangeLogSet<LogEntry> {
             for (int i = 0; i < locations.length; i++) {
                 String commonPart = findCommonPart(locations[i].remote, path);
                 if (commonPart != null) {
-                    if (path.startsWith("/")) {
+                    if (path.charAt(0) == '/') {
                         path = path.substring(1);
                     }
                     String newPath = path.substring(commonPart.length());
-                    if (newPath.startsWith("/")) {
+                    if (newPath.charAt(0) == '/') {
                         newPath = newPath.substring(1);
                     }
                     return newPath;
@@ -221,7 +221,7 @@ public final class SubversionChangeLogSet extends ChangeLogSet<LogEntry> {
             if (folder == null || filePath == null) {
                 return null;
             }
-            if (filePath.startsWith("/")) {
+            if (filePath.charAt(0) == '/') {
                 filePath = filePath.substring(1);
             }
             for (int i = 0; i < folder.length(); i++) {
@@ -285,7 +285,7 @@ public final class SubversionChangeLogSet extends ChangeLogSet<LogEntry> {
             if (this == o) {
                 return true;
             }
-            if (o == null || getClass() != o.getClass()) {
+            if (!(o instanceof LogEntry)) {
                 return false;
             }
 

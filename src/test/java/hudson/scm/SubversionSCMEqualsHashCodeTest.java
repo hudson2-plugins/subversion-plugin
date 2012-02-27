@@ -87,39 +87,39 @@ public class SubversionSCMEqualsHashCodeTest {
 
         return Arrays.asList(new Object[][]{
             {new SubversionSCM(locations, u, br, "excludedRegions", "excludedUsers", "excludedRevprop",
-                "excludedCommit", "excludedRegions"), true},
+                "excludedCommit", "excludedRegions"), Boolean.TRUE},
             {new SubversionSCM(locations1, u, br, "excludedRegions", "excludedUsers", "excludedRevprop",
-                "excludedCommit", "excludedRegions"), true},
+                "excludedCommit", "excludedRegions"), Boolean.TRUE},
             {new SubversionSCM(locations2, u, br, "excludedRegions", "excludedUsers", "excludedRevprop",
-                "excludedCommit", "excludedRegions"), false},
+                "excludedCommit", "excludedRegions"), Boolean.FALSE},
             {new SubversionSCM(locations, new UpdateUpdater(), br, "excludedRegions", "excludedUsers",
-                "excludedRevprop", "excludedCommit", "excludedRegions"), false},
+                "excludedRevprop", "excludedCommit", "excludedRegions"), Boolean.FALSE},
             {new SubversionSCM(locations, null, br, "excludedRegions", "excludedUsers", "excludedRevprop",
-                "excludedCommit", "excludedRegions"), false},
+                "excludedCommit", "excludedRegions"), Boolean.FALSE},
             {new SubversionSCM(locations, u, new WebSVN(new URL("http://websvn.com")), "excludedRegions",
-                "excludedUsers", "excludedRevprop", "excludedCommit", "excludedRegions"), false},
+                "excludedUsers", "excludedRevprop", "excludedCommit", "excludedRegions"), Boolean.FALSE},
             {new SubversionSCM(locations, u, null, "excludedRegions", "excludedUsers", "excludedRevprop",
-                "excludedCommit", "excludedRegions"), false},
+                "excludedCommit", "excludedRegions"), Boolean.FALSE},
             {new SubversionSCM(locations, u, br, "excludedRegions1", "excludedUsers", "excludedRevprop",
-                "excludedCommit", "excludedRegions"), false},
+                "excludedCommit", "excludedRegions"), Boolean.FALSE},
             {new SubversionSCM(locations, u, br, null, "excludedUsers", "excludedRevprop", "excludedCommit",
-                "excludedRegions"), false},
+                "excludedRegions"), Boolean.FALSE},
             {new SubversionSCM(locations, u, br, "excludedRegions", "excludedUsers1", "excludedRevprop",
-                "excludedCommit", "excludedRegions"), false},
+                "excludedCommit", "excludedRegions"), Boolean.FALSE},
             {new SubversionSCM(locations, u, br, "excludedRegions", null, "excludedRevprop", "excludedCommit",
-                "excludedRegions"), false},
+                "excludedRegions"), Boolean.FALSE},
             {new SubversionSCM(locations, u, br, "excludedRegions", "excludedUsers", "excludedRevprop1",
-                "excludedCommit", "excludedRegions"), false},
+                "excludedCommit", "excludedRegions"), Boolean.FALSE},
             {new SubversionSCM(locations, u, br, "excludedRegions", "excludedUsers", null, "excludedCommit",
-                "excludedRegions"), false},
+                "excludedRegions"), Boolean.FALSE},
             {new SubversionSCM(locations, u, br, "excludedRegions", "excludedUsers", "excludedRevprop",
-                "excludedCommit1", "excludedRegions"), false},
+                "excludedCommit1", "excludedRegions"), Boolean.FALSE},
             {new SubversionSCM(locations, u, br, "excludedRegions", "excludedUsers", "excludedRevprop", null,
-                "excludedRegions"), false},
+                "excludedRegions"), Boolean.FALSE},
             {new SubversionSCM(locations, u, br, "excludedRegions", "excludedUsers", "excludedRevprop",
-                "excludedCommit", "excludedRegions1"), false},
+                "excludedCommit", "excludedRegions1"), Boolean.FALSE},
             {new SubversionSCM(locations, u, br, "excludedRegions", "excludedUsers", "excludedRevprop",
-                "excludedCommit", null), false}
+                "excludedCommit", null), Boolean.FALSE}
         });
     }
 
@@ -129,7 +129,7 @@ public class SubversionSCMEqualsHashCodeTest {
     }
 
     @Test
-    public void testHashCode() throws MalformedURLException {
+    public void testHashCode() {
         assertEquals(expectedResult, defaultSubversionSCM.hashCode() == subversionSCM.hashCode());
     }
 

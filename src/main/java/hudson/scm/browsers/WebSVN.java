@@ -31,7 +31,6 @@ import hudson.scm.SubversionChangeLogSet;
 import hudson.scm.SubversionChangeLogSet.Path;
 import hudson.scm.SubversionRepositoryBrowser;
 import java.io.IOException;
-import java.net.MalformedURLException;
 import java.net.URL;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
@@ -70,10 +69,9 @@ public class WebSVN extends SubversionRepositoryBrowser {
      * Creates a new WebSVN object.
      *
      * @param url DOCUMENT ME!
-     * @throws MalformedURLException DOCUMENT ME!
      */
     @DataBoundConstructor
-    public WebSVN(URL url) throws MalformedURLException {
+    public WebSVN(URL url) {
         this.url = normalizeToEndWithSlash(url);
     }
 
@@ -133,7 +131,7 @@ public class WebSVN extends SubversionRepositoryBrowser {
         if (this == o) {
             return true;
         }
-        if (o == null || getClass() != o.getClass()) {
+        if (!(o instanceof WebSVN)) {
             return false;
         }
 

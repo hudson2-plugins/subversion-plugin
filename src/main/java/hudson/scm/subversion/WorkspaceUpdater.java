@@ -32,6 +32,7 @@ import hudson.scm.SubversionSCM;
 import hudson.scm.SubversionSCM.External;
 import hudson.scm.SubversionSCM.ModuleLocation;
 import hudson.scm.util.RevisionUtil;
+
 import org.kohsuke.stapler.export.ExportedBean;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationProvider;
@@ -232,17 +233,19 @@ public abstract class WorkspaceUpdater extends AbstractDescribableImpl<Workspace
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) {
+        if (this == o)
             return true;
-        }
-        if (o == null || getClass() != o.getClass()) {
+        if (!(o instanceof WorkspaceUpdater))
             return false;
-        }
+
+        WorkspaceUpdater that = (WorkspaceUpdater) o;
+        if (!(createTask().equals(that.createTask())))
+            return false;
         return true;
     }
-
+    
     @Override
     public int hashCode() {
-        return getClass().hashCode();
+    	return super.hashCode() + 1;
     }
 }

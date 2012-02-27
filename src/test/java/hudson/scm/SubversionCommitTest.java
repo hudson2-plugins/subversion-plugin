@@ -23,6 +23,8 @@
  */
 package hudson.scm;
 
+import antlr.ANTLRException;
+
 import com.gargoylesoftware.htmlunit.HttpMethod;
 import com.gargoylesoftware.htmlunit.WebConnection;
 import com.gargoylesoftware.htmlunit.WebRequestSettings;
@@ -37,15 +39,16 @@ import hudson.model.Result;
 import hudson.model.StringParameterValue;
 import hudson.model.TaskListener;
 import hudson.triggers.SCMTrigger;
-import hudson.util.StreamTaskListener;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
+import java.io.IOException;
 import java.net.URL;
-import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
+
 import org.jvnet.hudson.test.Bug;
 import org.jvnet.hudson.test.Email;
 import org.jvnet.hudson.test.HudsonHomeLoader.CopyExisting;
@@ -173,10 +176,13 @@ public class SubversionCommitTest extends AbstractSubversionTest {
 
     /**
      * Makes sure the symbolic link is checked out correctly. There seems to be
+     * @throws IOException 
+     * @throws ExecutionException 
+     * @throws InterruptedException 
      */
     @Bug(3904)
     //TODO fix when svn repository for the tests will be created
-    public void ignore_testSymbolicLinkCheckout() throws Exception {
+    public void ignore_testSymbolicLinkCheckout() throws IOException, InterruptedException, ExecutionException {
         // Only perform if symlink behavior is enabled
         if (!"true".equals(System.getProperty("svnkit.symlinks"))) {
             return;
@@ -192,7 +198,7 @@ public class SubversionCommitTest extends AbstractSubversionTest {
             readFileAsString(source), readFileAsString(linked));
     }
 
-    public void testExcludeByUser() throws Exception {
+    public void testExcludeByUser() throws InterruptedException, ExecutionException, IOException {
         FreeStyleProject p = createFreeStyleProject("testExcludeByUser");
         p.setScm(new SubversionSCM(
             Arrays.asList(new SubversionSCM.ModuleLocation(
@@ -215,7 +221,7 @@ public class SubversionCommitTest extends AbstractSubversionTest {
 //        SLAVE_DEBUG_PORT = 8001;
         File repo = new CopyExisting(getClass().getResource("HUDSON-6030.zip")).allocate();
         SubversionSCM scm = new SubversionSCM(
-            SubversionSCM.ModuleLocation.parse(new String[]{"file://" + repo.getPath()},
+            SubversionSCM.ModuleLocation.parse(new String[]{"file:///" + repo.getPath()},
                 new String[]{"."}, null, null),
             true, false, null, ".*//*bar", "", "", "", "");
 
@@ -224,19 +230,20 @@ public class SubversionCommitTest extends AbstractSubversionTest {
         assertBuildStatusSuccess(p.scheduleBuild2(0).get());
 
         // initial polling on the slave for the code path that doesn't find any change
-        assertFalse(p.pollSCMChanges(createTaskListener()));
-
+        assertFalse("Polling should not have any changes for an initially created slave",
+        	p.poll(createTaskListener()).hasChanges());
+        
         createCommit(scm, "bar");
 
         // polling on the slave for the code path that does have a change but should be excluded.
         assertFalse("Polling found changes that should have been ignored",
-            p.pollSCMChanges(createTaskListener()));
+            p.poll(createTaskListener()).hasChanges());
 
         createCommit(scm, "foo");
 
         // polling on the slave for the code path that doesn't find any change
         assertTrue("Polling didn't find a change it should have found.",
-            p.pollSCMChanges(createTaskListener()));
+            p.poll(createTaskListener()).hasChanges());
 
     }
 
@@ -248,28 +255,28 @@ public class SubversionCommitTest extends AbstractSubversionTest {
 //        SLAVE_DEBUG_PORT = 8001;
         File repo = new CopyExisting(getClass().getResource("HUDSON-6030.zip")).allocate();
         SubversionSCM scm = new SubversionSCM(
-            SubversionSCM.ModuleLocation.parse(new String[]{"file://" + repo.getPath()},
+            SubversionSCM.ModuleLocation.parse(new String[]{"file:///" + repo.getPath()},
                 new String[]{"."}, null, null),
             true, false, null, "", "", "", "", ".*//*foo");
 
-        FreeStyleProject p = createFreeStyleProject("testExcludedRegions");
+        FreeStyleProject p = createFreeStyleProject("testIncludedRegions");
         p.setScm(scm);
         assertBuildStatusSuccess(p.scheduleBuild2(0).get());
 
         // initial polling on the slave for the code path that doesn't find any change
-        assertFalse(p.pollSCMChanges(createTaskListener()));
+        assertFalse(p.poll(createTaskListener()).hasChanges());
 
         createCommit(scm, "bar");
 
         // polling on the slave for the code path that does have a change but should be excluded.
         assertFalse("Polling found changes that should have been ignored",
-            p.pollSCMChanges(createTaskListener()));
+            p.poll(createTaskListener()).hasChanges());
 
         createCommit(scm, "foo");
 
         // polling on the slave for the code path that doesn't find any change
         assertTrue("Polling didn't find a change it should have found.",
-            p.pollSCMChanges(createTaskListener()));
+            p.poll(createTaskListener()).hasChanges());
 
     }
 
@@ -281,7 +288,7 @@ public class SubversionCommitTest extends AbstractSubversionTest {
         FreeStyleProject p = createPostCommitTriggerJob();
         FreeStyleBuild b = sendCommitTrigger(p, true);
 
-        assertTrue(getActualRevision(b, "https://svn.java.net/svn/hudson~svn/trunk/hudson/test-projects/trivial-ant")
+        assertTrue(getActualRevision(b, "https://svn.java.net/svn/hudson~svn/trunk/hudson/test-projects/trivial-ant").longValue()
             <= 13000);
     }
 
@@ -295,17 +302,7 @@ public class SubversionCommitTest extends AbstractSubversionTest {
         FreeStyleBuild b = sendCommitTrigger(p, false);
 
         assertTrue(
-            getActualRevision(b, "https://svn.java.net/svn/hudson~svn/trunk/hudson/test-projects/trivial-ant") > 13000);
-    }
-
-    private void assertNullEquals(String left, String right) {
-        if (left == null) {
-            left = "";
-        }
-        if (right == null) {
-            right = "";
-        }
-        assertEquals(left, right);
+            getActualRevision(b, "https://svn.java.net/svn/hudson~svn/trunk/hudson/test-projects/trivial-ant").longValue() > 13000);
     }
 
     /**
@@ -374,12 +371,12 @@ public class SubversionCommitTest extends AbstractSubversionTest {
             throw new Exception("No revision found!");
         }
 
-        return revisionState.revisions.get(url).longValue();
+        return revisionState.revisions.get(url);
 
     }
 
 
-    private FreeStyleProject createPostCommitTriggerJob() throws Exception {
+    private FreeStyleProject createPostCommitTriggerJob() throws IOException, ANTLRException {
         // Disable crumbs because HTMLUnit refuses to mix request bodies with
         // request parameters
         hudson.setCrumbIssuer(null);
