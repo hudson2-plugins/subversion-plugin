@@ -77,7 +77,8 @@ public class UpdateWithCleanUpdater extends WorkspaceUpdater {
                             if (f.isDirectory())
                                 FileUtils.deleteDirectory(f);
                             else
-                                f.delete();
+                                if (!f.delete())
+                                	throw new IOException("Failed to delete file: " + f.getAbsolutePath());
                         } catch (IOException e) {
                             throw new SVNException(SVNErrorMessage.UNKNOWN_ERROR_MESSAGE,e);
                         }
