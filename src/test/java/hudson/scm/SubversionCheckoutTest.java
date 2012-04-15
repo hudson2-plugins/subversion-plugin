@@ -79,7 +79,7 @@ public class SubversionCheckoutTest extends AbstractSubversionTest {
 
         FreeStyleBuild b = assertBuildStatusSuccess(p.scheduleBuild2(0, new Cause.UserCause()).get());
         assertTrue(b.getWorkspace().child("README").exists());
-        b = assertBuildStatusSuccess(p.scheduleBuild2(0).get());
+        assertNotNull(assertBuildStatusSuccess(p.scheduleBuild2(0).get()));
     }
 
     /**
