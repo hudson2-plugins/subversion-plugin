@@ -252,7 +252,13 @@ public class UserProvidedCredential implements Closeable {
             return null;
         }
 
+        /**
+         * This method has been deprecated as of hudson 2.2.0. This is for support for only old versions of svnkit where
+         * overriding acknowledgeAuthentication needed to be overriden.
+         * 
+         */
         @Override
+        @Deprecated 
         public void acknowledgeAuthentication(boolean accepted, String kind, String realm, SVNErrorMessage errorMessage,
                                               SVNAuthentication authentication) throws SVNException {
             authenticationAcknowledged = true;
@@ -280,10 +286,6 @@ public class UserProvidedCredential implements Closeable {
         public void checkIfProtocolCompleted() throws SVNCancelException {
             if (!authenticationAttempted) {
                 logWriter.println("No authentication was attempted.");
-                throw new SVNCancelException();
-            }
-            if (!authenticationAcknowledged) {
-                logWriter.println("Authentication was not acknowledged.");
                 throw new SVNCancelException();
             }
         }
