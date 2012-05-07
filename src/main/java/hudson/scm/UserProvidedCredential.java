@@ -140,13 +140,8 @@ public class UserProvidedCredential implements Closeable {
             req.findAncestorObject(AbstractProject.class)) {
             @Override
             public void close() throws IOException {
-            	boolean deleteFailed = false;
-                
             	if (keyFile != null)
-                    deleteFailed = keyFile.delete();
-                
-                if (!deleteFailed)
-                	throw new IOException("Failed to delete file: " + keyFile.getAbsolutePath());
+                    keyFile.delete();
                 
                 if (item != null)
                 	item.delete();
