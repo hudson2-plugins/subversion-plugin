@@ -69,6 +69,10 @@ public class UserProvidedCredential implements Closeable {
     private final String password;
     private final File keyFile;
     private final Boolean overrideGlobal;
+    
+    public Boolean getOverrideGlobal() {
+    	return overrideGlobal;
+    }
     /**
      * If non-null, this credential is submitted primarily to be used with this project.
      * This actually doesn't prevent Hudson from trying it with other projects.
@@ -157,6 +161,17 @@ public class UserProvidedCredential implements Closeable {
      */
     public class AuthenticationManagerImpl extends DefaultSVNAuthenticationManager {
         private Credential cred;
+        
+        private String realm;
+        
+        public String getRealm() {
+        	return realm;
+        }
+        
+        public Credential getCredential() {
+        	return cred;
+        }
+        
         private final PrintWriter logWriter;
 
         /**
@@ -196,6 +211,9 @@ public class UserProvidedCredential implements Closeable {
 
         @Override
         public SVNAuthentication getFirstAuthentication(String kind, String realm, SVNURL url) throws SVNException {
+        	
+        	this.realm = realm;
+        	
             authenticationAttempted = true;
             if (kind.equals(ISVNAuthenticationManager.USERNAME))
             // when using svn+ssh, svnkit first asks for ISVNAuthenticationManager.SSH
