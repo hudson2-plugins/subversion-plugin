@@ -59,14 +59,26 @@ public class UpdateWithCleanUpdater extends WorkspaceUpdater {
             manager.getStatusClient().doStatus(local, null, SVNDepth.INFINITY, false, false, true, false, new ISVNStatusHandler() {
                 public void handleStatus(SVNStatus status) throws SVNException {
                     SVNStatusType s = status.getContentsStatus();
-                    if (s == SVNStatusType.STATUS_UNVERSIONED || s == SVNStatusType.STATUS_IGNORED || s == SVNStatusType.STATUS_MODIFIED) {
+                    /*
+                     * Perform a delete on the file/directory if any of the following are meet:
+                     * 1. The status of the file is unversioned.
+                     * 2. The status of the file is ignored.
+                     * 3. The status of the file is modified.
+                     * 4. Unable to obtain the status of a specific file.
+                     * 
+                     */
+                    if (s == SVNStatusType.STATUS_UNVERSIONED ||
+                    	s == SVNStatusType.STATUS_IGNORED ||
+                    	s == SVNStatusType.STATUS_MODIFIED ||
+                    	s == SVNStatusType.STATUS_NONE) {
                         listener.getLogger().println("Deleting "+status.getFile());
                         try {
                             File f = status.getFile();
                             if (f.isDirectory())
                                 FileUtils.deleteDirectory(f);
                             else
-                                f.delete();
+                                if (!f.delete())
+                                	throw new IOException("Failed to delete file: " + f.getAbsolutePath());
                         } catch (IOException e) {
                             throw new SVNException(SVNErrorMessage.UNKNOWN_ERROR_MESSAGE,e);
                         }

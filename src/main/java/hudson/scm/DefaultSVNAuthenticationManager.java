@@ -27,6 +27,21 @@ public class DefaultSVNAuthenticationManager extends org.tmatesoft.svn.core.inte
 		super(SVNWCUtil.getDefaultConfigurationDirectory(), createDefaultAuthenticationManager.isAuthenticationForced(), null, null);
 	}
 
+	
+	/**
+	 * File configDirectory, boolean storeAuth, String userName, String password, File privateKey, String passphrase)
+	 * @param subversionConfigDir
+	 * @param b
+	 * @param username
+	 * @param password
+	 * @param keyFile
+	 * @param password2
+	 */
+	public DefaultSVNAuthenticationManager(File subversionConfigDir, boolean b,
+			String username, String password, File keyFile, String password2) {
+		super(subversionConfigDir, b, username, password, keyFile, password2);
+	}
+
 	/* (non-Javadoc)
 	 * @see hudson.scm.auth.ISVNAuthenticationManager#getAuthenticationManager()
 	 */

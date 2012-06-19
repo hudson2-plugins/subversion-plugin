@@ -103,8 +103,8 @@ public class WorkspaceUpdaterTest extends AbstractSubversionTest {
 
             // those files should have been cleaned
             ws = b.getWorkspace();
-            assertFalse(ws.child("b").exists());
-            assertFalse(ws.child("c").exists());
+            assertFalse("Failed to clean up file: b", ws.child("b").exists());
+            assertFalse("Failed to clean up file: c", ws.child("c").exists());
         } finally {
             srv.kill();
         }

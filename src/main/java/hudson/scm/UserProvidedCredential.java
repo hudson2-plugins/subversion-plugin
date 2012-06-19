@@ -69,6 +69,10 @@ public class UserProvidedCredential implements Closeable {
     private final String password;
     private final File keyFile;
     private final Boolean overrideGlobal;
+    
+    public Boolean getOverrideGlobal() {
+    	return overrideGlobal;
+    }
     /**
      * If non-null, this credential is submitted primarily to be used with this project.
      * This actually doesn't prevent Hudson from trying it with other projects.
@@ -140,12 +144,11 @@ public class UserProvidedCredential implements Closeable {
             req.findAncestorObject(AbstractProject.class)) {
             @Override
             public void close() throws IOException {
-                if (keyFile != null) {
+            	if (keyFile != null)
                     keyFile.delete();
-                }
-                if (item != null) {
-                    item.delete();
-                }
+                
+                if (item != null)
+                	item.delete();
             }
         };
     }
@@ -158,6 +161,17 @@ public class UserProvidedCredential implements Closeable {
      */
     public class AuthenticationManagerImpl extends DefaultSVNAuthenticationManager {
         private Credential cred;
+        
+        private String realm;
+        
+        public String getRealm() {
+        	return realm;
+        }
+        
+        public Credential getCredential() {
+        	return cred;
+        }
+        
         private final PrintWriter logWriter;
 
         /**
@@ -197,6 +211,9 @@ public class UserProvidedCredential implements Closeable {
 
         @Override
         public SVNAuthentication getFirstAuthentication(String kind, String realm, SVNURL url) throws SVNException {
+        	
+        	this.realm = realm;
+        	
             authenticationAttempted = true;
             if (kind.equals(ISVNAuthenticationManager.USERNAME))
             // when using svn+ssh, svnkit first asks for ISVNAuthenticationManager.SSH
@@ -248,7 +265,13 @@ public class UserProvidedCredential implements Closeable {
             return null;
         }
 
+        /**
+         * This method has been deprecated as of hudson 2.2.0. This is for support for only old versions of svnkit where
+         * overriding acknowledgeAuthentication needed to be overriden.
+         * 
+         */
         @Override
+        @Deprecated 
         public void acknowledgeAuthentication(boolean accepted, String kind, String realm, SVNErrorMessage errorMessage,
                                               SVNAuthentication authentication) throws SVNException {
             authenticationAcknowledged = true;
@@ -276,10 +299,6 @@ public class UserProvidedCredential implements Closeable {
         public void checkIfProtocolCompleted() throws SVNCancelException {
             if (!authenticationAttempted) {
                 logWriter.println("No authentication was attempted.");
-                throw new SVNCancelException();
-            }
-            if (!authenticationAcknowledged) {
-                logWriter.println("Authentication was not acknowledged.");
                 throw new SVNCancelException();
             }
         }

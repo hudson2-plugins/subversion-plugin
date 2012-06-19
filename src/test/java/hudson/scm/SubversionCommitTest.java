@@ -55,6 +55,7 @@ import org.jvnet.hudson.test.HudsonHomeLoader.CopyExisting;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminAreaFactory;
+import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb;
 import org.tmatesoft.svn.core.wc.SVNClientManager;
 import org.tmatesoft.svn.core.wc.SVNCommitClient;
 import org.tmatesoft.svn.core.wc.SVNStatus;
@@ -139,7 +140,7 @@ public class SubversionCommitTest extends AbstractSubversionTest {
     }
 
     /**
-     * Makes sure that Subversion doesn't check out workspace in 1.6
+     * Makes sure that Subversion doesn't check out workspace in 1.7
      */
     @Email("http://www.nabble.com/SVN-1.6-td24081571.html")
     public void testWorkspaceVersion() throws Exception {
@@ -150,8 +151,9 @@ public class SubversionCommitTest extends AbstractSubversionTest {
         SVNClientManager wc = SubversionSCM.createSvnClientManager((AbstractProject) null);
         SVNStatus st = wc.getStatusClient().doStatus(new File(b.getWorkspace().getRemote() + "/a"), false);
         int wcf = st.getWorkingCopyFormat();
+        
         System.out.println(wcf);
-        assertEquals(SVNAdminAreaFactory.WC_FORMAT_14, wcf);
+        assertEquals("Validate working copy format is compatible with SVN 1.7.", ISVNWCDb.WC_FORMAT_17, wcf);
     }
 
     private static String readFileAsString(File file)

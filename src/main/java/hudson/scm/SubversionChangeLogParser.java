@@ -65,6 +65,8 @@ public class SubversionChangeLogParser extends ChangeLogParser {
             throw new IOException2("Failed to parse "+changelogFile,e);
         } catch (SAXException e) {
             throw new IOException2("Failed to parse "+changelogFile,e);
+        } catch (NullPointerException e) {
+        	throw new IOException2("Failed to parse "+changelogFile,e);
         }
 
         return new SubversionChangeLogSet(build,r);

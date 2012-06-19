@@ -1883,6 +1883,20 @@ public class SubversionSCM extends SCM implements Serializable {
                 repository.setAuthenticationManager(authManager);
                 repository.testConnection();
                 authManager.checkIfProtocolCompleted();
+                
+                Credential cred = authManager.getCredential();
+                String realm = authManager.getRealm();
+                
+                if (upc.getOverrideGlobal().booleanValue()) {
+                	LOGGER.info("Persisted " + cred + " for " + realm);
+                	credentials.put(realm, cred);
+                	save();
+                }
+                
+                if (upc.inContextOf != null) {
+                	LOGGER.info("Persisted " + cred + " for " + url);
+                	new PerJobCredentialStore(upc.inContextOf, url).acknowledgeAuthentication(realm, cred);
+                }
             } finally {
                 if (repository != null) {
                     repository.closeSession();
