@@ -29,7 +29,10 @@ import hudson.remoting.Channel;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.wc.admin.ISVNAdminAreaFactorySelector;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea14;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea15;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea16;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminAreaFactory;
+import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb;
 
 import java.io.File;
 import java.io.IOException;
@@ -60,6 +63,11 @@ public class SubversionWorkspaceSelector implements ISVNAdminAreaFactorySelector
         SVNAdminAreaFactory.setUpgradeEnabled(false);
     }
 
+    /**
+     * {@link #getEnabledFactories(File, Collection, boolean)} method is called quite a few times
+     * during a Subversion operation, so consulting this value back with master each time is not practical
+     * performance wise. Therefore, we have {@link SubversionSCM} set this value, even though it's error prone.
+     */
     @SuppressWarnings("unchecked")
     public Collection getEnabledFactories(File path, Collection factories, boolean writeAccess) throws SVNException {
         if(!writeAccess)    // for reading, use all our available factories
@@ -74,12 +82,12 @@ public class SubversionWorkspaceSelector implements ISVNAdminAreaFactorySelector
         return enabledFactories;
     }
 
-    /**
-     * {@link #getEnabledFactories(File, Collection, boolean)} method is called quite a few times
-     * during a Subversion operation, so consulting this value back with master each time is not practical
-     * performance wise. Therefore, we have {@link SubversionSCM} set this value, even though it's error prone.
-     */
-    public static volatile int workspaceFormat = SVNAdminArea14.WC_FORMAT;
+    public static volatile int workingCopyFormat14 = SVNAdminArea14.WC_FORMAT;
+    public static volatile int workingCopyFormat15 = SVNAdminArea15.WC_FORMAT;
+    public static volatile int workingCopyFormat16 = SVNAdminArea16.WC_FORMAT;
+    public static volatile int workingCopyFormat17 = ISVNWCDb.WC_FORMAT_17;
+    
+    public static volatile int workspaceFormat = workingCopyFormat14; // We set the default working copy format to 1.4
 
 	@SuppressWarnings("boxing")
 	public static void syncWorkspaceFormatFromMaster() {
