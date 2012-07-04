@@ -142,8 +142,8 @@ public class UpdateUpdater extends WorkspaceUpdater {
 
                     if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_LOCKED) {
                         // work space locked. try fresh check out
-                        listener.getLogger().println("Workspace appear to be locked, so getting a fresh workspace");
-                        return delegateTo(new CheckoutUpdater());
+                        listener.getLogger().println("Workspace appear to be locked, so Failing the build");
+                        throw (InterruptedException) new InterruptedException().initCause(e);
                     }
                     if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_OBSTRUCTED_UPDATE) {
                         // HUDSON-1882. If existence of local files cause an update to fail,
