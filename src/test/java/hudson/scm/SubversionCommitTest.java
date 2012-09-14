@@ -223,7 +223,7 @@ public class SubversionCommitTest extends AbstractSubversionTest {
 //        SLAVE_DEBUG_PORT = 8001;
         File repo = new CopyExisting(getClass().getResource("HUDSON-6030.zip")).allocate();
         SubversionSCM scm = new SubversionSCM(
-            SubversionSCM.ModuleLocation.parse(new String[]{"file:///" + repo.getPath()},
+            SubversionSCM.ModuleLocation.parse(new String[]{"file://" + repo.getPath()},
                 new String[]{"."}, null, null),
             true, false, null, ".*//*bar", "", "", "", "");
 
@@ -257,7 +257,7 @@ public class SubversionCommitTest extends AbstractSubversionTest {
 //        SLAVE_DEBUG_PORT = 8001;
         File repo = new CopyExisting(getClass().getResource("HUDSON-6030.zip")).allocate();
         SubversionSCM scm = new SubversionSCM(
-            SubversionSCM.ModuleLocation.parse(new String[]{"file:///" + repo.getPath()},
+            SubversionSCM.ModuleLocation.parse(new String[]{"file://" + repo.getPath()},
                 new String[]{"."}, null, null),
             true, false, null, "", "", "", "", ".*//*foo");
 
