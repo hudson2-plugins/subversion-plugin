@@ -30,7 +30,7 @@ import hudson.Extension;
 import hudson.model.Hudson;
 import hudson.scm.SubversionSCM.External;
 import hudson.scm.SubversionSCM.ModuleLocation;
-//import hudson.scm.SubversionSCM.SvnInfo;
+import hudson.scm.SubversionSCM.SvnInfo;
 import hudson.triggers.SCMTrigger;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.tmatesoft.svn.core.SVNDepth;
@@ -76,15 +76,17 @@ public class SwitchUpdater extends WorkspaceUpdater {
                     return false;
                 }
 
-                /*
                 try {
+                    /** 
+                     * The following is used to figure out if the module points to a valid
+                     * working copy. The only way I found to do this is by checking something using
+                     * svnInfo, if this is not a valid working copy, it will throw an exception.
+                     */
                     SVNInfo svnkitInfo = parseSvnInfo(module);
                     SvnInfo svnInfo = new SvnInfo(svnkitInfo);
-
                     String url = l.getURL();
-                    if(!svnInfo.url.equals(url)) {
-                        listener.getLogger().println("Checking out a fresh workspace because the workspace is not "+url);
-                        return false;
+                    if(svnInfo.url.equals(url)) {
+                        listener.getLogger().println("Workspace is "+url+". Using 'svn switch' to perform update.");
                     }
                 } catch (SVNException e) {
                     if (e.getErrorMessage().getErrorCode()==SVNErrorCode.WC_NOT_DIRECTORY) {
@@ -95,7 +97,6 @@ public class SwitchUpdater extends WorkspaceUpdater {
                     }
                     return false;
                 }
-                */
             }
             return true;
         }
