@@ -54,6 +54,7 @@ import hudson.scm.subversion.Messages;
 import hudson.scm.subversion.WorkspaceUpdaterDescriptor;
 import hudson.scm.subversion.CheckoutUpdater;
 import hudson.scm.subversion.UpdateUpdater;
+//import hudson.scm.subversion.SwitchUpdater;
 import hudson.scm.subversion.UpdateWithRevertUpdater;
 import hudson.scm.subversion.WorkspaceUpdater;
 import hudson.scm.subversion.WorkspaceUpdater.UpdateTask;
