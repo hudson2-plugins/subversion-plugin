@@ -28,6 +28,7 @@ package hudson.scm.subversion;
 
 import hudson.Extension;
 import hudson.Util;
+import hudson.scm.SubversionWorkspaceSelector;
 import hudson.scm.SubversionSCM.External;
 import hudson.scm.SubversionSCM.ModuleLocation;
 import hudson.util.IOException2;
@@ -35,6 +36,7 @@ import hudson.util.StreamCopyThread;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.internal.wc2.SvnWcGeneration;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNUpdateClient;
 
@@ -94,8 +96,17 @@ public class CheckoutUpdater extends WorkspaceUpdater {
                     }
                     File local = new File(ws, l.getLocalDir());
                     svnuc.setIgnoreExternals(l.isIgnoreExternalsOption());
+                    
                     svnuc.setEventHandler(
                             new SubversionUpdateEventHandler(new PrintStream(pos), externals, local, l.getLocalDir()));
+                    
+                    // If we can't find a valid working generation, fall back to 1.6 generation.
+                    if (SubversionWorkspaceSelector.workspaceFormat == SubversionWorkspaceSelector.workingCopyFormat17)
+                    	svnuc.getOperationsFactory().setPrimaryWcGeneration(SvnWcGeneration.V17);
+                    else 
+                    	svnuc.getOperationsFactory().setPrimaryWcGeneration(SvnWcGeneration.V16);
+                    
+                    // Finally perform a checkout.
                     svnuc.doCheckout(l.getSVNURL(), local.getCanonicalFile(), SVNRevision.HEAD, revision,
                             svnDepth, true);
                 }

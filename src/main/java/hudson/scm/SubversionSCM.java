@@ -54,7 +54,6 @@ import hudson.scm.subversion.Messages;
 import hudson.scm.subversion.WorkspaceUpdaterDescriptor;
 import hudson.scm.subversion.CheckoutUpdater;
 import hudson.scm.subversion.UpdateUpdater;
-//import hudson.scm.subversion.SwitchUpdater;
 import hudson.scm.subversion.UpdateWithRevertUpdater;
 import hudson.scm.subversion.WorkspaceUpdater;
 import hudson.scm.subversion.WorkspaceUpdater.UpdateTask;
@@ -70,14 +69,18 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.io.Serializable;
+import java.io.StreamCorruptedException;
 import java.io.StringWriter;
 import java.lang.reflect.InvocationTargetException;
 import java.text.DateFormat;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.GregorianCalendar;
@@ -132,6 +135,8 @@ import org.tmatesoft.svn.core.internal.io.fs.FSRepositoryFactory;
 import org.tmatesoft.svn.core.internal.io.svn.SVNRepositoryFactoryImpl;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNExternal;
+import org.tmatesoft.svn.core.internal.wc.admin.ISVNAdminAreaFactorySelector;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea15Factory;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminAreaFactory;
 import org.tmatesoft.svn.core.io.SVNCapability;
 import org.tmatesoft.svn.core.io.SVNRepository;
@@ -1540,7 +1545,11 @@ public class SubversionSCM extends SCM implements Serializable {
         		this.decodedUrl = url.toDecodedString();
         	}
         	
-        	/**
+        	public SerializableSVNURL(String uriEncodedPath, boolean b) {
+				// TODO Auto-generated constructor stub
+			}
+
+			/**
         	 * Returns the SVNURL object that was wrapped 
         	 * @return If this object has not been serialized yet, the original
         	 *         SVNURL used to construct this object will be returned, after
@@ -1555,6 +1564,20 @@ public class SubversionSCM extends SCM implements Serializable {
         		
         		return url;
         	} 
+        	
+        	private synchronized void writeObject(ObjectOutputStream s) throws IOException {
+        		s.writeUTF(url.toDecodedString());
+        	}
+        	
+        	private synchronized Object readResolve() throws StreamCorruptedException {
+        		try {
+        			return new SerializableSVNURL(SVNURL.parseURIEncoded(url.getURIEncodedPath()));
+        		} catch (SVNException e) {
+        			StreamCorruptedException x = new StreamCorruptedException("");
+        			x.initCause(e);
+        			throw x;
+        		}
+        	}
         }
 
         /**
@@ -2301,6 +2324,7 @@ public class SubversionSCM extends SCM implements Serializable {
             }
 
             // use SVN1.4 compatible workspace by default.
+            
             SVNAdminAreaFactory.setSelector(new SubversionWorkspaceSelector());
         }
     }

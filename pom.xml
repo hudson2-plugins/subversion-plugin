@@ -89,7 +89,13 @@ THE SOFTWARE.
         </repository>
     </repositories>
 -->
+
     <dependencies>
+        <dependency>
+            <groupId>xerces</groupId>
+            <artifactId>xercesImpl</artifactId>
+            <version>2.10.0</version>
+        </dependency>
         <dependency>
             <groupId>org.tmatesoft.svnkit</groupId>
             <artifactId>svnkit</artifactId>
@@ -108,6 +114,10 @@ THE SOFTWARE.
                 <exclusion>
                     <groupId>org.jvnet.hudson.main</groupId>
                     <artifactId>rest-plugin</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>xerces</groupId>
+                    <artifactId>xercesImpl</artifactId> 
                 </exclusion>
             </exclusions>
         </dependency>
