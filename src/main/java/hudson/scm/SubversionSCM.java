@@ -69,8 +69,8 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
-import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.io.ObjectStreamException;
 import java.io.OutputStream;
 import java.io.PrintStream;
 import java.io.PrintWriter;
@@ -80,7 +80,6 @@ import java.io.StringWriter;
 import java.lang.reflect.InvocationTargetException;
 import java.text.DateFormat;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.GregorianCalendar;
@@ -135,8 +134,6 @@ import org.tmatesoft.svn.core.internal.io.fs.FSRepositoryFactory;
 import org.tmatesoft.svn.core.internal.io.svn.SVNRepositoryFactoryImpl;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNExternal;
-import org.tmatesoft.svn.core.internal.wc.admin.ISVNAdminAreaFactorySelector;
-import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea15Factory;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminAreaFactory;
 import org.tmatesoft.svn.core.io.SVNCapability;
 import org.tmatesoft.svn.core.io.SVNRepository;
@@ -1528,6 +1525,7 @@ public class SubversionSCM extends SCM implements Serializable {
          *
          */
         static final class SerializableSVNURL implements Serializable {
+        	private static final long serialVersionUID = 1L;
         	/**
         	 * The SVNURL that we are wrapping
         	 * SVNURL is not serializable so we have to declare it as transient        	
@@ -1544,10 +1542,6 @@ public class SubversionSCM extends SCM implements Serializable {
         		this.url = url;
         		this.decodedUrl = url.toDecodedString();
         	}
-        	
-        	public SerializableSVNURL(String uriEncodedPath, boolean b) {
-				// TODO Auto-generated constructor stub
-			}
 
 			/**
         	 * Returns the SVNURL object that was wrapped 
@@ -1565,18 +1559,18 @@ public class SubversionSCM extends SCM implements Serializable {
         		return url;
         	} 
         	
-        	private synchronized void writeObject(ObjectOutputStream s) throws IOException {
+        	public synchronized void writeObject(ObjectOutputStream s) throws IOException {
         		s.writeUTF(url.toDecodedString());
         	}
         	
-        	private synchronized Object readResolve() throws StreamCorruptedException {
-        		try {
-        			return new SerializableSVNURL(SVNURL.parseURIEncoded(url.getURIEncodedPath()));
-        		} catch (SVNException e) {
-        			StreamCorruptedException x = new StreamCorruptedException("");
-        			x.initCause(e);
-        			throw x;
-        		}
+        	public synchronized Object readResolve() throws ObjectStreamException, SVNException {
+                try {
+            		return new SerializableSVNURL(SVNURL.parseURIDecoded(decodedUrl));
+                } catch (SVNException e) {
+                    StreamCorruptedException x = new StreamCorruptedException("Failed to load SVNURL");
+                    x.initCause(e);
+                    throw x;
+                }
         	}
         }
 

@@ -28,19 +28,13 @@ import hudson.remoting.Callable;
 import hudson.remoting.Channel;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.wc.admin.ISVNAdminAreaFactorySelector;
-import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea14;
-import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea14Factory;
-import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea15Factory;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminAreaFactory;
 import org.tmatesoft.svn.core.internal.wc17.db.SVNWCDb;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Iterator;
-import java.util.TreeSet;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
