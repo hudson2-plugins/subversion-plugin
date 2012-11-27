@@ -54,7 +54,6 @@ import hudson.scm.subversion.Messages;
 import hudson.scm.subversion.WorkspaceUpdaterDescriptor;
 import hudson.scm.subversion.CheckoutUpdater;
 import hudson.scm.subversion.UpdateUpdater;
-//import hudson.scm.subversion.SwitchUpdater;
 import hudson.scm.subversion.UpdateWithRevertUpdater;
 import hudson.scm.subversion.WorkspaceUpdater;
 import hudson.scm.subversion.WorkspaceUpdater.UpdateTask;
@@ -70,10 +69,13 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.ObjectOutputStream;
+import java.io.ObjectStreamException;
 import java.io.OutputStream;
 import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.io.Serializable;
+import java.io.StreamCorruptedException;
 import java.io.StringWriter;
 import java.lang.reflect.InvocationTargetException;
 import java.text.DateFormat;
@@ -1523,6 +1525,7 @@ public class SubversionSCM extends SCM implements Serializable {
          *
          */
         static final class SerializableSVNURL implements Serializable {
+        	private static final long serialVersionUID = 1L;
         	/**
         	 * The SVNURL that we are wrapping
         	 * SVNURL is not serializable so we have to declare it as transient        	
@@ -1539,8 +1542,8 @@ public class SubversionSCM extends SCM implements Serializable {
         		this.url = url;
         		this.decodedUrl = url.toDecodedString();
         	}
-        	
-        	/**
+
+			/**
         	 * Returns the SVNURL object that was wrapped 
         	 * @return If this object has not been serialized yet, the original
         	 *         SVNURL used to construct this object will be returned, after
@@ -1555,6 +1558,20 @@ public class SubversionSCM extends SCM implements Serializable {
         		
         		return url;
         	} 
+        	
+        	public synchronized void writeObject(ObjectOutputStream s) throws IOException {
+        		s.writeUTF(url.toDecodedString());
+        	}
+        	
+        	public synchronized Object readResolve() throws ObjectStreamException, SVNException {
+                try {
+            		return new SerializableSVNURL(SVNURL.parseURIDecoded(decodedUrl));
+                } catch (SVNException e) {
+                    StreamCorruptedException x = new StreamCorruptedException("Failed to load SVNURL");
+                    x.initCause(e);
+                    throw x;
+                }
+        	}
         }
 
         /**
@@ -2301,6 +2318,7 @@ public class SubversionSCM extends SCM implements Serializable {
             }
 
             // use SVN1.4 compatible workspace by default.
+            
             SVNAdminAreaFactory.setSelector(new SubversionWorkspaceSelector());
         }
     }

@@ -28,10 +28,12 @@ import hudson.scm.SubversionSCM;
 import org.junit.Test;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.internal.wc2.SvnWcGeneration;
 import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.core.wc.SVNClientManager;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNUpdateClient;
+import org.tmatesoft.svn.core.wc2.SvnOperationFactory;
 
 import java.io.File;
 import java.io.IOException;
@@ -63,6 +65,7 @@ public class CheckoutUpdaterTest {
         task.setRevisionPolicy(SubversionSCM.RevisionPolicy.HEAD);
         svnuc.setIgnoreExternals(false);
         svnuc.setEventHandler((ISVNEventHandler) anyObject());
+        expect(svnuc.getOperationsFactory()).andReturn(new SvnOperationFactory());
         expect(Long.valueOf(svnuc.doCheckout(location.getSVNURL(), new File(ws, location.getLocalDir()).getCanonicalFile(),
                 SVNRevision.HEAD, SVNRevision.HEAD, SVNDepth.INFINITY, true))).andReturn(Long.valueOf(100));
         replay(manager, svnuc);

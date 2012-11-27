@@ -10,7 +10,6 @@ import java.io.IOException;
 
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
-import org.tmatesoft.svn.core.auth.SVNAuthentication;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
@@ -20,7 +19,7 @@ import org.tmatesoft.svn.core.internal.wc.admin.SVNTranslator;
  * @author Steven Christou
  *
  */
-public class SVNSSLAuthentication extends SVNAuthentication {
+public class SVNSSLAuthentication extends org.tmatesoft.svn.core.auth.SVNSSLAuthentication {
 
     public static final String MSCAPI = "MSCAPI";
     public static final String SSL = "SSL";
@@ -94,7 +93,7 @@ public class SVNSSLAuthentication extends SVNAuthentication {
      * 
      * @return certificate file
      */
-    public byte[] getCertificateFile() {
+    public byte[] getByteCertificateFile() {
         return myCertificate;
     }
 
