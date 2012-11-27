@@ -153,7 +153,8 @@ public class SubversionCommitTest extends AbstractSubversionTest {
         int wcf = st.getWorkingCopyFormat();
         
         System.out.println(wcf);
-        assertEquals("Validate working copy format is compatible with SVN 1.7.", ISVNWCDb.WC_FORMAT_17, wcf);
+        // Default working copy is 1.4.
+        assertEquals("Validate working copy format is compatible with SVN 1.4.", SubversionWorkspaceSelector.workingCopyFormat14, wcf);
     }
 
     private static String readFileAsString(File file)

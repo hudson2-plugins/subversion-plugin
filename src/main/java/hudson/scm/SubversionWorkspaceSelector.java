@@ -28,16 +28,13 @@ import hudson.remoting.Callable;
 import hudson.remoting.Channel;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.wc.admin.ISVNAdminAreaFactorySelector;
-import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea14;
-import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea15;
-import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea16;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminAreaFactory;
-import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb;
+import org.tmatesoft.svn.core.internal.wc17.db.SVNWCDb;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -68,24 +65,24 @@ public class SubversionWorkspaceSelector implements ISVNAdminAreaFactorySelector
      * during a Subversion operation, so consulting this value back with master each time is not practical
      * performance wise. Therefore, we have {@link SubversionSCM} set this value, even though it's error prone.
      */
-    @SuppressWarnings("unchecked")
-    public Collection getEnabledFactories(File path, Collection factories, boolean writeAccess) throws SVNException {
-        if(!writeAccess)    // for reading, use all our available factories
-            return factories;
-
-        // for writing, use 1.4
-        Collection<SVNAdminAreaFactory> enabledFactories = new ArrayList<SVNAdminAreaFactory>();
-        for (SVNAdminAreaFactory factory : (Collection<SVNAdminAreaFactory>)factories)
-            if (factory.getSupportedVersion() == workspaceFormat)
-                enabledFactories.add(factory);
-
-        return enabledFactories;
+    @Override
+    public Collection getEnabledFactories(File path, Collection factories, boolean writeAccess) throws SVNException {            	   
+       for (Object factory : factories) {
+    	   int version = ((SVNAdminAreaFactory)factory).getSupportedVersion();
+    	   // Only keep enabled working factories.
+           if (workspaceFormat == version) { 
+               return Collections.singletonList(factory);
+           }
+       }
+       
+       // Returns an empty list for > 1.7 or invalid workspace copy format.
+       return Collections.emptyList();
     }
 
-    public static volatile int workingCopyFormat14 = SVNAdminArea14.WC_FORMAT;
-    public static volatile int workingCopyFormat15 = SVNAdminArea15.WC_FORMAT;
-    public static volatile int workingCopyFormat16 = SVNAdminArea16.WC_FORMAT;
-    public static volatile int workingCopyFormat17 = ISVNWCDb.WC_FORMAT_17;
+    public static volatile int workingCopyFormat14 = SVNAdminAreaFactory.WC_FORMAT_14;
+    public static volatile int workingCopyFormat15 = SVNAdminAreaFactory.WC_FORMAT_15;
+    public static volatile int workingCopyFormat16 = SVNAdminAreaFactory.WC_FORMAT_16;
+    public static volatile int workingCopyFormat17 = SVNWCDb.WC_FORMAT_17;
     
     public static volatile int workspaceFormat = workingCopyFormat14; // We set the default working copy format to 1.4
 

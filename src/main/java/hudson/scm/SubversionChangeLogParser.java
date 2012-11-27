@@ -27,7 +27,8 @@ import hudson.model.AbstractBuild;
 import hudson.scm.SubversionChangeLogSet.LogEntry;
 import hudson.scm.SubversionChangeLogSet.Path;
 import hudson.util.IOException2;
-import org.apache.commons.digester3.Digester;
+
+import org.apache.commons.digester.Digester;
 import org.xml.sax.SAXException;
 
 import java.io.File;
