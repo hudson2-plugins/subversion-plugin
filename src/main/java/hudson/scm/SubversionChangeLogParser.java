@@ -48,6 +48,7 @@ public class SubversionChangeLogParser extends ChangeLogParser {
         ArrayList<LogEntry> r = new ArrayList<LogEntry>();
         digester.push(r);
 
+        digester.setClassLoader(LogEntry.class.getClassLoader());
         digester.addObjectCreate("*/logentry", LogEntry.class);
         digester.addSetProperties("*/logentry");
         digester.addBeanPropertySetter("*/logentry/author","user");
