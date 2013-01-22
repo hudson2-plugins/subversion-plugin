@@ -96,9 +96,9 @@ public class CheckoutUpdater extends WorkspaceUpdater {
                     }
                     File local = new File(ws, l.getLocalDir());
                     svnuc.setIgnoreExternals(l.isIgnoreExternalsOption());
-                    
-                    svnuc.setEventHandler(
-                            new SubversionUpdateEventHandler(new PrintStream(pos), externals, local, l.getLocalDir()));
+                    SubversionUpdateEventHandler handler = new SubversionUpdateEventHandler(new PrintStream(pos), externals, local, l.getLocalDir());
+                    svnuc.setEventHandler(handler);
+                    svnuc.setExternalsHandler(handler);
                     
                     // If we can't find a valid working generation, fall back to 1.6 generation.
                     if (SubversionWorkspaceSelector.workspaceFormat == SubversionWorkspaceSelector.workingCopyFormat17)
