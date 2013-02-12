@@ -82,7 +82,7 @@ public class SubversionCommonTest extends AbstractSubversionTest {
     private static final String BOGUS_USER_PASSWORD = "boguspass";
     private static final int LOG_LIMIT = 1000;
     protected static final String SVN_URL1 = "http://svn.apache.org/repos/asf/subversion/trunk/doc";
-    protected static final String SVN_URL2 = "http://svn.apache.org/repos/asf/subversion/trunk/packages";
+    protected static final String SVN_URL2 = "http://svn.apache.org/repos/asf/subversion/trunk/notes";
 
     public void testMatcher() {
         check("http://foobar/");
