@@ -69,7 +69,7 @@ public class FishEyeSVN extends SubversionRepositoryBrowser {
 
         // normalize
         rootModule = rootModule.trim();
-        if(rootModule.charAt(0) == '/')
+        if(rootModule.startsWith("/"))
             rootModule = rootModule.substring(1);
         if(rootModule.endsWith("/"))
             rootModule = rootModule.substring(0,rootModule.length()-1);
@@ -165,7 +165,7 @@ public class FishEyeSVN extends SubversionRepositoryBrowser {
     private static final long serialVersionUID = 1L;
 
     @Override
-    public boolean equals(Object o) {
+    public final boolean equals(Object o) {
         if (this == o) {
             return true;
         }
@@ -182,7 +182,7 @@ public class FishEyeSVN extends SubversionRepositoryBrowser {
     }
 
     @Override
-    public int hashCode() {
+    public final int hashCode() {
         return new HashCodeBuilder()
             .append(url)
             .append(rootModule)
