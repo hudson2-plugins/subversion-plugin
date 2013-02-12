@@ -43,8 +43,6 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.auth.SVNSSHAuthentication;
 
-//TODO: Write unit test to validate svn+ssh:// support.
-
 /**
  * Public key authentication for Subversion over SSH.
  * <p/>
