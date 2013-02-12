@@ -57,6 +57,8 @@ import hudson.scm.subversion.UpdateUpdater;
 import hudson.scm.subversion.UpdateWithRevertUpdater;
 import hudson.scm.subversion.WorkspaceUpdater;
 import hudson.scm.subversion.WorkspaceUpdater.UpdateTask;
+import hudson.slaves.NodeProperty;
+import hudson.slaves.EnvironmentVariablesNodeProperty;
 import hudson.util.EditDistance;
 import hudson.util.FormValidation;
 import hudson.util.MultipartFormDataParser;
@@ -2644,16 +2646,29 @@ public class SubversionSCM extends SCM implements Serializable {
 
     static String getUrlWithoutRevision(
         String remoteUrlPossiblyWithRevision) {
-        int idx = remoteUrlPossiblyWithRevision.lastIndexOf('@');
-        if (idx > 0) {
-            String n = remoteUrlPossiblyWithRevision.substring(idx + 1);
-            SVNRevision r = SVNRevision.parse(n);
-            if ((r != null) && (r.isValid())) {
-                return remoteUrlPossiblyWithRevision.substring(0, idx);
-            }
-        }
-        return remoteUrlPossiblyWithRevision;
-    }
+		String remoteUrlWithoutRevision = remoteUrlPossiblyWithRevision;
+		       
+		if (Hudson.getInstance() != null) {
+			for (NodeProperty n: Hudson.getInstance().getGlobalNodeProperties()) {
+				EnvironmentVariablesNodeProperty gnp = (EnvironmentVariablesNodeProperty)n;
+				for (Entry e : gnp.getEnvVars().entrySet()) {
+					if (remoteUrlWithoutRevision.contains("${" + e.getKey().toString() + "}")) {
+						remoteUrlWithoutRevision = remoteUrlWithoutRevision.replace("${" + e.getKey().toString() + "}", e.getValue().toString()); 
+					}
+				}
+			}
+		}
+		int idx = remoteUrlWithoutRevision.lastIndexOf('@');
+		if (idx > 0) {
+			String n = remoteUrlWithoutRevision.substring(idx + 1);
+			SVNRevision r = SVNRevision.parse(n);
+			if ((r != null) && (r.isValid())) {
+				return remoteUrlWithoutRevision.substring(0, idx);
+			}
+		}
+		return remoteUrlWithoutRevision;
+	}
+
 
     /**
      * Gets the revision from a remote URL - i.e. the part after '@' if any
