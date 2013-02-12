@@ -2075,7 +2075,7 @@ public class SubversionSCM extends SCM implements Serializable {
 
         public static String getRelativePath(SVNURL repoURL, SVNRepository repository) throws SVNException {
             String repoPath = repoURL.getPath().substring(repository.getRepositoryRoot(false).getPath().length());
-            if (repoPath.length() > 0 && repoPath.charAt(0) != '/') {
+            if (repoPath.length() > 0 && !repoPath.startsWith("/")) {
                 repoPath = "/" + repoPath;
             }
             return repoPath;
@@ -2102,7 +2102,7 @@ public class SubversionSCM extends SCM implements Serializable {
 
             // check if a absolute path has been supplied
             // (the last check with the regex will match windows drives)
-            if (v.charAt(0) == '/' || v.charAt(0) == '\\' || v.startsWith("..") || v.matches("^[A-Za-z]:.*")) {
+            if (v.startsWith("/") || v.startsWith("\\") || v.startsWith("..") || v.matches("^[A-Za-z]:.*")) {
                 return FormValidation.error("absolute path is not allowed");
             }
 

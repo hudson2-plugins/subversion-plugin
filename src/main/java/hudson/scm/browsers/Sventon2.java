@@ -86,7 +86,7 @@ public class Sventon2 extends AbstractSventon {
     private static String encodePath(String path)
         throws UnsupportedEncodingException {
         StringBuilder buf = new StringBuilder();
-        if (path.charAt(0) == '/') {
+        if (path.startsWith("/")) {
             buf.append('/');
         }
         boolean first = true;
