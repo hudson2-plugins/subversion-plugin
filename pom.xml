@@ -98,18 +98,6 @@ THE SOFTWARE.
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>org.powermock</groupId>
-            <artifactId>powermock-module-junit4</artifactId>
-            <version>1.5</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.powermock</groupId>
-            <artifactId>powermock-api-mockito</artifactId>
-            <version>1.5</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
             <groupId>org.tmatesoft.svnkit</groupId>
             <artifactId>svnkit</artifactId>
             <version>${svnkit.version}</version>
@@ -130,6 +118,18 @@ THE SOFTWARE.
                 </exclusion>
             </exclusions>
         </dependency>
+   <dependency>
+      <groupId>org.powermock</groupId>
+      <artifactId>powermock-module-junit4</artifactId>
+      <version>1.5</version>
+      <scope>test</scope>
+   </dependency>
+   <dependency>
+      <groupId>org.powermock</groupId>
+      <artifactId>powermock-api-mockito</artifactId>
+      <version>1.5</version>
+      <scope>test</scope>
+   </dependency>
     </dependencies>
 
     <build>
@@ -150,7 +150,7 @@ THE SOFTWARE.
                     </systemPropertyVariables>
                 </configuration>
             </plugin>
-            <plugin>
+<!--            <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-pmd-plugin</artifactId>
                 <version>${maven-pmd-plugin.version}</version>
@@ -172,6 +172,7 @@ THE SOFTWARE.
                     </execution>
                 </executions>
             </plugin>
+-->
         </plugins>
     </build>
 

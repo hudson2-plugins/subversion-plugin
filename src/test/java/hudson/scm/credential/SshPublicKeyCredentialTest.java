@@ -15,6 +15,7 @@ import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
+import org.powermock.api.easymock.PowerMock;
 import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
@@ -30,6 +31,8 @@ import static org.mockito.Mockito.when;
 public class SshPublicKeyCredentialTest {
 	@Mock
 	Hudson hudson;
+	@Mock
+	Channel mockChannel;
 	
 	/**
 	 * Method used to set up a mock hudson instance.
@@ -44,7 +47,7 @@ public class SshPublicKeyCredentialTest {
 	 * Method used to create an invalid root directory (DNE directory).
 	 */
 	public void mockInvalidHudson() {
-		when(hudson.getRootDir()).thenReturn(new File("./asdf"));
+		when(hudson.getRootDir()).thenReturn(new File("target/asdf"));
 		PowerMockito.mockStatic(Hudson.class);
 		when(Hudson.getInstance()).thenReturn(hudson);
 	}
@@ -90,29 +93,6 @@ public class SshPublicKeyCredentialTest {
 		File f = new File("/tmp/.hudsonrsa");
 		if (!f.exists())
 			f.createNewFile();
-		
-		SshPublicKeyCredential sshKey = new SshPublicKeyCredential("username", "password", f);
-	}
-	
-	// Test ability to setup CHMOD 600 permissions for folder.
-	// TODO: Mock Chmod class to throw an exception. We need to verify if it fails to create permissions.
-	// Should be back on next release.
-	@Ignore
-	@Test
-	public void testBadPermissions() throws Exception {
-		mockInvalidHudson();
-		
-		PowerMockito.mockStatic(Messages.class);
-		when(Messages.SshPublicKeyCredential_private_key_permissions()).thenReturn("aewfgrea"); // Dirty Dirty Dirty! I feel bad doing this.
-		when(Messages.SshPublicKeyCredential_private_key()).thenReturn("subversion-credentials");
-		
-		File f = new File("/tmp/.hudsonrsa");
-		if (!f.exists())
-			f.createNewFile();
-		// This test requires that the hudson root does not exist.
-		f = new File("./asdf");
-		if (!f.exists())
-			f.mkdir();
 		
 		SshPublicKeyCredential sshKey = new SshPublicKeyCredential("username", "password", f);
 	}

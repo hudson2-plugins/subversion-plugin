@@ -48,14 +48,14 @@ public abstract class AbstractSubversionTest extends HudsonTestCase {
             launcher.launch().cmds("svnserve", "--help").start().join();
         } catch (IOException e) {
             // if we fail to launch svnserve, skip the test
-            return null;
+        	fail();
         }
         Socket s = null;
         try {
         	s = new Socket("localhost", 3690);
         	
         	// Reaching this point implies that port 3690 received a response. 
-        	return null;
+        	fail();
         } catch (IOException e) {
         	// Failed to receive any reposnse from port 3690. That means port is available.
         } finally {
