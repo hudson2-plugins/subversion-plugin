@@ -25,7 +25,14 @@ package hudson.scm;
 
 import java.io.File;
 
+import org.tmatesoft.svn.core.SVNCancelException;
+import org.tmatesoft.svn.core.SVNErrorMessage;
+import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.auth.SVNAuthentication;
+import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.wc.SVNWCUtil;
+import org.tmatesoft.svn.util.SVNLogType;
 
 import hudson.scm.auth.ISVNAuthenticationManager;
 import hudson.scm.auth.ISVNAuthenticationOutcomeListener;
@@ -62,6 +69,12 @@ public class DefaultSVNAuthenticationManager extends org.tmatesoft.svn.core.inte
 		super(subversionConfigDir, b, username, password, keyFile, password2);
 	}
 
+	public DefaultSVNAuthenticationManager() {
+		this(SVNWCUtil.getDefaultConfigurationDirectory(), 
+				SVNWCUtil.createDefaultOptions(SVNWCUtil.getDefaultConfigurationDirectory(), true).isAuthStorageEnabled(),
+				null, null, null, null);
+	}
+
 	/* (non-Javadoc)
 	 * @see hudson.scm.auth.ISVNAuthenticationManager#getAuthenticationManager()
 	 */
@@ -69,13 +82,33 @@ public class DefaultSVNAuthenticationManager extends org.tmatesoft.svn.core.inte
 	public org.tmatesoft.svn.core.auth.ISVNAuthenticationManager getAuthenticationManager() {
 		return (org.tmatesoft.svn.core.auth.ISVNAuthenticationManager)this;
 	}
-
+	
+	@Override
+	public SVNAuthentication getFirstAuthentication(String kind, String realm, SVNURL url) throws SVNException {
+		try {
+			return super.getFirstAuthentication(kind, realm, url);
+		} catch (SVNException e) {
+			SVNErrorManager.cancel("No Credentials to try. Authentication failed.", SVNLogType.WC);
+			throw e;
+		}
+	}
+	
+	@Override
+    public void acknowledgeAuthentication(boolean accepted, String kind, String realm, SVNErrorMessage errorMessage, SVNAuthentication authentication) throws SVNException {
+    	if (outcomeListener != null)
+    		outcomeListener.acknowledgeAuthentication(accepted, kind, realm, errorMessage, authentication);
+    	
+    	super.acknowledgeAuthentication(accepted, kind, realm, errorMessage, authentication);
+    }
 	/* (non-Javadoc)
 	 * @see hudson.scm.auth.ISVNAuthenticationManager#setAuthenticationOutcomeListener(hudson.scm.auth.ISVNAuthenticationOutcomeListener)
 	 */
 	@Override
 	public void setAuthenticationOutcomeListener(
 			ISVNAuthenticationOutcomeListener listener) {
-//		DO NOTHING
+		outcomeListener = listener;
 	}
+	
+	
+	private ISVNAuthenticationOutcomeListener outcomeListener;
 }

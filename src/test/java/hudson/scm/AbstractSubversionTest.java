@@ -7,7 +7,9 @@ import hudson.scm.SubversionSCM.DescriptorImpl;
 import hudson.util.StreamTaskListener;
 import java.io.File;
 import java.io.IOException;
+import java.net.Socket;
 import java.net.URL;
+
 import org.jvnet.hudson.test.HudsonHomeLoader.CopyExisting;
 import org.jvnet.hudson.test.HudsonTestCase;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
@@ -46,8 +48,21 @@ public abstract class AbstractSubversionTest extends HudsonTestCase {
             launcher.launch().cmds("svnserve", "--help").start().join();
         } catch (IOException e) {
             // if we fail to launch svnserve, skip the test
-            return null;
+        	fail();
         }
+        Socket s = null;
+        try {
+        	s = new Socket("localhost", 3690);
+        	
+        	// Reaching this point implies that port 3690 received a response. 
+        	fail();
+        } catch (IOException e) {
+        	// Failed to receive any reposnse from port 3690. That means port is available.
+        } finally {
+        	if (s != null) s.close();
+        }
+        
+        // Now since we verified port is not in use let's run svnserve -d.
         return launcher.launch().cmds(
             "svnserve", "-d", "--foreground", "-r", repo.getAbsolutePath()).pwd(repo).start();
     }

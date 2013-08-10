@@ -57,6 +57,10 @@ import hudson.scm.subversion.UpdateUpdater;
 import hudson.scm.subversion.UpdateWithRevertUpdater;
 import hudson.scm.subversion.WorkspaceUpdater;
 import hudson.scm.subversion.WorkspaceUpdater.UpdateTask;
+import hudson.slaves.EnvironmentVariablesNodeProperty;
+import hudson.slaves.NodeProperty;
+import hudson.slaves.NodePropertyDescriptor;
+import hudson.util.DescribableList;
 import hudson.util.EditDistance;
 import hudson.util.FormValidation;
 import hudson.util.MultipartFormDataParser;
@@ -842,9 +846,9 @@ public class SubversionSCM extends SCM implements Serializable {
      */
     public static SVNClientManager createSvnClientManager(ISVNAuthenticationProvider authProvider) {
         SubversionWorkspaceSelector.syncWorkspaceFormatFromMaster();
-        ISVNAuthenticationManager sam = new DefaultSVNAuthenticationManager(SVNWCUtil.createDefaultAuthenticationManager());
+        ISVNAuthenticationManager sam = new DefaultSVNAuthenticationManager();
         sam.setAuthenticationProvider(authProvider);
-        return SVNClientManager.newInstance(SVNWCUtil.createDefaultOptions(true), sam.getAuthenticationManager());
+        return SVNClientManager.newInstance(SVNWCUtil.createDefaultOptions(true), sam);
     }
 
     /**
@@ -955,7 +959,13 @@ public class SubversionSCM extends SCM implements Serializable {
             this.revision = ext.getRevision().getNumber();
         }
 
-        /**
+		public External(String path, SVNURL externalURL, long revision) {
+			this.path  = path;
+			this.url = externalURL.toDecodedString();
+			this.revision = revision;
+		}
+
+		/**
          * Returns true if this reference is to a fixed revision.
          */
         public boolean isRevisionFixed() {
@@ -1025,7 +1035,7 @@ public class SubversionSCM extends SCM implements Serializable {
                 }
                 for (External ext : externals) {
                     try {
-                        SvnInfo info = new SvnInfo(svnWc.doInfo(new File(ws, ext.path), SVNRevision.WORKING));
+                        SvnInfo info = new SvnInfo(svnWc.doInfo(new File(ext.path), SVNRevision.WORKING));
                         revisions.put(info.url, info);
                     } catch (SVNException e) {
                         e.printStackTrace(
@@ -1734,7 +1744,7 @@ public class SubversionSCM extends SCM implements Serializable {
         }
 
         public int getWorkspaceFormat() {
-            if (workspaceFormat == 0) {
+            if (workspaceFormat == 0) { // On invalid workspace use
                 return SVNAdminAreaFactory.WC_FORMAT_14; // default
             }
             return workspaceFormat;
@@ -2044,7 +2054,7 @@ public class SubversionSCM extends SCM implements Serializable {
         protected SVNRepository getRepository(AbstractProject context, SVNURL repoURL) throws SVNException {
             SVNRepository repository = SVNRepositoryFactory.create(repoURL);
 
-            ISVNAuthenticationManager sam = new DefaultSVNAuthenticationManager(SVNWCUtil.createDefaultAuthenticationManager());
+            ISVNAuthenticationManager sam = new DefaultSVNAuthenticationManager();
             sam = new FilterSVNAuthenticationManager(sam) {
                 // If there's no time out, the blocking read operation may hang forever, because TCP itself
                 // has no timeout. So always use some time out. If the underlying implementation gives us some
@@ -2067,7 +2077,7 @@ public class SubversionSCM extends SCM implements Serializable {
 
         public static String getRelativePath(SVNURL repoURL, SVNRepository repository) throws SVNException {
             String repoPath = repoURL.getPath().substring(repository.getRepositoryRoot(false).getPath().length());
-            if (repoPath.length() > 0 && repoPath.charAt(0) != '/') {
+            if (repoPath.length() > 0 && !repoPath.startsWith("/")) {
                 repoPath = "/" + repoPath;
             }
             return repoPath;
@@ -2094,7 +2104,7 @@ public class SubversionSCM extends SCM implements Serializable {
 
             // check if a absolute path has been supplied
             // (the last check with the regex will match windows drives)
-            if (v.charAt(0) == '/' || v.charAt(0) == '\\' || v.startsWith("..") || v.matches("^[A-Za-z]:.*")) {
+            if (v.startsWith("/") || v.startsWith("\\") || v.startsWith("..") || v.matches("^[A-Za-z]:.*")) {
                 return FormValidation.error("absolute path is not allowed");
             }
 
@@ -2638,15 +2648,29 @@ public class SubversionSCM extends SCM implements Serializable {
 
     static String getUrlWithoutRevision(
         String remoteUrlPossiblyWithRevision) {
-        int idx = remoteUrlPossiblyWithRevision.lastIndexOf('@');
+    	
+    	String remoteUrlWithoutRevision = remoteUrlPossiblyWithRevision;
+    	
+    	if (Hudson.getInstance() != null &&
+    			Hudson.getInstance().getGlobalNodeProperties() != null) {
+	    	for (NodeProperty n: Hudson.getInstance().getGlobalNodeProperties()) {
+	    		EnvironmentVariablesNodeProperty gnp = (EnvironmentVariablesNodeProperty)n;
+	    		for (Entry e : gnp.getEnvVars().entrySet()) {
+	    			if (remoteUrlWithoutRevision.contains("${" + e.getKey().toString() + "}")) {
+	    				remoteUrlWithoutRevision = remoteUrlWithoutRevision.replace("${" + e.getKey().toString() + "}", e.getValue().toString());
+	    			}
+	    		}
+	    	}
+    	}
+        int idx = remoteUrlWithoutRevision.lastIndexOf('@');
         if (idx > 0) {
-            String n = remoteUrlPossiblyWithRevision.substring(idx + 1);
+            String n = remoteUrlWithoutRevision.substring(idx + 1);
             SVNRevision r = SVNRevision.parse(n);
             if ((r != null) && (r.isValid())) {
-                return remoteUrlPossiblyWithRevision.substring(0, idx);
+                return remoteUrlWithoutRevision.substring(0, idx);
             }
         }
-        return remoteUrlPossiblyWithRevision;
+        return remoteUrlWithoutRevision;
     }
 
     /**

@@ -106,7 +106,7 @@ public class CollabNetSVN extends SubversionRepositoryBrowser {
     }
 
     @Override
-    public boolean equals(Object o) {
+    public final boolean equals(Object o) {
         if (this == o) {
             return true;
         }
@@ -122,7 +122,7 @@ public class CollabNetSVN extends SubversionRepositoryBrowser {
     }
 
     @Override
-    public int hashCode() {
+    public final int hashCode() {
         return new HashCodeBuilder()
             .append(url)
             .toHashCode();

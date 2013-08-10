@@ -203,6 +203,10 @@ public class PerJobCredentialStoreTest extends AbstractSubversionTest {
     }
 
 
+    /*
+     * This test is sensitive that if svnserve -d is already running on the machine it will fail.
+     * Run ps -ef | grep svnserve and kill the svnserve task. 
+     */
     @Bug(1379)
     public void testSuperUserForAllRepos() throws Exception {
         Proc p = runSvnServe(getClass().getResource("HUDSON-1379.zip"));

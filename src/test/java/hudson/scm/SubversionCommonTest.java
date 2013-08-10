@@ -32,6 +32,7 @@ import hudson.FilePath;
 import hudson.Proc;
 import hudson.model.Cause;
 import hudson.model.FreeStyleBuild;
+import hudson.model.Item;
 import hudson.model.FreeStyleProject;
 import hudson.model.Hudson;
 import hudson.model.Result;
@@ -82,7 +83,7 @@ public class SubversionCommonTest extends AbstractSubversionTest {
     private static final String BOGUS_USER_PASSWORD = "boguspass";
     private static final int LOG_LIMIT = 1000;
     protected static final String SVN_URL1 = "http://svn.apache.org/repos/asf/subversion/trunk/doc";
-    protected static final String SVN_URL2 = "http://svn.apache.org/repos/asf/subversion/trunk/packages";
+    protected static final String SVN_URL2 = "http://svn.apache.org/repos/asf/subversion/trunk/notes";
 
     public void testMatcher() {
         check("http://foobar/");
@@ -181,8 +182,7 @@ public class SubversionCommonTest extends AbstractSubversionTest {
     }
 
     @Bug(7944)
-    @Ignore
-    public void testConfigRoundtrip2() throws IOException {
+    public void testConfigRoundtrip2() throws Exception {
         FreeStyleProject p = createFreeStyleProject();
 
         SubversionSCM scm = new SubversionSCM(
@@ -191,7 +191,7 @@ public class SubversionCommonTest extends AbstractSubversionTest {
                     "https://svn.java.net/svn/hudson~svn/trunk/hudson/test-projects/testSubversionExclusion", "")),
             true, null, null, null, null, null);
         p.setScm(scm);
-//        configRoundtrip(p);
+        configRoundtrip((Item)p);
         verify(scm, (SubversionSCM) p.getScm());
     }
 

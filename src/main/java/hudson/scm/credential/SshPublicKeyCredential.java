@@ -43,8 +43,6 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.auth.SVNSSHAuthentication;
 
-//TODO: Write unit test to validate svn+ssh:// support.
-
 /**
  * Public key authentication for Subversion over SSH.
  * <p/>
@@ -74,6 +72,8 @@ public class SshPublicKeyCredential extends SubversionSCM.DescriptorImpl.Credent
 
         try {
             File savedKeyFile = getKeyFile();
+            System.out.println(keyFile.getAbsolutePath());
+            System.out.println(savedKeyFile.getAbsolutePath());
             FileUtils.copyFile(keyFile, savedKeyFile);
             setFilePermissions(savedKeyFile, "600");
         } catch (IOException e) {
@@ -107,6 +107,8 @@ public class SshPublicKeyCredential extends SubversionSCM.DescriptorImpl.Credent
             chmod.setProject(new Project());
             chmod.setFile(file);
             chmod.setPerm(perms);
+            chmod.setVerbose(true);
+            chmod.setLogError(true);
             chmod.execute();
         } catch (BuildException e) {
             // if we failed to set the permission, that's fine.

@@ -204,11 +204,11 @@ public final class SubversionChangeLogSet extends ChangeLogSet<LogEntry> {
             for (int i = 0; i < locations.length; i++) {
                 String commonPart = findCommonPart(locations[i].remote, path);
                 if (commonPart != null) {
-                    if (path.charAt(0) == '/') {
+                    if (path.startsWith("/")) {
                         path = path.substring(1);
                     }
                     String newPath = path.substring(commonPart.length());
-                    if (newPath.charAt(0) == '/') {
+                    if (newPath.startsWith("/")) {
                         newPath = newPath.substring(1);
                     }
                     return newPath;
@@ -221,7 +221,7 @@ public final class SubversionChangeLogSet extends ChangeLogSet<LogEntry> {
             if (folder == null || filePath == null) {
                 return null;
             }
-            if (filePath.charAt(0) == '/') {
+            if (filePath.startsWith("/")) {
                 filePath = filePath.substring(1);
             }
             for (int i = 0; i < folder.length(); i++) {

@@ -27,7 +27,10 @@ import hudson.model.Cause;
 import hudson.model.FreeStyleBuild;
 import hudson.model.FreeStyleProject;
 import hudson.model.Result;
+import hudson.scm.SubversionSCM.ModuleLocation;
+import hudson.slaves.NodeProperty;
 import hudson.slaves.DumbSlave;
+import hudson.slaves.EnvironmentVariablesNodeProperty;
 import hudson.util.FormValidation;
 import java.io.File;
 import java.io.IOException;
@@ -36,6 +39,7 @@ import java.util.concurrent.Future;
 
 import javax.servlet.ServletException;
 
+import org.junit.Test;
 import org.jvnet.hudson.test.Bug;
 import org.jvnet.hudson.test.Email;
 import org.jvnet.hudson.test.HudsonHomeLoader.CopyExisting;
@@ -217,6 +221,44 @@ public class SubversionCheckoutTest extends AbstractSubversionTest {
                     new SubversionSCM.DescriptorImpl().doCheckExcludedUsers(invalidUsername).kind);
         }
 
+    }
+    
+    @Test
+    @Bug(397860)
+    public void testGlobalVariableInURL() throws IOException {
+    	String expectedURL = "https://TEST/asdf";
+    	String inputURL = "https://${TEST}/asdf";
+    	
+    	EnvironmentVariablesNodeProperty.Entry e = new EnvironmentVariablesNodeProperty.Entry("TEST", "TEST");
+    	NodeProperty<?> np = new EnvironmentVariablesNodeProperty(e);
+    	
+    	hudson.getInstance().getGlobalNodeProperties().add(np);
+    	
+    	assertNotNull(hudson.getInstance().getGlobalNodeProperties().get(0)); // Verify it was inserted successfully.
+    	
+    	ModuleLocation loc = new ModuleLocation(inputURL, "");
+    	
+    	assertEquals(expectedURL, loc.getURL());
+    }
+    
+    @Test
+    @Bug(397860)
+    public void testMultipleGlobalVariablesInURL() throws IOException {
+    	String expectedURL = "https://TEST/asdf";
+    	String inputURL = "https://${REPOURL}/${BRANCH}";
+    	
+    	EnvironmentVariablesNodeProperty.Entry e = new EnvironmentVariablesNodeProperty.Entry("REPOURL", "TEST");
+    	EnvironmentVariablesNodeProperty.Entry e1 = new EnvironmentVariablesNodeProperty.Entry("SVNURL", "TESTs");
+    	EnvironmentVariablesNodeProperty.Entry e2 = new EnvironmentVariablesNodeProperty.Entry("BRANCH", "asdf");
+    	NodeProperty<?> np = new EnvironmentVariablesNodeProperty(e, e1, e2);
+    	
+    	hudson.getInstance().getGlobalNodeProperties().add(np);
+    	
+    	assertNotNull(hudson.getInstance().getGlobalNodeProperties().get(0)); // Verify it was inserted successfully.
+    	
+    	ModuleLocation loc = new ModuleLocation(inputURL, "");
+    	
+    	assertEquals(expectedURL, loc.getURL());
     }
 
     private void verify(SubversionSCM lhs, SubversionSCM rhs) {

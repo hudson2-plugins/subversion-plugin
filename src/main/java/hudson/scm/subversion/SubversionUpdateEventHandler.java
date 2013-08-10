@@ -38,8 +38,11 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
+import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.wc.SVNExternal;
+import org.tmatesoft.svn.core.wc.ISVNExternalsHandler;
 import org.tmatesoft.svn.core.wc.SVNEventAction;
+import org.tmatesoft.svn.core.wc.SVNRevision;
 
 /**
  * Just prints out the progress of svn update/checkout operation in a way similar to
@@ -47,7 +50,7 @@ import org.tmatesoft.svn.core.wc.SVNEventAction;
  * <p/>
  * This code also records all the referenced external locations.
  */
-final class SubversionUpdateEventHandler extends SubversionEventHandlerImpl {
+final class SubversionUpdateEventHandler extends SubversionEventHandlerImpl implements ISVNExternalsHandler{
     private static final Logger LOGGER = Logger.getLogger(SubversionUpdateEventHandler.class.getName());
     /**
      * External urls that are fetched through svn:externals.
@@ -118,4 +121,13 @@ final class SubversionUpdateEventHandler extends SubversionEventHandlerImpl {
             throw new SVNCancelException();
         }
     }
+
+	@Override
+	public SVNRevision[] handleExternal(File externalPath, SVNURL externalURL,
+			SVNRevision externalRevision, SVNRevision externalPegRevision,
+			String externalsDefinition, SVNRevision externalsWorkingRevision) {
+		// When an external has been found, add to externals List.
+		externals.add(new External(externalPath.getAbsolutePath(), externalURL, externalRevision.getNumber()));
+		return new SVNRevision[] {externalRevision, externalPegRevision};
+	}
 }

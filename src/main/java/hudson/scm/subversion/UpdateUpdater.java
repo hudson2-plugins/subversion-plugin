@@ -113,15 +113,16 @@ public class UpdateUpdater extends WorkspaceUpdater {
             if (!isUpdatable())
                 return delegateTo(new CheckoutUpdater());
 
-
             final SVNUpdateClient svnuc = manager.getUpdateClient();
             final List<External> externals = new ArrayList<External>(); // store discovered externals to here
 
             for (final ModuleLocation l : locations) {
                 try {
-                    File local = new File(ws, l.getLocalDir());
-                    svnuc.setEventHandler(new SubversionUpdateEventHandler(listener.getLogger(), externals, local, l.getLocalDir()));
-
+                	File local = new File(ws, l.getLocalDir());
+                	SubversionUpdateEventHandler handler = new SubversionUpdateEventHandler(listener.getLogger(), externals, local, l.getLocalDir());
+                    svnuc.setEventHandler(handler);
+                    svnuc.setExternalsHandler(handler);
+                    
                     svnuc.setIgnoreExternals(l.isIgnoreExternalsOption());
                     preUpdate(l, local);
 

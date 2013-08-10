@@ -148,7 +148,7 @@ public class SubversionRepositoryStatus extends AbstractModelObject {
                         continue;   // repository root should be a subpath of the module path, but be defensive
                     }
                     String remaining = m.substring(n.length());
-                    if (remaining.charAt(0) == '/') {
+                    if (remaining.startsWith("/")) {
                         remaining = remaining.substring(1);
                     }
                     String remainingSlash = remaining + '/';
@@ -164,11 +164,12 @@ public class SubversionRepositoryStatus extends AbstractModelObject {
                     }
 
                     for (String path : affectedPath) {
-                        if (path.equals(remaining) /*
+                        if (path.equals(remaining)
+                        		/*
                                  * for files
                                  */ || path.startsWith(remainingSlash) /*
                                  * for dirs
-                                 */) {
+                                 */ || remaining.length() == 0) {
                             // this project is possibly changed. poll now.
                             // if any of the data we used was bogus, the trigger will not detect a change
                             LOGGER.fine("Scheduling the immediate polling of " + p);
