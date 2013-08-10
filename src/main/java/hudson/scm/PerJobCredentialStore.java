@@ -30,7 +30,7 @@ import org.tmatesoft.svn.core.SVNException;
  *
  * @author Kohsuke Kawaguchi
  */
-final class PerJobCredentialStore implements Saveable, RemotableSVNAuthenticationProvider {
+public final class PerJobCredentialStore implements Saveable, RemotableSVNAuthenticationProvider {
     private static final Logger LOGGER = Logger.getLogger(PerJobCredentialStore.class.getName());
 
     /**
@@ -51,7 +51,7 @@ final class PerJobCredentialStore implements Saveable, RemotableSVNAuthenticatio
      */
     private final Map<String, Credential> credentials = new Hashtable<String, Credential>();
 
-    PerJobCredentialStore(AbstractProject<?, ?> project, String url) {
+    public PerJobCredentialStore(AbstractProject<?, ?> project, String url) {
         this.project = project;
         this.url = url;
         // read existing credential
@@ -132,7 +132,9 @@ final class PerJobCredentialStore implements Saveable, RemotableSVNAuthenticatio
         //matrix configuration project
         if (prj instanceof MatrixConfiguration && prj.getParent() != null) {
             ItemGroup parent = prj.getParent();
-            return getXmlFile((Job)parent);
+            if (parent instanceof Job) {
+            	return getXmlFile((Job)parent);
+            }
         }
         if (prj.hasCascadingProject()) {
             return getXmlFile(prj.getCascadingProject());

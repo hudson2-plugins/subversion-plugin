@@ -57,8 +57,10 @@ import hudson.scm.subversion.UpdateUpdater;
 import hudson.scm.subversion.UpdateWithRevertUpdater;
 import hudson.scm.subversion.WorkspaceUpdater;
 import hudson.scm.subversion.WorkspaceUpdater.UpdateTask;
-import hudson.slaves.NodeProperty;
 import hudson.slaves.EnvironmentVariablesNodeProperty;
+import hudson.slaves.NodeProperty;
+import hudson.slaves.NodePropertyDescriptor;
+import hudson.util.DescribableList;
 import hudson.util.EditDistance;
 import hudson.util.FormValidation;
 import hudson.util.MultipartFormDataParser;
@@ -846,7 +848,7 @@ public class SubversionSCM extends SCM implements Serializable {
         SubversionWorkspaceSelector.syncWorkspaceFormatFromMaster();
         ISVNAuthenticationManager sam = new DefaultSVNAuthenticationManager();
         sam.setAuthenticationProvider(authProvider);
-        return SVNClientManager.newInstance(SVNWCUtil.createDefaultOptions(true), sam.getAuthenticationManager());
+        return SVNClientManager.newInstance(SVNWCUtil.createDefaultOptions(true), sam);
     }
 
     /**
@@ -1742,7 +1744,7 @@ public class SubversionSCM extends SCM implements Serializable {
         }
 
         public int getWorkspaceFormat() {
-            if (workspaceFormat == 0) {
+            if (workspaceFormat == 0) { // On invalid workspace use
                 return SVNAdminAreaFactory.WC_FORMAT_14; // default
             }
             return workspaceFormat;
@@ -2646,29 +2648,30 @@ public class SubversionSCM extends SCM implements Serializable {
 
     static String getUrlWithoutRevision(
         String remoteUrlPossiblyWithRevision) {
-		String remoteUrlWithoutRevision = remoteUrlPossiblyWithRevision;
-		       
-		if (Hudson.getInstance() != null) {
-			for (NodeProperty n: Hudson.getInstance().getGlobalNodeProperties()) {
-				EnvironmentVariablesNodeProperty gnp = (EnvironmentVariablesNodeProperty)n;
-				for (Entry e : gnp.getEnvVars().entrySet()) {
-					if (remoteUrlWithoutRevision.contains("${" + e.getKey().toString() + "}")) {
-						remoteUrlWithoutRevision = remoteUrlWithoutRevision.replace("${" + e.getKey().toString() + "}", e.getValue().toString()); 
-					}
-				}
-			}
-		}
-		int idx = remoteUrlWithoutRevision.lastIndexOf('@');
-		if (idx > 0) {
-			String n = remoteUrlWithoutRevision.substring(idx + 1);
-			SVNRevision r = SVNRevision.parse(n);
-			if ((r != null) && (r.isValid())) {
-				return remoteUrlWithoutRevision.substring(0, idx);
-			}
-		}
-		return remoteUrlWithoutRevision;
-	}
-
+    	
+    	String remoteUrlWithoutRevision = remoteUrlPossiblyWithRevision;
+    	
+    	if (Hudson.getInstance() != null &&
+    			Hudson.getInstance().getGlobalNodeProperties() != null) {
+	    	for (NodeProperty n: Hudson.getInstance().getGlobalNodeProperties()) {
+	    		EnvironmentVariablesNodeProperty gnp = (EnvironmentVariablesNodeProperty)n;
+	    		for (Entry e : gnp.getEnvVars().entrySet()) {
+	    			if (remoteUrlWithoutRevision.contains("${" + e.getKey().toString() + "}")) {
+	    				remoteUrlWithoutRevision = remoteUrlWithoutRevision.replace("${" + e.getKey().toString() + "}", e.getValue().toString());
+	    			}
+	    		}
+	    	}
+    	}
+        int idx = remoteUrlWithoutRevision.lastIndexOf('@');
+        if (idx > 0) {
+            String n = remoteUrlWithoutRevision.substring(idx + 1);
+            SVNRevision r = SVNRevision.parse(n);
+            if ((r != null) && (r.isValid())) {
+                return remoteUrlWithoutRevision.substring(0, idx);
+            }
+        }
+        return remoteUrlWithoutRevision;
+    }
 
     /**
      * Gets the revision from a remote URL - i.e. the part after '@' if any

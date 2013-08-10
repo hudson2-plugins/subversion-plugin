@@ -118,24 +118,25 @@ public class Sventon extends AbstractSventon {
     private static final long serialVersionUID = 1L;
 
     @Override
-    public boolean equals(Object o) {
+    public final boolean equals(Object o) {
         if (this == o) {
             return true;
         }
-        if (!(o instanceof Sventon)) {
+    	if (!(o instanceof Sventon)) {
             return false;
         }
 
         Sventon that = (Sventon) o;
 
         return new EqualsBuilder()
+        	.appendSuper(super.equals(that))
             .append(url, that.url)
             .append(repositoryInstance, that.repositoryInstance)
             .isEquals();
     }
 
     @Override
-    public int hashCode() {
+    public final int hashCode() {
         return new HashCodeBuilder()
             .append(url)
             .append(repositoryInstance)
