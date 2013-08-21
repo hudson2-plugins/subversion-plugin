@@ -24,6 +24,8 @@ import hudson.Util;
 import hudson.model.*;
 import hudson.scm.SubversionSCM;
 import hudson.util.FormValidation;
+
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -106,7 +108,7 @@ public class ListSubversionTagsParameterDefinition extends ParameterDefinition i
      * Returns a list of Subversion dirs to be displayed in
      * {@code ListSubversionTagsParameterDefinition/index.jelly}.
      *
-     * <p>This method plainly reuses settings that must have been preivously
+     * <p>This method plainly reuses settings that must have been previously
      * defined when configuring the Subversion SCM.</p>
      *
      * <p>This method never returns {@code null}. In case an error happens, the

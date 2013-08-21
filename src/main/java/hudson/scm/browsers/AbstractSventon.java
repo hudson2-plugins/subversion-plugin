@@ -105,10 +105,10 @@ public abstract class AbstractSventon extends SubversionRepositoryBrowser {
         if (this == o) {
             return true;
         }
-        if (!(o instanceof AbstractSventon)) {
-            return false;
+        if (o == null || getClass() != o.getClass()) {
+        	return false;
         }
-
+        
         AbstractSventon that = (AbstractSventon) o;
 
         return new EqualsBuilder()

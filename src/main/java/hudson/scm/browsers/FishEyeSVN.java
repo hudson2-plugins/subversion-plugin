@@ -111,7 +111,8 @@ public class FishEyeSVN extends SubversionRepositoryBrowser {
      */
     private String getProjectName() {
         String p = url.getPath();
-        if(p.endsWith("/")) p = p.substring(0,p.length()-1);
+        if(p.endsWith("/"))
+        	p = p.substring(0,p.length()-1);
 
         int idx = p.lastIndexOf('/');
         return p.substring(idx+1);

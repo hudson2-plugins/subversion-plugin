@@ -7,6 +7,8 @@ import java.net.MalformedURLException;
 import java.net.URL;
 
 import nl.jqno.equalsverifier.EqualsVerifier;
+import nl.jqno.equalsverifier.Warning;
+
 import org.junit.Test;
 
 /**
@@ -54,5 +56,29 @@ public class BrowserEqualsTester {
 		EqualsVerifier.forClass(WebSVN2.class)
 			.withPrefabValues(URL.class, new URL("http://test"), new URL("https://test"))
 			.verify();
+	}
+	
+	@Test
+	public void testAbstractSventonEqualsHashCode() throws Exception {
+		EqualsVerifier.forClass(AbstractSventon.class)
+		.withPrefabValues(URL.class, new URL("http://test"), new URL("https://test"))
+		.usingGetClass()
+		.verify();
+	}
+	
+	@Test
+	public void testSventonEqualsHashCode() throws MalformedURLException {
+		EqualsVerifier.forClass(Sventon.class)
+		.withPrefabValues(URL.class, new URL("http://test"), new URL("https://test"))
+		.usingGetClass()
+		.verify();
+	}
+	
+	@Test
+	public void testSventon2EqualsHashCode() throws MalformedURLException {
+		EqualsVerifier.forClass(Sventon2.class)
+		.withPrefabValues(URL.class, new URL("http://test"), new URL("https://test"))
+		.usingGetClass()
+		.verify();
 	}
 }

@@ -164,11 +164,12 @@ public class SubversionRepositoryStatus extends AbstractModelObject {
                     }
 
                     for (String path : affectedPath) {
-                        if (path.equals(remaining) /*
+                        if (path.equals(remaining)
+                        		/*
                                  * for files
                                  */ || path.startsWith(remainingSlash) /*
                                  * for dirs
-                                 */) {
+                                 */ || remaining.length() == 0) {
                             // this project is possibly changed. poll now.
                             // if any of the data we used was bogus, the trigger will not detect a change
                             LOGGER.fine("Scheduling the immediate polling of " + p);

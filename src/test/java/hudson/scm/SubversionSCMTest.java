@@ -24,12 +24,22 @@
 
 package hudson.scm;
 
+import hudson.model.FreeStyleBuild;
+import hudson.model.Result;
+import hudson.model.TaskListener;
+import hudson.model.Cause;
+import hudson.model.FreeStyleProject;
+import hudson.model.User;
+
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.concurrent.Future;
+
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.jvnet.hudson.test.Bug;
+import org.kohsuke.stapler.export.Exported;
 
 import static junit.framework.Assert.assertEquals;
 
@@ -42,7 +52,7 @@ import static junit.framework.Assert.assertEquals;
  * @author Anton Kozak
  */
 @RunWith(Parameterized.class)
-public class SubversionSCMTest {
+public class SubversionSCMTest extends AbstractSubversionTest{
 
     private String userName;
     private boolean expectedResult;

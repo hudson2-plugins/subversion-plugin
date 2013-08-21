@@ -24,10 +24,15 @@
 package hudson.scm.subversion;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.List;
 
 import org.junit.Test;
 import org.jvnet.hudson.test.Bug;
+import org.jvnet.hudson.test.Email;
+import org.jvnet.hudson.test.For;
+import org.tmatesoft.svn.core.internal.wc.SVNExternal;
+import org.tmatesoft.svn.core.wc.SVNRevision;
 
 import com.thoughtworks.xstream.XStream;
 
@@ -75,6 +80,18 @@ public class SVNExternalsTest extends AbstractSubversionTest {
         }
         
 	}
+	
+	@Email("http://www.eclipse.org/forums/index.php?t=rview&goto=1028723#msg_1028723")
+	@Test
+	public void testSVNUpdateStrategy() throws Exception {
+		FreeStyleProject p = hudson.createProject(FreeStyleProject.class, "svnExternal");
+		
+		SubversionSCM scm = new SubversionSCM("https://tsethudsonsvn.googlecode.com/svn/trunk");
+//		UpdateWithRevertUpdater
+		
+		
+	}
+	
 	
     private static final XStream XSTREAM = new XStream2();
 

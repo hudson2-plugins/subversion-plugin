@@ -8,6 +8,7 @@ import java.net.URL;
 
 import org.junit.Test;
 
+import hudson.model.Descriptor;
 import hudson.scm.SubversionChangeLogSet.Path;
 import hudson.scm.SubversionChangeLogSet.LogEntry;
 
@@ -53,6 +54,11 @@ public class SVNWebTest {
         String changeSetLink = repoBrowser.getChangeSetLink(entry).toString();
         // then
         assertThat(changeSetLink, is("http://localhost/svnweb/repo/revision/?rev=2"));
+    }
+    
+    @Test
+    public void verifyDisplayName() {
+    	assertThat(new SVNWeb.DescriptorImpl().getDisplayName(), is("SVN::Web"));
     }
 
     private Path path(String action, int revision) {
